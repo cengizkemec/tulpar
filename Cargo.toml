@@ -78,7 +78,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 unicode-normalization = "0.1"
 utoipa = { version = "5.3", features = ["axum_extras", "uuid", "chrono"] }
-utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
+utoipa-swagger-ui = { version = "10.0", features = ["axum"] }
 uuid = { version = "1.11", features = ["v7", "serde"] }
 
 [profile.dev]
