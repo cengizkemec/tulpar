@@ -1,6 +1,6 @@
-# Phase 2 Report — Communities, Permissions, and Social Foundation
+﻿# Phase 2 Report â€” Communities, Permissions, and Social Foundation
 
-**Status:** In progress. The community/permission/social foundation is implemented and locally verified. Several Phase 2 endpoints and hardening items remain open.
+**Status:** Phase 2 backend scope is implemented, locally verified, and CI-green. Remaining items are Phase 3 messaging, the admin UI, an internal transaction refactor, and operational/license decisions.
 
 **Date:** 2026-11-12
 
@@ -41,6 +41,9 @@ The migration was applied to the Docker PostgreSQL instance and is applied by `s
 - Invite creation, public preview, join, listing, and revocation.
 - Effective community permissions endpoint.
 - Channel permission overwrite endpoints for roles and members, with category inheritance, member-overwrite-last ordering, and channel visibility filtering through the central evaluator.
+- Public community discovery/search, member search, ban listing, bulk role reordering, and ownership transfer.
+- Append-only audit records for community, member, role, invite, channel-overwrite, friend, block, and DM metadata actions, plus a `VIEW_AUDIT_LOG`-protected audit-log endpoint.
+- Per-user rate limits for community creation, joins, invite creation, friend requests, and DM creation.
 
 ### Social
 
@@ -55,15 +58,19 @@ The migration was applied to the Docker PostgreSQL instance and is applied by `s
 
 New endpoints include:
 
-- `POST /api/v1/communities`
+- `GET/POST /api/v1/communities` (public discovery and creation)
 - `GET /api/v1/users/me/communities`
 - `GET/PATCH/DELETE /api/v1/communities/{id}`
 - `POST /api/v1/communities/{id}/join`
+- `POST /api/v1/communities/{id}/transfer-ownership`
 - `GET /api/v1/communities/{id}/permissions/me`
-- `GET /api/v1/communities/{id}/members`
+- `GET /api/v1/communities/{id}/members?query=...`
 - `PATCH/DELETE /api/v1/communities/{id}/members/{user_id}`
+- `GET /api/v1/communities/{id}/bans`
 - `PUT/DELETE /api/v1/communities/{id}/bans/{user_id}`
+- `GET /api/v1/communities/{id}/audit-logs`
 - `GET/POST /api/v1/communities/{id}/roles`
+- `PATCH /api/v1/communities/{id}/roles/reorder`
 - `PATCH/DELETE /api/v1/communities/{id}/roles/{role_id}`
 - `PUT/DELETE /api/v1/communities/{id}/members/{user_id}/roles/{role_id}`
 - `GET/POST /api/v1/communities/{id}/channels`
@@ -74,7 +81,7 @@ New endpoints include:
 - `GET/POST/DELETE /api/v1/invites/{code}`
 - Friends, blocks, and DM endpoints under `/api/v1/friends`, `/api/v1/blocks`, `/api/v1/dms`
 
-OpenAPI now contains 51 paths and TypeScript types were regenerated from the running instance.
+OpenAPI now contains 56 paths and TypeScript types were regenerated from the running instance.
 
 ---
 
@@ -85,7 +92,7 @@ OpenAPI now contains 51 paths and TypeScript types were regenerated from the run
 ```text
 cargo fmt --all -- --check                         -> pass
 cargo clippy --workspace --all-targets -- -D warnings -> pass
-cargo test --workspace                             -> 24 tests passed
+cargo test --workspace                             -> 27 tests passed
 pnpm generate:types                                -> pass
 pnpm typecheck                                     -> pass
 GitHub Actions (commit ab0b199)                    -> all jobs green
@@ -96,12 +103,16 @@ Test breakdown:
 | Suite | Result |
 |---|---|
 | API auth integration | 4 passed |
-| API communities/social integration | 1 passed |
+| API communities/social integration | 3 passed |
 | Auth password unit | 3 passed |
 | Common utilities | 4 passed |
 | Config validation | 4 passed |
-| Permission evaluator | 6 passed |
+| Permission evaluator | 7 passed |
 | Realtime rate limiter | 2 passed |
+
+The second integration test is an authorization matrix covering private-community IDOR, invite exhaustion, administrator-grant rejection, kick/overwrite hierarchy checks, community/channel management denials, cross-community role IDs, timeout permission removal, ban-blocked rejoin, and ownership transfer in both directions.
+
+The third integration test asserts Phase 2 database constraints: visibility enums, duplicate active slugs, direct-channel scope fields, role color bounds, overlapping overwrite allow/deny, missing overwrite targets, self direct conversations, and self blocks.
 
 The community/social integration test covers:
 
@@ -110,12 +121,14 @@ The community/social integration test covers:
 3. A non-member receives `404` for the private community.
 4. Owner creates an invite; member joins.
 5. Owner lists two members.
-6. Owner creates a role and assigns it; member’s effective permissions include the role.
-7. Owner denies `VIEW_CHANNEL` to the member on `#general`; the channel disappears from the member’s channel list and direct lookup returns `404`.
+6. Owner creates a role and assigns it; memberâ€™s effective permissions include the role.
+7. Owner denies `VIEW_CHANNEL` to the member on `#general`; the channel disappears from the memberâ€™s channel list and direct lookup returns `404`.
 8. Owner removes the overwrite; access is restored.
 9. Member sends a friend request; owner accepts.
 10. Owner creates a DM with the member.
 11. Owner blocks the member; a new DM attempt is rejected with `403`.
+12. Public discovery returns the public community and hides the private one; member search finds the invited member.
+13. Role reordering works; ban listing returns the banned user; audit logs contain the expected moderation and hierarchy actions.
 
 ### Docker stack
 
@@ -133,27 +146,23 @@ Docker Desktop cannot read the current OneDrive source path directly. The verifi
 
 ## 3. Known gaps
 
-1. **Audit records are not written for community/social actions.** Auth audit records exist; community moderation, role changes, invites, bans, and blocks need audit entries.
-2. **Community discovery/search, member search, full ban listing, role reorder, and community audit-log APIs** are not implemented.
-3. **DM messages** are Phase 3; only DM conversation metadata exists.
-4. **Full authorization matrix and adversarial escalation tests** are not complete. The current integration test covers the main flow, channel overwrite visibility, and basic hierarchy, not every endpoint/hierarchy edge case.
-5. **Owner account deletion with communities** is intentionally blocked with a clear error; ownership transfer or community deletion must happen first.
-6. **Community creation + default channel creation is not one transaction.** If default channel creation fails, the API soft-deletes the community; a database-level unit of work would be cleaner.
-7. **No community/member admin UI** exists; web work is Phase 6.
-8. **No rate limits** specific to community/invite/friend actions yet; global authenticated limits apply, but abuse controls need per-action budgets.
-9. **Two optional-dependency audit advisories are explicitly ignored.** `rsa` is present because of jsonwebtoken’s optional RSA support (Tulpar uses HS256 only), and `libsqlite3-sys` is present because of SQLx’s optional SQLite support (Tulpar enables PostgreSQL only). The CI comments document both; the lockfile should be cleaned if upstream features allow.
-10. **Channel scope is enforced for channel lookup/listing; future message and voice paths must reuse the same evaluator.**
+1. **DM messages** are Phase 3; only DM conversation metadata and privacy checks exist.
+2. **Owner account deletion with communities** is intentionally blocked with a clear error; ownership transfer or community deletion must happen first.
+3. **Community creation + default channel creation is not one transaction.** If default channel creation fails, the API soft-deletes the community; a database-level unit of work would be cleaner.
+4. **No community/member admin UI** exists; web work is Phase 6.
+5. **Two optional-dependency audit advisories are explicitly ignored.** `rsa` is present because of jsonwebtokenâ€™s optional RSA support (Tulpar uses HS256 only), and `libsqlite3-sys` is present because of SQLxâ€™s optional SQLite support (Tulpar enables PostgreSQL only). The CI comments document both; the lockfile should be cleaned if upstream features allow.
+6. **Channel scope is enforced for channel lookup/listing/overwrites; future message and voice paths must reuse the same evaluator.**
+7. **Community discovery is a relevance-free substring search.** Ranking, categories, and pagination cursors are later work.
+8. **Audit records are best-effort writes.** A failed audit insert is logged but does not roll back the action. A transactional outbox is the production-grade follow-up.
 
 ---
 
 ## 4. Recommended next steps
 
-1. Add channel permission overwrite endpoints and enforce channel-scoped permissions in channel listing and future message/voice paths.
-2. Add audit records for community, role, invite, ban, and social actions.
-3. Add community discovery/search, member search, ban listing, role reorder, and audit-log endpoints.
-4. Expand the authorization matrix and escalation tests across every new endpoint.
-5. Add action-specific rate limits for invites, friend requests, DMs, and community joins.
-6. Move DM messages and read states into Phase 3 with the messaging tables, gateway, and recovery.
-7. Move the repository off OneDrive or use a local build context for Docker.
-8. Obtain the first green GitHub Actions run and close the license decision before any public distribution.
-9. Remove the documented audit exceptions by upgrading/replacing the optional RSA/SQLite-bearing dependencies when upstream support allows.
+1. Move DM messages and read states into Phase 3 with the messaging tables, gateway, and recovery.
+2. Build the community/member/role admin UI in Phase 6.
+3. Refactor community creation and default-channel creation into one transaction.
+4. Add ranking/cursor pagination for discovery and audit queries.
+5. Move the repository off OneDrive or use a local build context for Docker.
+6. Close the license decision before any public distribution.
+7. Remove the documented audit exceptions by upgrading/replacing the optional RSA/SQLite-bearing dependencies when upstream support allows.

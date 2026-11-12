@@ -341,6 +341,30 @@ mod tests {
     }
 
     #[test]
+    fn channel_overwrite_has_priority_over_category_overwrite() {
+        let role = Role::new(id(), DEFAULT_MEMBER_PERMISSIONS, 1, true);
+        let category = Overwrite::new(
+            OverwriteTarget::Role(role.id),
+            Permissions::empty(),
+            Permissions::SEND_MESSAGES,
+        );
+        let channel = Overwrite::new(
+            OverwriteTarget::Role(role.id),
+            Permissions::SEND_MESSAGES,
+            Permissions::empty(),
+        );
+        let perms = evaluate(PermissionContext {
+            is_owner: false,
+            member_id: id(),
+            roles: &[role],
+            category_overwrites: &[category],
+            channel_overwrites: &[channel],
+            timed_out: false,
+        });
+        assert!(perms.contains(Permissions::SEND_MESSAGES));
+    }
+
+    #[test]
     fn timeout_removes_send_and_voice_publish() {
         let role = Role::new(id(), DEFAULT_MEMBER_PERMISSIONS, 0, true);
         let perms = evaluate(PermissionContext {

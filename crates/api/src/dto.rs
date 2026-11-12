@@ -4,8 +4,9 @@ use users::{User, UserSettings};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use audit::AuditLog;
 use channels::{Channel, DirectConversation};
-use communities::{Community, CommunityAccess, Invite, MemberView, Role};
+use communities::{BanView, Community, CommunityAccess, Invite, MemberView, Role};
 use social::{BlockedUser, FriendUser, FriendshipView};
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -730,4 +731,106 @@ impl From<DirectConversation> for DirectConversationDto {
 pub struct JoinResponse {
     pub community_id: Uuid,
     pub already_member: bool,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct BanDto {
+    pub user_id: Uuid,
+    pub username: String,
+    pub display_name: String,
+    pub moderator_id: Option<Uuid>,
+    pub reason: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<BanView> for BanDto {
+    fn from(value: BanView) -> Self {
+        Self {
+            user_id: value.user_id,
+            username: value.username,
+            display_name: value.display_name,
+            moderator_id: value.moderator_id,
+            reason: value.reason,
+            expires_at: value.expires_at,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AuditLogDto {
+    pub id: Uuid,
+    pub actor_user_id: Option<Uuid>,
+    pub actor_username: Option<String>,
+    pub actor_type: String,
+    pub action: String,
+    pub target_type: Option<String>,
+    pub target_id: Option<Uuid>,
+    pub metadata: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<AuditLog> for AuditLogDto {
+    fn from(value: AuditLog) -> Self {
+        Self {
+            id: value.id,
+            actor_user_id: value.actor_user_id,
+            actor_username: value.actor_username,
+            actor_type: value.actor_type,
+            action: value.action,
+            target_type: value.target_type,
+            target_id: value.target_id,
+            metadata: value.metadata,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CommunitySearchQuery {
+    #[serde(default)]
+    pub query: Option<String>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+    #[serde(default)]
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MemberSearchQuery {
+    #[serde(default)]
+    pub query: Option<String>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AuditLogQuery {
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RolePositionRequest {
+    pub role_id: Uuid,
+    pub position: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ReorderRolesRequest {
+    pub roles: Vec<RolePositionRequest>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct TransferOwnershipRequest {
+    pub new_owner_id: Uuid,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UserSearchQuery {
+    #[serde(default)]
+    pub query: Option<String>,
+    #[serde(default)]
+    pub limit: Option<i64>,
 }

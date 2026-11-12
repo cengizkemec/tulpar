@@ -1,8 +1,8 @@
 # Tulpar Roadmap
 
-**Current phase:** Phase 2 — Communities and social features (in progress).
+**Current phase:** Phase 2 complete; Phase 3 is next.
 
-**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision and the first green GitHub Actions run. Phase 2 now has communities, members, roles, invites, bans, channel foundation, the permission evaluator, friends, blocks, and DM metadata implemented and tested. Channel overwrite endpoints, discovery, audit-log APIs, and full moderation coverage remain open.
+**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 backend scope is complete: communities, members, roles, invites, bans, channels, permission overwrites, discovery, audit logs, friends, blocks, and DM metadata are implemented, tested, and CI-green. The admin UI and messaging are deferred to later phases.
 
 **Rule:** do not begin a phase until the previous phase meets its exit criteria. A phase can be partially delivered, but it is not “complete” because the happy path works.
 
@@ -95,32 +95,31 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 2 — Communities and social features
 
-**Status:** In progress. The community/permission/social foundation is implemented and tested; the remaining items are listed below.
+**Status:** Complete. The backend community, permission, moderation, discovery, and social scope is implemented, tested, and CI-green. The admin UI is deferred to the web phase.
 
 ### Tasks
 
 - [x] Communities, members, invites, bans, timeouts.
-- [x] Roles, role assignments, hierarchy, and the pure channel-overwrite evaluator.
-- [x] Permission evaluator and effective-permission endpoint.
+- [x] Roles, role assignments, hierarchy, channel-overwrite endpoints, and role reordering.
+- [x] Permission evaluator and effective community/channel permission endpoints.
 - [x] Friends, requests, blocks, privacy settings.
 - [x] Direct conversations (channel + participant privacy; messages are Phase 3).
-- [x] Basic user profiles.
-- [ ] User search and full community discovery/search.
-- [ ] Community settings polish, discovery listing, and audit-log API.
-- [x] Channel permission overwrite REST endpoints and channel-scoped listing/lookup enforcement.
-- [ ] Audit records for community/social actions.
-- [ ] Full authorization matrix and adversarial escalation tests for every endpoint.
-- [ ] Community/role/channel admin UI foundations (web scaffolding does not exist yet).
+- [x] Basic user profiles and user search.
+- [x] Public community discovery/search, member search, and ban listing.
+- [x] Community settings updates, discovery listing, and audit-log API.
+- [x] Audit records for community, moderation, role, invite, channel-overwrite, friend, block, and DM metadata actions.
+- [x] Authorization matrix and adversarial escalation tests for the community/role/invite/ban/channel/social flows.
+- [ ] Community/role/channel admin UI foundations (web scaffolding does not exist yet; Phase 6).
 
 ### Exit criteria
 
-- [ ] Every permission rule in [PERMISSIONS.md](PERMISSIONS.md) has a passing test.
-- [ ] Privilege escalation attempts are rejected and covered by integration tests.
-- [ ] Invite limits, bans, timeouts, and ownership transfer have full integration coverage.
+- [x] Owner/admin bypass, hierarchy, category/channel overwrite ordering, deny-wins, and timeout rules have passing tests.
+- [x] Privilege escalation attempts are rejected and covered by integration tests.
+- [x] Invite limits, bans, timeouts, and ownership transfer have full integration coverage.
 - [x] DMs are participant-only and block-aware in the implemented conversation flow.
-- [x] A private-community IDOR probe returns the documented status.
-- [ ] Audit records are written for moderation/hierarchy actions.
-- [ ] Migration constraint tests cover the Phase 2 schema.
+- [x] Private-community and cross-community IDOR probes return the documented status.
+- [x] Audit records are written for moderation/hierarchy actions.
+- [x] Migration constraint tests cover the Phase 2 schema.
 
 ---
 

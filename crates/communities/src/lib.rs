@@ -121,6 +121,17 @@ pub struct CommunityAccess {
 }
 
 #[derive(Debug, Clone, Serialize, FromRow)]
+pub struct BanView {
+    pub user_id: Uuid,
+    pub username: String,
+    pub display_name: String,
+    pub moderator_id: Option<Uuid>,
+    pub reason: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, FromRow)]
 pub struct Invite {
     pub id: Uuid,
     pub code: String,
@@ -290,6 +301,36 @@ impl CommunityService {
             "#,
         )
         .bind(user_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(communities)
+    }
+
+    /// Search public communities by name, slug, or description.
+    pub async fn search_public(
+        &self,
+        query: Option<&str>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<Community>, CommunityError> {
+        let pattern = query
+            .map(|value| format!("%{}%", value.trim().replace(['%', '_'], "")))
+            .unwrap_or_else(|| "%".to_string());
+        let communities = sqlx::query_as::<_, Community>(
+            r#"
+            SELECT id, name, slug::text AS slug, description, icon_file_id, banner_file_id,
+                   owner_user_id, visibility, default_notifications, created_at, updated_at
+            FROM communities
+            WHERE deleted_at IS NULL
+              AND visibility = 'public'
+              AND (name ILIKE $1 OR slug::text ILIKE $1 OR COALESCE(description, '') ILIKE $1)
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+        )
+        .bind(pattern)
+        .bind(limit.clamp(1, 100))
+        .bind(offset.max(0))
         .fetch_all(&self.pool)
         .await?;
         Ok(communities)
@@ -532,6 +573,49 @@ impl CommunityService {
         Ok(())
     }
 
+    /// Update several role positions in one transaction.
+    pub async fn reorder_roles(
+        &self,
+        community_id: Uuid,
+        positions: &[(Uuid, i32)],
+    ) -> Result<(), CommunityError> {
+        if positions.is_empty() || positions.len() > 100 {
+            return Err(CommunityError::Invalid(
+                "a reorder request must contain between 1 and 100 roles".into(),
+            ));
+        }
+        let mut seen = std::collections::HashSet::new();
+        for (role_id, position) in positions {
+            if !seen.insert(*role_id) {
+                return Err(CommunityError::Invalid(
+                    "each role may appear only once in a reorder request".into(),
+                ));
+            }
+            if *position < 0 {
+                return Err(CommunityError::Invalid(
+                    "role positions must not be negative".into(),
+                ));
+            }
+        }
+
+        let mut tx = self.pool.begin().await?;
+        for (role_id, position) in positions {
+            let result = sqlx::query(
+                "UPDATE roles SET position = $3, updated_at = now() WHERE community_id = $1 AND id = $2 AND is_default = false",
+            )
+            .bind(community_id)
+            .bind(role_id)
+            .bind(position)
+            .execute(&mut *tx)
+            .await?;
+            if result.rows_affected() == 0 {
+                return Err(CommunityError::RoleNotFound);
+            }
+        }
+        tx.commit().await?;
+        Ok(())
+    }
+
     pub async fn assign_role(
         &self,
         community_id: Uuid,
@@ -583,6 +667,35 @@ impl CommunityService {
             "#,
         )
         .bind(community_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(members)
+    }
+
+    /// Search members by username, display name, or nickname.
+    pub async fn search_members(
+        &self,
+        community_id: Uuid,
+        query: &str,
+        limit: i64,
+    ) -> Result<Vec<MemberView>, CommunityError> {
+        let pattern = format!("%{}%", query.trim().replace(['%', '_'], ""));
+        let members = sqlx::query_as::<_, MemberView>(
+            r#"
+            SELECT m.user_id, u.username::text AS username, u.display_name, u.avatar_file_id,
+                   m.nickname, m.joined_at, m.communication_disabled_until
+            FROM community_members m
+            JOIN users u ON u.id = m.user_id
+            WHERE m.community_id = $1
+              AND u.deleted_at IS NULL
+              AND (u.username::text ILIKE $2 OR u.display_name ILIKE $2 OR COALESCE(m.nickname, '') ILIKE $2)
+            ORDER BY u.display_name, u.id
+            LIMIT $3
+            "#,
+        )
+        .bind(community_id)
+        .bind(pattern)
+        .bind(limit.clamp(1, 100))
         .fetch_all(&self.pool)
         .await?;
         Ok(members)
@@ -823,6 +936,24 @@ impl CommunityService {
         .fetch_one(&self.pool)
         .await?;
         Ok(banned)
+    }
+
+    /// Active and expired bans for moderator views.
+    pub async fn list_bans(&self, community_id: Uuid) -> Result<Vec<BanView>, CommunityError> {
+        let bans = sqlx::query_as::<_, BanView>(
+            r#"
+            SELECT b.user_id, u.username::text AS username, u.display_name,
+                   b.moderator_id, b.reason, b.expires_at, b.created_at
+            FROM bans b
+            JOIN users u ON u.id = b.user_id
+            WHERE b.community_id = $1
+            ORDER BY b.created_at DESC
+            "#,
+        )
+        .bind(community_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(bans)
     }
 
     pub async fn update_member(

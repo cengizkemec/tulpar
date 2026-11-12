@@ -1,5 +1,7 @@
+use std::time::Duration as StdDuration;
+
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Json,
 };
 use chrono::{Duration, Utc};
@@ -9,15 +11,32 @@ use uuid::Uuid;
 
 use crate::{
     dto::{
-        BanMemberRequest, ChannelDto, CommunityDetailsDto, CommunityDto, CommunityPermissionsDto,
-        CreateChannelRequest, CreateCommunityRequest, CreateInviteRequest, CreateRoleRequest,
-        InviteDto, InvitePreviewDto, JoinResponse, MemberDto, RoleDto, UpdateCommunityRequest,
-        UpdateMemberRequest, UpdateRoleRequest,
+        AuditLogDto, AuditLogQuery, BanDto, BanMemberRequest, ChannelDto, CommunityDetailsDto,
+        CommunityDto, CommunityPermissionsDto, CommunitySearchQuery, CreateChannelRequest,
+        CreateCommunityRequest, CreateInviteRequest, CreateRoleRequest, InviteDto,
+        InvitePreviewDto, JoinResponse, MemberDto, MemberSearchQuery, ReorderRolesRequest, RoleDto,
+        TransferOwnershipRequest, UpdateCommunityRequest, UpdateMemberRequest, UpdateRoleRequest,
     },
     error::ApiError,
-    extract::CurrentUser,
+    extract::{enforce_rate_limit, CurrentUser},
     state::AppState,
 };
+
+async fn limit_action(
+    state: &AppState,
+    action: &str,
+    user_id: Uuid,
+    limit: u64,
+    window_seconds: u64,
+) -> Result<(), ApiError> {
+    enforce_rate_limit(
+        state,
+        &format!("community:{action}:{user_id}"),
+        limit,
+        StdDuration::from_secs(window_seconds),
+    )
+    .await
+}
 
 fn require_permission(access: &CommunityAccess, permission: Permissions) -> Result<(), ApiError> {
     if access.permissions.contains(permission) {
@@ -70,6 +89,34 @@ async fn details(
 }
 
 #[utoipa::path(
+    get,
+    path = "/api/v1/communities",
+    tag = "communities",
+    params(
+        ("query" = Option<String>, Query, description = "Name, slug, or description search"),
+        ("limit" = Option<i64>, Query, description = "Maximum results, 1-100"),
+        ("offset" = Option<i64>, Query, description = "Pagination offset")
+    ),
+    responses((status = 200, body = Vec<CommunityDto>))
+)]
+pub async fn list_public(
+    State(state): State<AppState>,
+    Query(params): Query<CommunitySearchQuery>,
+) -> Result<Json<Vec<CommunityDto>>, ApiError> {
+    let communities = state
+        .communities
+        .search_public(
+            params.query.as_deref(),
+            params.limit.unwrap_or(25),
+            params.offset.unwrap_or(0),
+        )
+        .await?;
+    Ok(Json(
+        communities.into_iter().map(CommunityDto::from).collect(),
+    ))
+}
+
+#[utoipa::path(
     post,
     path = "/api/v1/communities",
     tag = "communities",
@@ -82,6 +129,7 @@ pub async fn create_community(
     current: CurrentUser,
     Json(payload): Json<CreateCommunityRequest>,
 ) -> Result<Json<CommunityDetailsDto>, ApiError> {
+    limit_action(&state, "create", current.user().id, 10, 3600).await?;
     let community = state
         .communities
         .create(
@@ -99,6 +147,15 @@ pub async fn create_community(
         let _ = state.communities.soft_delete(community.id).await;
         return Err(error.into());
     }
+
+    state
+        .record_audit(
+            Some(current.user().id),
+            "community.create",
+            Some(community.id),
+            Some(("community", community.id)),
+        )
+        .await;
 
     Ok(Json(details(&state, community, current.user().id).await?))
 }
@@ -176,6 +233,14 @@ pub async fn update_community(
             payload.visibility,
         )
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "community.update",
+            Some(community_id),
+            Some(("community", community_id)),
+        )
+        .await;
     Ok(Json(community.into()))
 }
 
@@ -198,6 +263,54 @@ pub async fn delete_community(
         .await?;
     require_owner(&access)?;
     state.communities.soft_delete(community_id).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "community.delete",
+            Some(community_id),
+            Some(("community", community_id)),
+        )
+        .await;
+    Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/communities/{community_id}/transfer-ownership",
+    tag = "communities",
+    security(("bearer_auth" = [])),
+    params(("community_id" = Uuid, Path, description = "Community identifier")),
+    request_body = TransferOwnershipRequest,
+    responses((status = 204, description = "Ownership transferred"))
+)]
+pub async fn transfer_ownership(
+    State(state): State<AppState>,
+    current: CurrentUser,
+    Path(community_id): Path<Uuid>,
+    Json(payload): Json<TransferOwnershipRequest>,
+) -> Result<axum::http::StatusCode, ApiError> {
+    let access = state
+        .communities
+        .access(community_id, current.user().id)
+        .await?;
+    require_owner(&access)?;
+    if payload.new_owner_id == current.user().id {
+        return Err(ApiError::validation(
+            "Ownership must be transferred to another member.",
+        ));
+    }
+    state
+        .communities
+        .transfer_ownership(community_id, payload.new_owner_id)
+        .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "community.transfer_ownership",
+            Some(community_id),
+            Some(("user", payload.new_owner_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -214,10 +327,21 @@ pub async fn join_public(
     current: CurrentUser,
     Path(community_id): Path<Uuid>,
 ) -> Result<Json<JoinResponse>, ApiError> {
+    limit_action(&state, "join", current.user().id, 30, 3600).await?;
     let result = state
         .communities
         .join_public(community_id, current.user().id)
         .await?;
+    if !result.already_member {
+        state
+            .record_audit(
+                Some(current.user().id),
+                "member.join",
+                Some(community_id),
+                Some(("user", current.user().id)),
+            )
+            .await;
+    }
     Ok(Json(JoinResponse {
         community_id: result.community_id,
         already_member: result.already_member,
@@ -249,20 +373,38 @@ pub async fn my_permissions(
     path = "/api/v1/communities/{community_id}/members",
     tag = "communities",
     security(("bearer_auth" = [])),
-    params(("community_id" = Uuid, Path, description = "Community identifier")),
+    params(
+        ("community_id" = Uuid, Path, description = "Community identifier"),
+        ("query" = Option<String>, Query, description = "Username, display name, or nickname search"),
+        ("limit" = Option<i64>, Query, description = "Maximum results, 1-100")
+    ),
     responses((status = 200, body = Vec<MemberDto>))
 )]
 pub async fn list_members(
     State(state): State<AppState>,
     current: CurrentUser,
     Path(community_id): Path<Uuid>,
+    Query(params): Query<MemberSearchQuery>,
 ) -> Result<Json<Vec<MemberDto>>, ApiError> {
     let access = state
         .communities
         .access(community_id, current.user().id)
         .await?;
     require_permission(&access, Permissions::VIEW_MEMBER_LIST)?;
-    let members = state.communities.list_members(community_id).await?;
+    let members = match params
+        .query
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        Some(query) => {
+            state
+                .communities
+                .search_members(community_id, query, params.limit.unwrap_or(50))
+                .await?
+        }
+        None => state.communities.list_members(community_id).await?,
+    };
     Ok(Json(members.into_iter().map(MemberDto::from).collect()))
 }
 
@@ -334,6 +476,14 @@ pub async fn update_member(
         .communities
         .update_member(community_id, user_id, payload.nickname, timeout)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "member.update",
+            Some(community_id),
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -361,6 +511,14 @@ pub async fn kick_member(
     let target = state.communities.access(community_id, user_id).await?;
     require_target_below(&actor, &target)?;
     state.communities.kick(community_id, user_id).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "member.kick",
+            Some(community_id),
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -411,6 +569,14 @@ pub async fn ban_member(
             expires_at,
         )
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "member.ban",
+            Some(community_id),
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -436,7 +602,70 @@ pub async fn unban_member(
         .await?;
     require_permission(&actor, Permissions::BAN_MEMBERS)?;
     state.communities.unban(community_id, user_id).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "member.unban",
+            Some(community_id),
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/communities/{community_id}/bans",
+    tag = "communities",
+    security(("bearer_auth" = [])),
+    params(("community_id" = Uuid, Path, description = "Community identifier")),
+    responses((status = 200, body = Vec<BanDto>))
+)]
+pub async fn list_bans(
+    State(state): State<AppState>,
+    current: CurrentUser,
+    Path(community_id): Path<Uuid>,
+) -> Result<Json<Vec<BanDto>>, ApiError> {
+    let access = state
+        .communities
+        .access(community_id, current.user().id)
+        .await?;
+    require_permission(&access, Permissions::BAN_MEMBERS)?;
+    let bans = state.communities.list_bans(community_id).await?;
+    Ok(Json(bans.into_iter().map(BanDto::from).collect()))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/communities/{community_id}/audit-logs",
+    tag = "communities",
+    security(("bearer_auth" = [])),
+    params(
+        ("community_id" = Uuid, Path, description = "Community identifier"),
+        ("limit" = Option<i64>, Query, description = "Maximum records, 1-200")
+    ),
+    responses((status = 200, body = Vec<AuditLogDto>))
+)]
+pub async fn list_audit_logs(
+    State(state): State<AppState>,
+    current: CurrentUser,
+    Path(community_id): Path<Uuid>,
+    Query(params): Query<AuditLogQuery>,
+) -> Result<Json<Vec<AuditLogDto>>, ApiError> {
+    let access = state
+        .communities
+        .access(community_id, current.user().id)
+        .await?;
+    require_permission(&access, Permissions::VIEW_AUDIT_LOG)?;
+    let logs = state
+        .audit
+        .list_community(community_id, params.limit.unwrap_or(50))
+        .await
+        .map_err(|error| {
+            tracing::error!(%error, "failed to list audit logs");
+            ApiError::dependency_unavailable("Audit logs are temporarily unavailable.")
+        })?;
+    Ok(Json(logs.into_iter().map(AuditLogDto::from).collect()))
 }
 
 #[utoipa::path(
@@ -514,7 +743,81 @@ pub async fn create_role(
             payload.mentionable,
         )
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "role.create",
+            Some(community_id),
+            Some(("role", role.id)),
+        )
+        .await;
     Ok(Json(role.into()))
+}
+
+#[utoipa::path(
+    patch,
+    path = "/api/v1/communities/{community_id}/roles/reorder",
+    tag = "communities",
+    security(("bearer_auth" = [])),
+    params(("community_id" = Uuid, Path, description = "Community identifier")),
+    request_body = ReorderRolesRequest,
+    responses((status = 200, body = Vec<RoleDto>))
+)]
+pub async fn reorder_roles(
+    State(state): State<AppState>,
+    current: CurrentUser,
+    Path(community_id): Path<Uuid>,
+    Json(payload): Json<ReorderRolesRequest>,
+) -> Result<Json<Vec<RoleDto>>, ApiError> {
+    let actor = state
+        .communities
+        .access(community_id, current.user().id)
+        .await?;
+    require_permission(&actor, Permissions::MANAGE_ROLES)?;
+    if payload.roles.is_empty() {
+        return Err(ApiError::validation(
+            "At least one role must be included in a reorder request.",
+        ));
+    }
+
+    let mut positions = Vec::with_capacity(payload.roles.len());
+    for entry in &payload.roles {
+        let role = state.communities.get_role(entry.role_id).await?;
+        if role.community_id != community_id || role.is_default {
+            return Err(ApiError::forbidden(
+                "protected_role",
+                "Only non-default roles in this community can be reordered.",
+            ));
+        }
+        if !actor.is_owner && role.position >= actor.highest_role_position {
+            return Err(ApiError::forbidden(
+                "hierarchy",
+                "You cannot reorder a role at or above your highest role.",
+            ));
+        }
+        if !actor.is_owner && entry.position >= actor.highest_role_position {
+            return Err(ApiError::forbidden(
+                "hierarchy",
+                "You cannot move a role to or above your highest role.",
+            ));
+        }
+        positions.push((entry.role_id, entry.position));
+    }
+
+    state
+        .communities
+        .reorder_roles(community_id, &positions)
+        .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "role.reorder",
+            Some(community_id),
+            None,
+        )
+        .await;
+    let roles = state.communities.list_roles(community_id).await?;
+    Ok(Json(roles.into_iter().map(RoleDto::from).collect()))
 }
 
 #[utoipa::path(
@@ -592,6 +895,14 @@ pub async fn update_role(
             payload.mentionable,
         )
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "role.update",
+            Some(community_id),
+            Some(("role", role.id)),
+        )
+        .await;
     Ok(Json(role.into()))
 }
 
@@ -630,6 +941,14 @@ pub async fn delete_role(
         ));
     }
     state.communities.delete_role(role_id).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "role.delete",
+            Some(community_id),
+            Some(("role", role_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -679,6 +998,14 @@ pub async fn assign_role(
         .communities
         .assign_role(community_id, user_id, role_id, current.user().id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "role.assign",
+            Some(community_id),
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -720,6 +1047,14 @@ pub async fn remove_role(
         .communities
         .remove_role(community_id, user_id, role_id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "role.remove",
+            Some(community_id),
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -784,6 +1119,14 @@ pub async fn create_channel(
             payload.topic,
         )
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "channel.create",
+            Some(community_id),
+            Some(("channel", channel.id)),
+        )
+        .await;
     Ok(Json(channel.into()))
 }
 
@@ -848,6 +1191,7 @@ pub async fn create_invite(
             "expires_in_hours must be between 1 and 720.",
         ));
     }
+    limit_action(&state, "invite-create", current.user().id, 60, 3600).await?;
     let invite = state
         .communities
         .create_invite(CreateInvite {
@@ -858,6 +1202,14 @@ pub async fn create_invite(
             expires_in_hours: payload.expires_in_hours,
         })
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "invite.create",
+            Some(community_id),
+            Some(("invite", invite.id)),
+        )
+        .await;
     Ok(Json(invite.into()))
 }
 
@@ -892,10 +1244,21 @@ pub async fn join_invite(
     current: CurrentUser,
     Path(code): Path<String>,
 ) -> Result<Json<JoinResponse>, ApiError> {
+    limit_action(&state, "join", current.user().id, 30, 3600).await?;
     let result = state
         .communities
         .join_invite(&code, current.user().id)
         .await?;
+    if !result.already_member {
+        state
+            .record_audit(
+                Some(current.user().id),
+                "member.join",
+                Some(result.community_id),
+                Some(("user", current.user().id)),
+            )
+            .await;
+    }
     Ok(Json(JoinResponse {
         community_id: result.community_id,
         already_member: result.already_member,
@@ -929,5 +1292,13 @@ pub async fn revoke_invite(
         ));
     }
     state.communities.revoke_invite(&code).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "invite.revoke",
+            Some(invite.community_id),
+            Some(("invite", invite.id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

@@ -255,6 +255,14 @@ pub async fn set_role_overwrite(
         .channels
         .set_overwrite(channel_id, Some(role_id), None, allow, deny)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "channel.overwrite.set",
+            Some(access.community.id),
+            Some(("channel", channel_id)),
+        )
+        .await;
     Ok(Json(overwrite.into()))
 }
 
@@ -287,6 +295,14 @@ pub async fn delete_role_overwrite(
         .channels
         .delete_overwrite(channel_id, Some(role_id), None)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "channel.overwrite.delete",
+            Some(access.community.id),
+            Some(("channel", channel_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -317,7 +333,9 @@ pub async fn set_user_overwrite(
         .community_id
         .ok_or_else(|| ApiError::not_found("Channel not found."))?;
     let target = state.communities.access(community_id, user_id).await?;
-    if !access.is_owner && access.highest_role_position <= target.highest_role_position {
+    if target.is_owner
+        || (!access.is_owner && access.highest_role_position <= target.highest_role_position)
+    {
         return Err(ApiError::forbidden(
             "hierarchy",
             "You cannot overwrite a member at or above your role position.",
@@ -334,6 +352,14 @@ pub async fn set_user_overwrite(
         .channels
         .set_overwrite(channel_id, None, Some(user_id), allow, deny)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "channel.overwrite.set",
+            Some(community_id),
+            Some(("channel", channel_id)),
+        )
+        .await;
     Ok(Json(overwrite.into()))
 }
 
@@ -359,5 +385,13 @@ pub async fn delete_user_overwrite(
         .channels
         .delete_overwrite(channel_id, None, Some(user_id))
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "channel.overwrite.delete",
+            Some(access.community.id),
+            Some(("channel", channel_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

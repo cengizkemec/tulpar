@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Json,
 };
 use users::{ProfileUpdate, SettingsUpdate};
@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::{
     dto::{
         DeleteAccountRequest, ProfileUpdateRequest, PublicUserDto, SelfUserDto,
-        SettingsUpdateRequest, UserSettingsDto,
+        SettingsUpdateRequest, UserSearchQuery, UserSettingsDto,
     },
     error::ApiError,
     extract::{clear_refresh_cookie, CurrentUser},
@@ -245,6 +245,39 @@ pub async fn update_settings(
         )
         .await?;
     Ok(Json(settings.into()))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/users",
+    tag = "users",
+    security(("bearer_auth" = [])),
+    params(
+        ("query" = Option<String>, Query, description = "Username or display name search"),
+        ("limit" = Option<i64>, Query, description = "Maximum results, 1-50")
+    ),
+    responses((status = 200, body = Vec<PublicUserDto>))
+)]
+pub async fn search_users(
+    State(state): State<AppState>,
+    _current: CurrentUser,
+    Query(params): Query<UserSearchQuery>,
+) -> Result<Json<Vec<PublicUserDto>>, ApiError> {
+    let query = params
+        .query
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| value.chars().count() >= 2);
+    let Some(query) = query else {
+        return Ok(Json(Vec::new()));
+    };
+    let users = state
+        .users
+        .search(query, params.limit.unwrap_or(20))
+        .await?;
+    Ok(Json(
+        users.iter().map(PublicUserDto::from).collect::<Vec<_>>(),
+    ))
 }
 
 #[utoipa::path(

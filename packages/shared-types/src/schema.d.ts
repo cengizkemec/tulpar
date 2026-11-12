@@ -395,7 +395,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["list_public"];
         put?: never;
         post: operations["create_community"];
         delete?: never;
@@ -418,6 +418,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_community"];
+        trace?: never;
+    };
+    "/api/v1/communities/{community_id}/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_audit_logs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/communities/{community_id}/bans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_bans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/communities/{community_id}/bans/{user_id}": {
@@ -564,6 +596,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/communities/{community_id}/roles/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["reorder_roles"];
+        trace?: never;
+    };
     "/api/v1/communities/{community_id}/roles/{role_id}": {
         parameters: {
             query?: never;
@@ -578,6 +626,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_role"];
+        trace?: never;
+    };
+    "/api/v1/communities/{community_id}/transfer-ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["transfer_ownership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/dms": {
@@ -687,6 +751,22 @@ export interface paths {
         put?: never;
         post: operations["join_invite"];
         delete: operations["revoke_invite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_users"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -830,6 +910,38 @@ export interface components {
             expires_in: number;
             token_type: string;
         };
+        AuditLogDto: {
+            action: string;
+            actor_type: string;
+            /** Format: uuid */
+            actor_user_id?: string | null;
+            actor_username?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            id: string;
+            metadata: unknown;
+            /** Format: uuid */
+            target_id?: string | null;
+            target_type?: string | null;
+        };
+        AuditLogQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+        };
+        BanDto: {
+            /** Format: date-time */
+            created_at: string;
+            display_name: string;
+            /** Format: date-time */
+            expires_at?: string | null;
+            /** Format: uuid */
+            moderator_id?: string | null;
+            reason?: string | null;
+            /** Format: uuid */
+            user_id: string;
+            username: string;
+        };
         BanMemberRequest: {
             /** Format: int64 */
             expires_in_seconds?: number | null;
@@ -917,6 +1029,13 @@ export interface components {
             permissions: string[];
             /** Format: date-time */
             timed_out_until?: string | null;
+        };
+        CommunitySearchQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+            /** Format: int64 */
+            offset?: number | null;
+            query?: string | null;
         };
         CreateChannelRequest: {
             kind: string;
@@ -1090,6 +1209,11 @@ export interface components {
             user_id: string;
             username: string;
         };
+        MemberSearchQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+            query?: string | null;
+        };
         OverwriteRequest: {
             allow?: string[];
             deny?: string[];
@@ -1146,6 +1270,9 @@ export interface components {
             login_required: boolean;
             verification_required: boolean;
         };
+        ReorderRolesRequest: {
+            roles: components["schemas"]["RolePositionRequest"][];
+        };
         ResetPasswordRequest: {
             new_password: string;
             token: string;
@@ -1162,6 +1289,12 @@ export interface components {
             permissions: string[];
             /** Format: int32 */
             position: number;
+        };
+        RolePositionRequest: {
+            /** Format: int32 */
+            position: number;
+            /** Format: uuid */
+            role_id: string;
         };
         SelfUserDto: {
             /** Format: uuid */
@@ -1208,6 +1341,10 @@ export interface components {
             show_typing_indicators?: boolean | null;
             theme?: string | null;
         };
+        TransferOwnershipRequest: {
+            /** Format: uuid */
+            new_owner_id: string;
+        };
         UpdateCommunityRequest: {
             description?: string | null;
             name?: string | null;
@@ -1233,6 +1370,11 @@ export interface components {
             sessions: components["schemas"]["SessionDto"][];
             settings: components["schemas"]["UserSettingsDto"];
             user: components["schemas"]["SelfUserDto"];
+        };
+        UserSearchQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+            query?: string | null;
         };
         UserSettingsDto: {
             accent_color: string;
@@ -1988,6 +2130,32 @@ export interface operations {
             };
         };
     };
+    list_public: {
+        parameters: {
+            query?: {
+                /** @description Name, slug, or description search */
+                query?: string;
+                /** @description Maximum results, 1-100 */
+                limit?: number;
+                /** @description Pagination offset */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommunityDto"][];
+                };
+            };
+        };
+    };
     create_community: {
         parameters: {
             query?: never;
@@ -2085,6 +2253,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommunityDto"];
+                };
+            };
+        };
+    };
+    list_audit_logs: {
+        parameters: {
+            query?: {
+                /** @description Maximum records, 1-200 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogDto"][];
+                };
+            };
+        };
+    };
+    list_bans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BanDto"][];
                 };
             };
         };
@@ -2259,7 +2474,12 @@ export interface operations {
     };
     list_members: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Username, display name, or nickname search */
+                query?: string;
+                /** @description Maximum results, 1-100 */
+                limit?: number;
+            };
             header?: never;
             path: {
                 /** @description Community identifier */
@@ -2449,6 +2669,32 @@ export interface operations {
             };
         };
     };
+    reorder_roles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderRolesRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleDto"][];
+                };
+            };
+        };
+    };
     delete_role: {
         parameters: {
             query?: never;
@@ -2497,6 +2743,31 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RoleDto"];
                 };
+            };
+        };
+    };
+    transfer_ownership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferOwnershipRequest"];
+            };
+        };
+        responses: {
+            /** @description Ownership transferred */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2741,6 +3012,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    search_users: {
+        parameters: {
+            query?: {
+                /** @description Username or display name search */
+                query?: string;
+                /** @description Maximum results, 1-50 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicUserDto"][];
+                };
             };
         };
     };

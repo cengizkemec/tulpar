@@ -1,3 +1,5 @@
+use std::time::Duration as StdDuration;
+
 use axum::{
     extract::{Path, State},
     Json,
@@ -10,9 +12,24 @@ use crate::{
         SendFriendRequest,
     },
     error::ApiError,
-    extract::CurrentUser,
+    extract::{enforce_rate_limit, CurrentUser},
     state::AppState,
 };
+
+async fn limit_social(
+    state: &AppState,
+    action: &str,
+    user_id: Uuid,
+    limit: u64,
+) -> Result<(), ApiError> {
+    enforce_rate_limit(
+        state,
+        &format!("social:{action}:{user_id}"),
+        limit,
+        StdDuration::from_secs(3600),
+    )
+    .await
+}
 
 #[utoipa::path(
     get,
@@ -63,10 +80,19 @@ pub async fn send_request(
     if target.deleted_at.is_some() || target.disabled_at.is_some() {
         return Err(ApiError::not_found("User not found."));
     }
+    limit_social(&state, "friend-request", current.user().id, 60).await?;
     state
         .social
         .send_request(current.user().id, payload.user_id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "friend.request",
+            None,
+            Some(("user", payload.user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -87,6 +113,14 @@ pub async fn accept_request(
         .social
         .accept_request(current.user().id, request_id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "friend.accept",
+            None,
+            Some(("friendship", request_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -107,6 +141,14 @@ pub async fn decline_request(
         .social
         .decline_request(current.user().id, request_id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "friend.decline",
+            None,
+            Some(("friendship", request_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -127,6 +169,14 @@ pub async fn remove_friend(
         .social
         .remove_friend(current.user().id, user_id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "friend.remove",
+            None,
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -160,6 +210,14 @@ pub async fn block_user(
 ) -> Result<axum::http::StatusCode, ApiError> {
     state.users.get_user(user_id).await?;
     state.social.block(current.user().id, user_id).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "user.block",
+            None,
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -177,6 +235,14 @@ pub async fn unblock_user(
     Path(user_id): Path<Uuid>,
 ) -> Result<axum::http::StatusCode, ApiError> {
     state.social.unblock(current.user().id, user_id).await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "user.unblock",
+            None,
+            Some(("user", user_id)),
+        )
+        .await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -217,6 +283,7 @@ pub async fn create_dm(
     Json(payload): Json<CreateDmRequest>,
 ) -> Result<Json<DirectConversationDto>, ApiError> {
     state.users.get_user(payload.recipient_id).await?;
+    limit_social(&state, "dm-create", current.user().id, 120).await?;
     state
         .social
         .can_dm(current.user().id, payload.recipient_id)
@@ -225,6 +292,14 @@ pub async fn create_dm(
         .channels
         .create_direct(current.user().id, payload.recipient_id, current.user().id)
         .await?;
+    state
+        .record_audit(
+            Some(current.user().id),
+            "dm.create",
+            None,
+            Some(("channel", channel.id)),
+        )
+        .await;
     Ok(Json(DirectConversationDto {
         channel_id: channel.id,
         other_user_id: payload.recipient_id,

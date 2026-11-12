@@ -6,6 +6,7 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+audit = { package = "tulpar-audit", path = "../audit" }
 auth = { package = "tulpar-auth", path = "../auth" }
 axum.workspace = true
 channels = { package = "tulpar-channels", path = "../channels" }

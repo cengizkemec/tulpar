@@ -64,6 +64,7 @@ pub fn router(state: AppState) -> Router {
         .route("/device/token", post(routes::auth::device_token));
 
     let users = Router::new()
+        .route("/", get(routes::users::search_users))
         .route(
             "/me",
             get(routes::users::get_me)
@@ -79,7 +80,10 @@ pub fn router(state: AppState) -> Router {
         .route("/{user_id}", get(routes::users::get_user));
 
     let communities = Router::new()
-        .route("/", post(routes::communities::create_community))
+        .route(
+            "/",
+            get(routes::communities::list_public).post(routes::communities::create_community),
+        )
         .route(
             "/{community_id}",
             get(routes::communities::get_community)
@@ -89,6 +93,10 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/{community_id}/join",
             post(routes::communities::join_public),
+        )
+        .route(
+            "/{community_id}/transfer-ownership",
+            post(routes::communities::transfer_ownership),
         )
         .route(
             "/{community_id}/permissions/me",
@@ -103,13 +111,22 @@ pub fn router(state: AppState) -> Router {
             axum::routing::patch(routes::communities::update_member)
                 .delete(routes::communities::kick_member),
         )
+        .route("/{community_id}/bans", get(routes::communities::list_bans))
         .route(
             "/{community_id}/bans/{user_id}",
             put(routes::communities::ban_member).delete(routes::communities::unban_member),
         )
         .route(
+            "/{community_id}/audit-logs",
+            get(routes::communities::list_audit_logs),
+        )
+        .route(
             "/{community_id}/roles",
             get(routes::communities::list_roles).post(routes::communities::create_role),
+        )
+        .route(
+            "/{community_id}/roles/reorder",
+            axum::routing::patch(routes::communities::reorder_roles),
         )
         .route(
             "/{community_id}/roles/{role_id}",

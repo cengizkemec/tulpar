@@ -4,8 +4,10 @@
 
 use std::net::IpAddr;
 
+use chrono::{DateTime, Utc};
+use serde::Serialize;
 use serde_json::Value;
-use sqlx::PgPool;
+use sqlx::{FromRow, PgPool};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -63,10 +65,29 @@ impl AuditEvent {
         self
     }
 
+    pub fn community(mut self, community_id: Uuid) -> Self {
+        self.community_id = Some(community_id);
+        self
+    }
+
     pub fn metadata(mut self, metadata: Value) -> Self {
         self.metadata = metadata;
         self
     }
+}
+
+#[derive(Debug, Clone, Serialize, FromRow)]
+pub struct AuditLog {
+    pub id: Uuid,
+    pub actor_user_id: Option<Uuid>,
+    pub actor_username: Option<String>,
+    pub actor_type: String,
+    pub action: String,
+    pub community_id: Option<Uuid>,
+    pub target_type: Option<String>,
+    pub target_id: Option<Uuid>,
+    pub metadata: Value,
+    pub created_at: DateTime<Utc>,
 }
 
 /// Audit repository.
@@ -103,5 +124,28 @@ impl AuditService {
         .execute(&self.pool)
         .await?;
         Ok(())
+    }
+
+    pub async fn list_community(
+        &self,
+        community_id: Uuid,
+        limit: i64,
+    ) -> Result<Vec<AuditLog>, AuditError> {
+        let logs = sqlx::query_as::<_, AuditLog>(
+            r#"
+            SELECT a.id, a.actor_user_id, u.username::text AS actor_username, a.actor_type,
+                   a.action, a.community_id, a.target_type, a.target_id, a.metadata, a.created_at
+            FROM audit_logs a
+            LEFT JOIN users u ON u.id = a.actor_user_id
+            WHERE a.community_id = $1
+            ORDER BY a.created_at DESC
+            LIMIT $2
+            "#,
+        )
+        .bind(community_id)
+        .bind(limit.clamp(1, 200))
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(logs)
     }
 }

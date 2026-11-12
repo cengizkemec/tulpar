@@ -251,6 +251,23 @@ impl UserService {
         Ok(self.get_record(id).await?.public())
     }
 
+    /// Search active users by username or display name.
+    pub async fn search(&self, query: &str, limit: i64) -> Result<Vec<User>, UserError> {
+        let pattern = format!("%{}%", query.trim().replace(['%', '_'], ""));
+        let rows = sqlx::query_as::<_, UserRecord>(&format!(
+            "SELECT {USER_COLUMNS} FROM users
+             WHERE deleted_at IS NULL AND disabled_at IS NULL
+               AND (username::text ILIKE $1 OR display_name ILIKE $1)
+             ORDER BY display_name, id
+             LIMIT $2"
+        ))
+        .bind(pattern)
+        .bind(limit.clamp(1, 50))
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows.into_iter().map(User::from).collect())
+    }
+
     pub async fn set_email_verified(&self, id: Uuid) -> Result<(), UserError> {
         let result = sqlx::query(
             "UPDATE users SET email_verified_at = now(), updated_at = now() WHERE id = $1 AND deleted_at IS NULL",

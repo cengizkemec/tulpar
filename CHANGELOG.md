@@ -32,23 +32,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Centralized permission bitfield and evaluator with role hierarchy, overwrite ordering, administrator bypass, owner bypass, and timeout handling.
 - Friendships, friend requests, blocking, and DM conversation metadata with privacy checks.
 - Community/member/role/invite/channel/friend/block/DM REST endpoints and OpenAPI schemas.
-- Phase 2 integration test covering community creation, invite join, role assignment, permissions, friendship, DM, and blocking.
+- Public community discovery, user/member search, ban listing, role reordering, and ownership transfer.
+- Audit records for community, moderation, role, invite, channel-overwrite, friend, block, and DM metadata actions, with a `VIEW_AUDIT_LOG`-protected audit endpoint.
+- Per-user rate limits for community creation, joins, invite creation, friend requests, and DM creation.
+- Phase 2 integration tests covering the main social flow, an authorization/escalation matrix, and Phase 2 database constraints.
 - Verified Docker development stack with pinned PostgreSQL, Redis, LiveKit, and Coturn images.
 
-### Planned — Phase 2 completion
+### Planned — Phase 3
 
-- Channel permission overwrite endpoints and channel-scoped evaluation.
-- Community discovery/search and full moderation listing endpoints.
-- Membership and role hierarchy edge cases beyond the integration test.
-- DM message storage and delivery (Phase 3).
+- Text messages, attachments, edits, deletes, reactions, pins, and threads.
+- WebSocket gateway, presence, typing, and recovery.
+- DM message storage and read states.
 - Generated SDK/API client wrappers.
 
 ### Planned — Phase 1/2 hardening
 
-- First successful GitHub Actions run.
 - `cargo deny` policy and dependency-review workflow.
-- Remove the documented audit exception or replace the RSA-bearing JWT dependency.
+- Remove the documented audit exceptions or replace the optional RSA/SQLite-bearing dependencies.
 - Move the repository outside OneDrive for direct Docker builds.
+- Transactional community creation with default channels.
 - Full production Compose stack and runbooks (Phase 9).
 
 ### Notes
