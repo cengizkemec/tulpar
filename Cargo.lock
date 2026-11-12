@@ -2612,6 +2612,7 @@ dependencies = [
  "tulpar-communities",
  "tulpar-config",
  "tulpar-core",
+ "tulpar-messaging",
  "tulpar-permissions",
  "tulpar-realtime",
  "tulpar-social",
@@ -2745,6 +2746,14 @@ version = "0.1.0"
 [[package]]
 name = "tulpar-messaging"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "sqlx",
+ "thiserror",
+ "tulpar-core",
+ "uuid",
+]
 
 [[package]]
 name = "tulpar-notifications"

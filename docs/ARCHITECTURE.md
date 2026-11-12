@@ -1,6 +1,6 @@
 # Tulpar Architecture
 
-**Status:** Phase 0 approved; Phase 1 identity/auth is implemented and Phase 2 adds communities, permissions, channels, and social foundations. This document describes the target architecture; later sections remain planned and must not be treated as implemented.
+**Status:** Phase 0 approved; Phase 1 identity/auth and Phase 2 communities/permissions/social are implemented. Phase 3 adds persistent messaging APIs; the WebSocket gateway, presence, attachments, voice, and clients remain planned. This document describes the target architecture; later sections must not be treated as implemented.
 
 **Audience:** maintainers, contributors, operators, security reviewers, and client developers.
 

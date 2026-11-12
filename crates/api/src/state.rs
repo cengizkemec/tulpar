@@ -5,6 +5,7 @@ use auth::{AuthError, AuthService, EmailSender};
 use channels::ChannelService;
 use communities::CommunityService;
 use config::AppConfig;
+use messaging::MessageService;
 use realtime::{RateLimiter, RedisStore};
 use social::SocialService;
 use sqlx::PgPool;
@@ -24,6 +25,7 @@ pub struct AppState {
     pub communities: CommunityService,
     pub channels: ChannelService,
     pub social: SocialService,
+    pub messages: MessageService,
 }
 
 impl AppState {
@@ -42,6 +44,7 @@ impl AppState {
             communities: CommunityService::new(db.clone()),
             channels: ChannelService::new(db.clone()),
             social: SocialService::new(db.clone()),
+            messages: MessageService::new(db.clone()),
             auth,
             db,
             redis,

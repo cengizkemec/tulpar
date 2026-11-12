@@ -1,6 +1,6 @@
 # Tulpar Roles, Permissions, and Authorization
 
-**Status:** Phase 2. Permission bits, role hierarchy, overwrite ordering, administrator/owner bypass, timeout handling, the pure evaluator, channel overwrite REST endpoints, and channel listing/lookup enforcement are implemented. Message and voice paths must reuse the evaluator when those features land.
+**Status:** Phase 3 in progress. Permission bits, role hierarchy, overwrite ordering, administrator/owner bypass, timeout handling, the pure evaluator, channel overwrite endpoints, channel listing/lookup, and message send/read/react/pin enforcement are implemented. Voice and gateway paths must reuse the evaluator when they land.
 
 **Rule zero:** every authorization decision is made by the backend. The frontend may hide controls for usability, but hiding a button is never a security control.
 

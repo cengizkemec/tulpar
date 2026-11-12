@@ -12,6 +12,7 @@ axum.workspace = true
 channels = { package = "tulpar-channels", path = "../channels" }
 chrono.workspace = true
 communities = { package = "tulpar-communities", path = "../communities" }
+messaging = { package = "tulpar-messaging", path = "../messaging" }
 common = { package = "tulpar-common", path = "../common" }
 config = { package = "tulpar-config", path = "../config" }
 tulpar_core = { package = "tulpar-core", path = "../core" }

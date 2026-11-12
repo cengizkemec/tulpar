@@ -38,11 +38,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Phase 2 integration tests covering the main social flow, an authorization/escalation matrix, and Phase 2 database constraints.
 - Verified Docker development stack with pinned PostgreSQL, Redis, LiveKit, and Coturn images.
 
-### Planned — Phase 3
+### Added — Phase 3 messaging foundation
 
-- Text messages, attachments, edits, deletes, reactions, pins, and threads.
-- WebSocket gateway, presence, typing, and recovery.
-- DM message storage and read states.
+- `0003_messaging.sql` with messages, reactions, mentions, pins, read states, and search indexes.
+- Persistent message send/list/search/edit/delete with keyset pagination and client-nonce idempotency.
+- Same-channel replies, reactions, pins, read-state cursors, unread counts, and slowmode.
+- Community-channel permission enforcement and participant-only DM messages.
+- Moderator message-delete and pin audit records.
+- Messaging integration test covering idempotency, edits, reactions, pins, read states, search, slowmode, timeouts, tombstones, and DMs.
+
+### Planned — Phase 3 completion
+
+- WebSocket gateway, presence, typing, and reconnect/resync.
+- Attachments, file validation, quotas, and storage abstraction.
+- Mentions, notifications, and preferences.
+- Outbox dispatcher, event contracts, and gateway load tests.
 - Generated SDK/API client wrappers.
 
 ### Planned — Phase 1/2 hardening

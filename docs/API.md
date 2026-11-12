@@ -1,6 +1,6 @@
 # Tulpar REST API
 
-**Status:** Phase 2 complete. Auth, sessions, device authorization, user profile/settings and search, account deletion/export, communities, discovery, members, roles, invites, bans, channels, channel permission overwrites, audit logs, ownership transfer, friends, blocks, and DM conversation metadata are implemented. Message delivery, voice, and the developer platform are not implemented yet.
+**Status:** Phase 3 in progress. Phase 2 is complete. Phase 3 adds persistent messages, edits, deletion, replies, reactions, pins, read states, unread counts, channel search, slowmode, and DM messages. WebSocket delivery, presence, attachments, notifications, voice, and the developer platform are not implemented yet.
 
 **Base path:** `/api/v1`
 

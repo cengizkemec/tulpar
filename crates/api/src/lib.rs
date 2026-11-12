@@ -172,6 +172,39 @@ pub fn router(state: AppState) -> Router {
             "/{channel_id}/permissions/users/{user_id}",
             put(routes::channels::set_user_overwrite)
                 .delete(routes::channels::delete_user_overwrite),
+        )
+        .route(
+            "/{channel_id}/messages",
+            get(routes::messages::list_messages).post(routes::messages::send_message),
+        )
+        .route(
+            "/{channel_id}/messages/search",
+            get(routes::messages::search_messages),
+        )
+        .route(
+            "/{channel_id}/read-state",
+            get(routes::messages::get_read_state).put(routes::messages::set_read_state),
+        )
+        .route("/{channel_id}/pins", get(routes::messages::list_pins))
+        .route(
+            "/{channel_id}/pins/{message_id}",
+            put(routes::messages::pin_message).delete(routes::messages::unpin_message),
+        );
+
+    let messages = Router::new()
+        .route(
+            "/{message_id}",
+            get(routes::messages::get_message)
+                .patch(routes::messages::edit_message)
+                .delete(routes::messages::delete_message),
+        )
+        .route(
+            "/{message_id}/reactions",
+            get(routes::messages::list_reactions),
+        )
+        .route(
+            "/{message_id}/reactions/{emoji}",
+            put(routes::messages::add_reaction).delete(routes::messages::remove_reaction),
         );
 
     let friends = Router::new()
@@ -215,6 +248,7 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/communities", communities)
         .nest("/api/v1/invites", invites)
         .nest("/api/v1/channels", channels)
+        .nest("/api/v1/messages", messages)
         .nest("/api/v1/friends", friends)
         .nest("/api/v1/blocks", blocks)
         .nest("/api/v1/dms", dms)

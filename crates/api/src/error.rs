@@ -7,6 +7,7 @@ use axum::{
 };
 use channels::ChannelError;
 use communities::CommunityError;
+use messaging::MessageError;
 use serde::Serialize;
 use social::SocialError;
 use users::UserError;
@@ -267,6 +268,22 @@ impl From<ChannelError> for ApiError {
             ChannelError::Invalid(message) => Self::validation(message),
             ChannelError::Database(error) => {
                 tracing::error!(%error, "channel database error");
+                Self::dependency_unavailable("The database is temporarily unavailable.")
+            }
+        }
+    }
+}
+
+impl From<MessageError> for ApiError {
+    fn from(error: MessageError) -> Self {
+        match error {
+            MessageError::NotFound => Self::not_found("Message not found."),
+            MessageError::Invalid(message) => Self::validation(message),
+            MessageError::ReplyTargetInvalid => {
+                Self::validation("The reply target must belong to the same channel.")
+            }
+            MessageError::Database(error) => {
+                tracing::error!(%error, "message database error");
                 Self::dependency_unavailable("The database is temporarily unavailable.")
             }
         }

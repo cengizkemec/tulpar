@@ -39,7 +39,7 @@ fn permission_overwrites(overwrites: &[ChannelOverwrite]) -> Vec<PermissionOverw
         .collect()
 }
 
-async fn effective_for_access(
+pub(crate) async fn effective_permissions(
     state: &AppState,
     access: &CommunityAccess,
     channel: &Channel,
@@ -83,7 +83,7 @@ pub async fn visible_channels(
     let channels = state.channels.list_for_community(community_id).await?;
     let mut visible = Vec::with_capacity(channels.len());
     for channel in channels {
-        let permissions = effective_for_access(state, &access, &channel).await?;
+        let permissions = effective_permissions(state, &access, &channel).await?;
         if permissions.contains(Permissions::VIEW_CHANNEL) {
             visible.push(channel);
         }
@@ -91,7 +91,7 @@ pub async fn visible_channels(
     Ok(visible)
 }
 
-async fn channel_and_access(
+pub(crate) async fn channel_access(
     state: &AppState,
     user_id: Uuid,
     channel_id: Uuid,
@@ -101,7 +101,7 @@ async fn channel_and_access(
         .community_id
         .ok_or_else(|| ApiError::not_found("Channel not found."))?;
     let access = state.communities.access(community_id, user_id).await?;
-    let permissions = effective_for_access(state, &access, &channel).await?;
+    let permissions = effective_permissions(state, &access, &channel).await?;
     Ok((channel, access, permissions))
 }
 
@@ -151,7 +151,7 @@ pub async fn get_channel(
         }
         return Ok(Json(channel.into()));
     }
-    let (_, _, permissions) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, _, permissions) = channel_access(&state, current.user().id, channel_id).await?;
     if !permissions.contains(Permissions::VIEW_CHANNEL) {
         return Err(ApiError::not_found("Channel not found."));
     }
@@ -171,7 +171,7 @@ pub async fn my_permissions(
     current: CurrentUser,
     Path(channel_id): Path<Uuid>,
 ) -> Result<Json<ChannelPermissionsDto>, ApiError> {
-    let (_, _, permissions) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, _, permissions) = channel_access(&state, current.user().id, channel_id).await?;
     if !permissions.contains(Permissions::VIEW_CHANNEL) {
         return Err(ApiError::not_found("Channel not found."));
     }
@@ -197,7 +197,7 @@ pub async fn list_overwrites(
     current: CurrentUser,
     Path(channel_id): Path<Uuid>,
 ) -> Result<Json<Vec<ChannelOverwriteDto>>, ApiError> {
-    let (_, access, _) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, access, _) = channel_access(&state, current.user().id, channel_id).await?;
     require_manage_roles(&access)?;
     let overwrites = state.channels.list_overwrites(channel_id).await?;
     Ok(Json(
@@ -226,7 +226,7 @@ pub async fn set_role_overwrite(
     Path((channel_id, role_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<OverwriteRequest>,
 ) -> Result<Json<ChannelOverwriteDto>, ApiError> {
-    let (_, access, _) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, access, _) = channel_access(&state, current.user().id, channel_id).await?;
     require_manage_roles(&access)?;
     let role = state.communities.get_role(role_id).await?;
     let community_id = state
@@ -282,7 +282,7 @@ pub async fn delete_role_overwrite(
     current: CurrentUser,
     Path((channel_id, role_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::http::StatusCode, ApiError> {
-    let (_, access, _) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, access, _) = channel_access(&state, current.user().id, channel_id).await?;
     require_manage_roles(&access)?;
     let role = state.communities.get_role(role_id).await?;
     if !access.is_owner && role.position >= access.highest_role_position {
@@ -324,7 +324,7 @@ pub async fn set_user_overwrite(
     Path((channel_id, user_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<OverwriteRequest>,
 ) -> Result<Json<ChannelOverwriteDto>, ApiError> {
-    let (_, access, _) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, access, _) = channel_access(&state, current.user().id, channel_id).await?;
     require_manage_roles(&access)?;
     let community_id = state
         .channels
@@ -379,7 +379,7 @@ pub async fn delete_user_overwrite(
     current: CurrentUser,
     Path((channel_id, user_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::http::StatusCode, ApiError> {
-    let (_, access, _) = channel_and_access(&state, current.user().id, channel_id).await?;
+    let (_, access, _) = channel_access(&state, current.user().id, channel_id).await?;
     require_manage_roles(&access)?;
     state
         .channels

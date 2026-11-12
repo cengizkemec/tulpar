@@ -1,8 +1,8 @@
 # Tulpar Roadmap
 
-**Current phase:** Phase 2 complete; Phase 3 is next.
+**Current phase:** Phase 3 — Real-time messaging (in progress).
 
-**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 backend scope is complete: communities, members, roles, invites, bans, channels, permission overwrites, discovery, audit logs, friends, blocks, and DM metadata are implemented, tested, and CI-green. The admin UI and messaging are deferred to later phases.
+**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 is complete. Phase 3 has message persistence and APIs, reactions, pins, read states, search, slowmode, and DM messages implemented and tested; the WebSocket gateway, presence, attachments, notifications, sync, and outbox remain open.
 
 **Rule:** do not begin a phase until the previous phase meets its exit criteria. A phase can be partially delivered, but it is not “complete” because the happy path works.
 
@@ -125,19 +125,23 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 3 — Real-time messaging
 
+**Status:** In progress. Message persistence, CRUD, reactions, pins, read states, search, slowmode, and DM messages are implemented and tested. The gateway, presence, attachments, notifications, sync, and outbox remain open.
+
 ### Tasks
 
-- WebSocket gateway, tickets, heartbeat, sequencing, filtering, backpressure.
-- Text/announcement/forum channel foundations.
-- Message persistence, edit, delete, replies, mentions, reactions, pins.
-- Read states, unread counts, typing, presence.
-- Notifications and preferences.
-- File attachments and the storage abstraction.
-- Message search.
-- Reconnect/resync and message catch-up.
-- Outbox dispatcher and event contracts.
-- Gateway load/backpressure tests.
-- Web UI for messaging if Phase 6 has begun; otherwise API-level verification.
+- [ ] WebSocket gateway, tickets, heartbeat, sequencing, filtering, backpressure.
+- [x] Text/announcement/forum channel foundations (community channel metadata from Phase 2).
+- [x] Message persistence, edit, delete, replies, reactions, pins.
+- [ ] Mentions and mention authorization.
+- [x] Read states and unread counts.
+- [ ] Typing and presence.
+- [ ] Notifications and preferences.
+- [ ] File attachments and the storage abstraction.
+- [x] Message search (channel-scoped full-text).
+- [ ] Reconnect/resync and message catch-up.
+- [ ] Outbox dispatcher and event contracts.
+- [ ] Gateway load/backpressure tests.
+- [ ] Web UI for messaging if Phase 6 has begun; otherwise API-level verification.
 
 ### Exit criteria
 

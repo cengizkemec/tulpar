@@ -324,6 +324,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/channels/{channel_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_messages"];
+        put?: never;
+        post: operations["send_message"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/messages/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search_messages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/channels/{channel_id}/permissions": {
         parameters: {
             query?: never;
@@ -383,6 +415,54 @@ export interface paths {
         put: operations["set_user_overwrite"];
         post?: never;
         delete: operations["delete_user_overwrite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/pins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_pins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/pins/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["pin_message"];
+        post?: never;
+        delete: operations["unpin_message"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/read-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_read_state"];
+        put: operations["set_read_state"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -756,6 +836,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/messages/{message_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_message"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_message"];
+        options?: never;
+        head?: never;
+        patch: operations["edit_message"];
+        trace?: never;
+    };
+    "/api/v1/messages/{message_id}/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_reactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/messages/{message_id}/reactions/{emoji}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["add_reaction"];
+        post?: never;
+        delete: operations["remove_reaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -1114,6 +1242,9 @@ export interface components {
             /** Format: uuid */
             other_user_id: string;
         };
+        EditMessageRequest: {
+            content: string;
+        };
         EmailRequest: {
             email: string;
         };
@@ -1214,6 +1345,36 @@ export interface components {
             limit?: number | null;
             query?: string | null;
         };
+        MessageDto: {
+            /** Format: uuid */
+            author_id?: string | null;
+            /** Format: uuid */
+            channel_id: string;
+            content?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            deleted_at?: string | null;
+            /** Format: date-time */
+            edited_at?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            reply_to_id?: string | null;
+        };
+        MessageListQuery: {
+            /** Format: uuid */
+            after?: string | null;
+            /** Format: uuid */
+            before?: string | null;
+            /** Format: int64 */
+            limit?: number | null;
+        };
+        MessageSearchQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+            query?: string | null;
+        };
         OverwriteRequest: {
             allow?: string[];
             deny?: string[];
@@ -1243,6 +1404,27 @@ export interface components {
             id: string;
             is_bot: boolean;
             username: string;
+        };
+        ReactionDto: {
+            /** Format: date-time */
+            created_at: string;
+            emoji: string;
+            /** Format: uuid */
+            user_id: string;
+        };
+        ReadStateDto: {
+            /** Format: uuid */
+            channel_id: string;
+            /** Format: date-time */
+            last_read_at?: string | null;
+            /** Format: uuid */
+            last_read_message_id?: string | null;
+            /** Format: int64 */
+            unread_count: number;
+        };
+        ReadStateRequest: {
+            /** Format: uuid */
+            message_id: string;
         };
         ReauthRequest: {
             password: string;
@@ -1315,6 +1497,13 @@ export interface components {
         SendFriendRequest: {
             /** Format: uuid */
             user_id: string;
+        };
+        SendMessageRequest: {
+            /** Format: uuid */
+            client_nonce?: string | null;
+            content: string;
+            /** Format: uuid */
+            reply_to_id?: string | null;
         };
         SessionDto: {
             /** Format: date-time */
@@ -1984,6 +2173,88 @@ export interface operations {
             };
         };
     };
+    list_messages: {
+        parameters: {
+            query?: {
+                /** @description Return messages older than this ID */
+                before?: string;
+                /** @description Return messages newer than this ID */
+                after?: string;
+                /** @description Maximum messages, 1-100 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"][];
+                };
+            };
+        };
+    };
+    send_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMessageRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"];
+                };
+            };
+        };
+    };
+    search_messages: {
+        parameters: {
+            query?: {
+                /** @description Full-text search query */
+                query?: string;
+                /** @description Maximum results, 1-100 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"][];
+                };
+            };
+        };
+    };
     list_overwrites: {
         parameters: {
             query?: never;
@@ -2127,6 +2398,122 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_pins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"][];
+                };
+            };
+        };
+    };
+    pin_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+                /** @description Message identifier */
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Message pinned */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    unpin_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+                /** @description Message identifier */
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Message unpinned */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_read_state: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadStateDto"];
+                };
+            };
+        };
+    };
+    set_read_state: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadStateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadStateDto"];
+                };
             };
         };
     };
@@ -3007,6 +3394,143 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Invite revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"];
+                };
+            };
+        };
+    };
+    delete_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Message deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    edit_message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditMessageRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageDto"];
+                };
+            };
+        };
+    };
+    list_reactions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionDto"][];
+                };
+            };
+        };
+    };
+    add_reaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+                /** @description Reaction emoji */
+                emoji: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reaction added */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    remove_reaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+                /** @description Reaction emoji */
+                emoji: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reaction removed */
             204: {
                 headers: {
                     [name: string]: unknown;

@@ -7,6 +7,7 @@ use uuid::Uuid;
 use audit::AuditLog;
 use channels::{Channel, DirectConversation};
 use communities::{BanView, Community, CommunityAccess, Invite, MemberView, Role};
+use messaging::{Message, Reaction, ReadState};
 use social::{BlockedUser, FriendUser, FriendshipView};
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -833,4 +834,104 @@ pub struct UserSearchQuery {
     pub query: Option<String>,
     #[serde(default)]
     pub limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MessageDto {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub author_id: Option<Uuid>,
+    pub content: Option<String>,
+    pub reply_to_id: Option<Uuid>,
+    pub edited_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<Message> for MessageDto {
+    fn from(value: Message) -> Self {
+        Self {
+            id: value.id,
+            channel_id: value.channel_id,
+            author_id: value.author_id,
+            content: value.content,
+            reply_to_id: value.reply_to_id,
+            edited_at: value.edited_at,
+            deleted_at: value.deleted_at,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ReactionDto {
+    pub user_id: Uuid,
+    pub emoji: String,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<Reaction> for ReactionDto {
+    fn from(value: Reaction) -> Self {
+        Self {
+            user_id: value.user_id,
+            emoji: value.emoji,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ReadStateDto {
+    pub channel_id: Uuid,
+    pub last_read_message_id: Option<Uuid>,
+    pub last_read_at: Option<DateTime<Utc>>,
+    pub unread_count: i64,
+}
+
+impl From<ReadState> for ReadStateDto {
+    fn from(value: ReadState) -> Self {
+        Self {
+            channel_id: value.channel_id,
+            last_read_message_id: value.last_read_message_id,
+            last_read_at: value.last_read_at,
+            unread_count: value.unread_count,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SendMessageRequest {
+    pub content: String,
+    #[serde(default)]
+    pub reply_to_id: Option<Uuid>,
+    #[serde(default)]
+    pub client_nonce: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct EditMessageRequest {
+    pub content: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MessageListQuery {
+    #[serde(default)]
+    pub before: Option<Uuid>,
+    #[serde(default)]
+    pub after: Option<Uuid>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MessageSearchQuery {
+    #[serde(default)]
+    pub query: Option<String>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ReadStateRequest {
+    pub message_id: Uuid,
 }
