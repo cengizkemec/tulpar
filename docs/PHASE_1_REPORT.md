@@ -198,7 +198,7 @@ The server currently applies migrations on startup as well as via the `migrate` 
 6. **Local Node is 26, target is Node 24 LTS.** CI uses Node 24; local development should match it.
 7. **Phase 2 schema is now present.** Messaging, voice, notification, integration, and embed tables remain planned.
 8. **No MFA, bots, API keys, or webhooks yet.** Those are later phases.
-9. **CI is green** on commit `2003fc3` (Rust checks/tests, dependency audit, secret scan, TypeScript contract).
+9. **CI is green** on commit `ab0b199` (Rust checks/tests, dependency audit, secret scan, TypeScript contract).
 
 ---
 

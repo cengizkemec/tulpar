@@ -393,7 +393,7 @@ Phase 0 is approved. Phase 1 is implemented and its remaining technical checks a
 - [x] SMTP delivery is implemented and tested against a local SMTP capture.
 - [x] Account deletion and data export follow the documented policy.
 - [x] CI workflow covers format, clippy, tests, secret scanning, dependency audit, and TypeScript contracts.
-- [x] The CI workflow has passed on GitHub (commit `2003fc3`).
+- [x] The CI workflow has passed on GitHub (commit `ab0b199`).
 - [x] Generated TypeScript types are produced from the OpenAPI document and typecheck.
 - [x] The development Compose stack is created and verified from a local build context.
 - [x] The OpenAPI Bearer security scheme is registered.
