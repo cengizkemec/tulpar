@@ -95,7 +95,7 @@ cargo clippy --workspace --all-targets -- -D warnings -> pass
 cargo test --workspace                             -> 27 tests passed
 pnpm generate:types                                -> pass
 pnpm typecheck                                     -> pass
-GitHub Actions (commit ab0b199)                    -> all jobs green
+GitHub Actions (commit c24433a)                    -> all jobs green
 ```
 
 Test breakdown:
@@ -139,6 +139,7 @@ The community/social integration test covers:
 - LiveKit 1.13.11 (pinned digest)
 - Coturn 4.6.3 (pinned digest)
 - Tulpar API health check and a real community creation through the Docker API
+- A rebuilt Phase 2 API container exposing 56 OpenAPI paths, public discovery, and a `community.create` audit record
 
 Docker Desktop cannot read the current OneDrive source path directly. The verified run used a local copy at `%LOCALAPPDATA%\Tulpar\tulpar-docker`. This is an environment limitation, not a Compose error; the repository should be moved off OneDrive for direct builds.
 
