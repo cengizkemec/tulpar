@@ -136,6 +136,27 @@ pub fn router(state: AppState) -> Router {
             .delete(routes::communities::revoke_invite),
     );
 
+    let channels = Router::new()
+        .route("/{channel_id}", get(routes::channels::get_channel))
+        .route(
+            "/{channel_id}/permissions/me",
+            get(routes::channels::my_permissions),
+        )
+        .route(
+            "/{channel_id}/permissions",
+            get(routes::channels::list_overwrites),
+        )
+        .route(
+            "/{channel_id}/permissions/roles/{role_id}",
+            put(routes::channels::set_role_overwrite)
+                .delete(routes::channels::delete_role_overwrite),
+        )
+        .route(
+            "/{channel_id}/permissions/users/{user_id}",
+            put(routes::channels::set_user_overwrite)
+                .delete(routes::channels::delete_user_overwrite),
+        );
+
     let friends = Router::new()
         .route("/", get(routes::social::list_friends))
         .route(
@@ -176,6 +197,7 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/users", users)
         .nest("/api/v1/communities", communities)
         .nest("/api/v1/invites", invites)
+        .nest("/api/v1/channels", channels)
         .nest("/api/v1/friends", friends)
         .nest("/api/v1/blocks", blocks)
         .nest("/api/v1/dms", dms)

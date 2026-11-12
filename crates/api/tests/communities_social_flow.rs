@@ -106,6 +106,10 @@ async fn community_invite_role_friend_and_dm_flow(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     let community = body_json(response).await;
     let community_id = community["community"]["id"].as_str().unwrap().to_string();
+    let general_channel_id = community["channels"].as_array().unwrap()[1]["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
     assert_eq!(community["channels"].as_array().unwrap().len(), 2);
     assert!(!community["roles"].as_array().unwrap().is_empty());
 
@@ -162,6 +166,83 @@ async fn community_invite_role_friend_and_dm_flow(pool: PgPool) {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(body_json(response).await.as_array().unwrap().len(), 2);
 
+    let member_id = {
+        let me = with_auth(
+            Request::builder().method("GET").uri("/api/v1/users/me"),
+            &member_token,
+        )
+        .body(Body::empty())
+        .unwrap();
+        let response = app.clone().oneshot(me).await.unwrap();
+        body_json(response).await["id"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+
+    let deny_view = with_auth(
+        Request::builder()
+            .method("PUT")
+            .uri(format!(
+                "/api/v1/channels/{general_channel_id}/permissions/users/{member_id}"
+            ))
+            .header(header::CONTENT_TYPE, "application/json"),
+        &owner_token,
+    )
+    .body(Body::from(
+        json!({ "allow": [], "deny": ["VIEW_CHANNEL"] }).to_string(),
+    ))
+    .unwrap();
+    let response = app.clone().oneshot(deny_view).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let member_channels = with_auth(
+        Request::builder()
+            .method("GET")
+            .uri(format!("/api/v1/communities/{community_id}/channels")),
+        &member_token,
+    )
+    .body(Body::empty())
+    .unwrap();
+    let response = app.clone().oneshot(member_channels).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert!(body_json(response)
+        .await
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|channel| channel["id"] != general_channel_id));
+
+    let hidden_channel = with_auth(
+        Request::builder()
+            .method("GET")
+            .uri(format!("/api/v1/channels/{general_channel_id}")),
+        &member_token,
+    )
+    .body(Body::empty())
+    .unwrap();
+    assert_eq!(
+        app.clone().oneshot(hidden_channel).await.unwrap().status(),
+        StatusCode::NOT_FOUND
+    );
+
+    let remove_overwrite = with_auth(
+        Request::builder().method("DELETE").uri(format!(
+            "/api/v1/channels/{general_channel_id}/permissions/users/{member_id}"
+        )),
+        &owner_token,
+    )
+    .body(Body::empty())
+    .unwrap();
+    assert_eq!(
+        app.clone()
+            .oneshot(remove_overwrite)
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::NO_CONTENT
+    );
+
     let create_role = with_auth(
         Request::builder()
             .method("POST")
@@ -183,20 +264,6 @@ async fn community_invite_role_friend_and_dm_flow(pool: PgPool) {
         .as_str()
         .unwrap()
         .to_string();
-
-    let member_id = {
-        let me = with_auth(
-            Request::builder().method("GET").uri("/api/v1/users/me"),
-            &member_token,
-        )
-        .body(Body::empty())
-        .unwrap();
-        let response = app.clone().oneshot(me).await.unwrap();
-        body_json(response).await["id"]
-            .as_str()
-            .unwrap()
-            .to_string()
-    };
 
     let assign = with_auth(
         Request::builder().method("PUT").uri(format!(

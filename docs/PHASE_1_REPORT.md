@@ -1,6 +1,6 @@
 # Phase 1 Report — Core Backend Foundation
 
-**Status:** Implemented and locally verified; Phase 1 is not fully closed.
+**Status:** Implemented, locally verified, and CI-green; only the license decision remains open before public distribution.
 
 **Date:** 2026-11-12
 
@@ -191,14 +191,14 @@ The server currently applies migrations on startup as well as via the `migrate` 
 ## 4. Known gaps and limitations
 
 1. **Docker Compose is not created or verified.** Docker is not installed and WSL has no distribution. Local verification used native processes. The Phase 1 exit criterion for Compose is open.
-2. **CI has not run on GitHub yet.** `.github/workflows/ci.yml` is written but cannot be validated locally; the first push must prove the workflow and service configuration.
-3. **Generated TypeScript types do not exist yet.** The OpenAPI document is served, but the web client and `packages/shared-types` are Phase 6 work.
-4. **OpenAPI Bearer scheme is registered, but per-operation security requirements are not annotated yet.** Swagger shows the authorize control; protected paths should be marked with the scheme in a follow-up.
-5. **SQLx queries are runtime-checked.** Compile-time checked macros and `.sqlx` offline data are deferred to avoid requiring a database during every build.
-6. **OneDrive build warnings.** Rust incremental compilation sometimes fails to finalize a session directory with access denied. Builds still pass; moving the repository or setting `CARGO_TARGET_DIR` outside OneDrive is recommended.
-7. **Local Node is 26, target is Node 24 LTS.** No frontend package exists yet, so this has no runtime impact.
-8. **Only the Phase 1 schema subset exists.** Permissions, communities, channels, messaging, voice, embeddings, and social tables are still planned.
-9. **No MFA, bots, API keys, or webhooks yet.** Those are later phases.
+2. **Generated TypeScript types** now exist in `packages/shared-types` and pass typecheck in CI.
+3. **OpenAPI Bearer scheme is registered and protected operations are annotated.** Public endpoints remain unannotated.
+4. **SQLx queries are runtime-checked.** Compile-time checked macros and `.sqlx` offline data are deferred to avoid requiring a database during every build.
+5. **OneDrive build warnings.** Rust incremental compilation sometimes fails to finalize a session directory with access denied. Builds still pass; moving the repository or setting `CARGO_TARGET_DIR` outside OneDrive is recommended.
+6. **Local Node is 26, target is Node 24 LTS.** CI uses Node 24; local development should match it.
+7. **Phase 2 schema is now present.** Messaging, voice, notification, integration, and embed tables remain planned.
+8. **No MFA, bots, API keys, or webhooks yet.** Those are later phases.
+9. **CI is green** on commit `2003fc3` (Rust checks/tests, dependency audit, secret scan, TypeScript contract).
 
 ---
 

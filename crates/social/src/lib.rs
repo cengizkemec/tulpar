@@ -93,12 +93,30 @@ impl SocialService {
         }
 
         let (a, b) = ordered_pair(requester_id, addressee_id);
-        let result = sqlx::query(
-            r#"
-            INSERT INTO friendships (id, user_a_id, user_b_id, requested_by)
-            VALUES ($1, $2, $3, $4)
-            ON CONFLICT (user_a_id, user_b_id) DO NOTHING
-            "#,
+        let existing: Option<(Uuid, String)> = sqlx::query_as(
+            "SELECT id, status FROM friendships WHERE user_a_id = $1 AND user_b_id = $2",
+        )
+        .bind(a)
+        .bind(b)
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if let Some((friendship_id, status)) = existing {
+            if status == "declined" {
+                sqlx::query(
+                    "UPDATE friendships SET status = 'pending', requested_by = $2, responded_at = NULL, created_at = now() WHERE id = $1",
+                )
+                .bind(friendship_id)
+                .bind(requester_id)
+                .execute(&self.pool)
+                .await?;
+                return Ok(());
+            }
+            return Err(SocialError::AlreadyExists);
+        }
+
+        sqlx::query(
+            "INSERT INTO friendships (id, user_a_id, user_b_id, requested_by) VALUES ($1, $2, $3, $4)",
         )
         .bind(tulpar_core::new_id())
         .bind(a)
@@ -106,9 +124,6 @@ impl SocialService {
         .bind(requester_id)
         .execute(&self.pool)
         .await?;
-        if result.rows_affected() == 0 {
-            return Err(SocialError::AlreadyExists);
-        }
         Ok(())
     }
 

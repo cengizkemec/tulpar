@@ -28,6 +28,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 ### Added — Phase 2
 
 - Communities, members, roles, role assignments, invites, bans, and basic channel foundation.
+- Channel permission overwrite endpoints and channel-scoped visibility/lookup enforcement.
 - Centralized permission bitfield and evaluator with role hierarchy, overwrite ordering, administrator bypass, owner bypass, and timeout handling.
 - Friendships, friend requests, blocking, and DM conversation metadata with privacy checks.
 - Community/member/role/invite/channel/friend/block/DM REST endpoints and OpenAPI schemas.

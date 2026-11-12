@@ -9,6 +9,7 @@ publish.workspace = true
 chrono.workspace = true
 common = { package = "tulpar-common", path = "../common" }
 tulpar_core = { package = "tulpar-core", path = "../core" }
+permissions = { package = "tulpar-permissions", path = "../permissions" }
 serde.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true

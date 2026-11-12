@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 
 use chrono::{DateTime, Utc};
+use permissions::Permissions;
 use serde::Serialize;
 use sqlx::{FromRow, PgPool};
 use thiserror::Error;
@@ -45,6 +46,26 @@ pub struct Channel {
 pub struct DirectConversation {
     pub channel: Channel,
     pub other_user_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, FromRow)]
+pub struct ChannelOverwrite {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub role_id: Option<Uuid>,
+    pub user_id: Option<Uuid>,
+    pub allow: i64,
+    pub deny: i64,
+}
+
+impl ChannelOverwrite {
+    pub fn allow_permissions(&self) -> Permissions {
+        Permissions::from_bits_truncate(self.allow as u64)
+    }
+
+    pub fn deny_permissions(&self) -> Permissions {
+        Permissions::from_bits_truncate(self.deny as u64)
+    }
 }
 
 #[derive(Clone)]
@@ -267,5 +288,125 @@ impl ChannelService {
         .fetch_optional(&self.pool)
         .await?;
         Ok(other)
+    }
+
+    pub async fn list_overwrites(
+        &self,
+        channel_id: Uuid,
+    ) -> Result<Vec<ChannelOverwrite>, ChannelError> {
+        let overwrites = sqlx::query_as::<_, ChannelOverwrite>(
+            r#"
+            SELECT id, channel_id, role_id, user_id, allow, deny
+            FROM channel_permission_overwrites
+            WHERE channel_id = $1
+            ORDER BY id
+            "#,
+        )
+        .bind(channel_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(overwrites)
+    }
+
+    pub async fn set_overwrite(
+        &self,
+        channel_id: Uuid,
+        role_id: Option<Uuid>,
+        user_id: Option<Uuid>,
+        allow: Permissions,
+        deny: Permissions,
+    ) -> Result<ChannelOverwrite, ChannelError> {
+        if role_id.is_some() == user_id.is_some() {
+            return Err(ChannelError::Invalid(
+                "an overwrite must target exactly one role or member".into(),
+            ));
+        }
+        if !(allow & deny).is_empty() {
+            return Err(ChannelError::Invalid(
+                "allow and deny permissions must not overlap".into(),
+            ));
+        }
+        let mut tx = self.pool.begin().await?;
+        let existing: Option<Uuid> = if let Some(role_id) = role_id {
+            sqlx::query_scalar(
+                "SELECT id FROM channel_permission_overwrites WHERE channel_id = $1 AND role_id = $2",
+            )
+            .bind(channel_id)
+            .bind(role_id)
+            .fetch_optional(&mut *tx)
+            .await?
+        } else {
+            sqlx::query_scalar(
+                "SELECT id FROM channel_permission_overwrites WHERE channel_id = $1 AND user_id = $2",
+            )
+            .bind(channel_id)
+            .bind(user_id)
+            .fetch_optional(&mut *tx)
+            .await?
+        };
+
+        let id = existing.unwrap_or_else(tulpar_core::new_id);
+        if existing.is_some() {
+            sqlx::query(
+                "UPDATE channel_permission_overwrites SET allow = $2, deny = $3, updated_at = now() WHERE id = $1",
+            )
+            .bind(id)
+            .bind(allow.bits() as i64)
+            .bind(deny.bits() as i64)
+            .execute(&mut *tx)
+            .await?;
+        } else {
+            sqlx::query(
+                "INSERT INTO channel_permission_overwrites (id, channel_id, role_id, user_id, allow, deny) VALUES ($1, $2, $3, $4, $5, $6)",
+            )
+            .bind(id)
+            .bind(channel_id)
+            .bind(role_id)
+            .bind(user_id)
+            .bind(allow.bits() as i64)
+            .bind(deny.bits() as i64)
+            .execute(&mut *tx)
+            .await?;
+        }
+        tx.commit().await?;
+        Ok(ChannelOverwrite {
+            id,
+            channel_id,
+            role_id,
+            user_id,
+            allow: allow.bits() as i64,
+            deny: deny.bits() as i64,
+        })
+    }
+
+    pub async fn delete_overwrite(
+        &self,
+        channel_id: Uuid,
+        role_id: Option<Uuid>,
+        user_id: Option<Uuid>,
+    ) -> Result<(), ChannelError> {
+        if role_id.is_some() == user_id.is_some() {
+            return Err(ChannelError::Invalid(
+                "an overwrite must target exactly one role or member".into(),
+            ));
+        }
+        if let Some(role_id) = role_id {
+            sqlx::query(
+                "DELETE FROM channel_permission_overwrites WHERE channel_id = $1 AND role_id = $2",
+            )
+            .bind(channel_id)
+            .bind(role_id)
+            .execute(&self.pool)
+            .await?;
+        } else {
+            sqlx::query(
+                "DELETE FROM channel_permission_overwrites WHERE channel_id = $1 AND user_id = $2",
+            )
+            .bind(channel_id)
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+        }
+        Ok(())
     }
 }

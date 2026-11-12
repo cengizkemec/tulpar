@@ -8,7 +8,7 @@ Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastruct
 
 > **Project status: Phase 2 — Communities, permissions, and social foundation.**
 >
-> The backend now includes authentication, sessions, SMTP email, account deletion/export, communities, members, roles, invites, channels, the centralized permission evaluator, friends, blocks, and DM conversation metadata. A verified Docker development stack and generated TypeScript contracts exist. Text messages, WebSocket messaging, voice/video, and the clients are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md) and [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md) for verification details and remaining work.
+> The backend now includes authentication, sessions, SMTP email, account deletion/export, communities, members, roles, invites, channels, the centralized permission evaluator, friends, blocks, and DM conversation metadata. A verified Docker development stack, generated TypeScript contracts, and a green GitHub Actions pipeline exist. Text messages, WebSocket messaging, voice/video, and the clients are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md) and [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md) for verification details and remaining work.
 
 ---
 

@@ -40,6 +40,7 @@ The migration was applied to the Docker PostgreSQL instance and is applied by `s
 - Role listing, creation, update, deletion, assignment, and removal with hierarchy and anti-escalation checks.
 - Invite creation, public preview, join, listing, and revocation.
 - Effective community permissions endpoint.
+- Channel permission overwrite endpoints for roles and members, with category inheritance, member-overwrite-last ordering, and channel visibility filtering through the central evaluator.
 
 ### Social
 
@@ -66,11 +67,14 @@ New endpoints include:
 - `PATCH/DELETE /api/v1/communities/{id}/roles/{role_id}`
 - `PUT/DELETE /api/v1/communities/{id}/members/{user_id}/roles/{role_id}`
 - `GET/POST /api/v1/communities/{id}/channels`
+- `GET /api/v1/channels/{id}`
+- `GET /api/v1/channels/{id}/permissions/me`
+- `GET/PUT/DELETE /api/v1/channels/{id}/permissions/...`
 - `GET/POST /api/v1/communities/{id}/invites`
 - `GET/POST/DELETE /api/v1/invites/{code}`
 - Friends, blocks, and DM endpoints under `/api/v1/friends`, `/api/v1/blocks`, `/api/v1/dms`
 
-OpenAPI now contains 46 paths and TypeScript types were regenerated from the running Docker API.
+OpenAPI now contains 51 paths and TypeScript types were regenerated from the running instance.
 
 ---
 
@@ -84,6 +88,7 @@ cargo clippy --workspace --all-targets -- -D warnings -> pass
 cargo test --workspace                             -> 24 tests passed
 pnpm generate:types                                -> pass
 pnpm typecheck                                     -> pass
+GitHub Actions (commit 2003fc3)                    -> all jobs green
 ```
 
 Test breakdown:
@@ -106,9 +111,11 @@ The community/social integration test covers:
 4. Owner creates an invite; member joins.
 5. Owner lists two members.
 6. Owner creates a role and assigns it; member’s effective permissions include the role.
-7. Member sends a friend request; owner accepts.
-8. Owner creates a DM with the member.
-9. Owner blocks the member; a new DM attempt is rejected with `403`.
+7. Owner denies `VIEW_CHANNEL` to the member on `#general`; the channel disappears from the member’s channel list and direct lookup returns `404`.
+8. Owner removes the overwrite; access is restored.
+9. Member sends a friend request; owner accepts.
+10. Owner creates a DM with the member.
+11. Owner blocks the member; a new DM attempt is rejected with `403`.
 
 ### Docker stack
 
@@ -126,19 +133,16 @@ Docker Desktop cannot read the current OneDrive source path directly. The verifi
 
 ## 3. Known gaps
 
-1. **Channel permission overwrite REST endpoints** are not implemented. The evaluator and database table exist; channel-scoped enforcement in API/message/voice paths is pending.
-2. **Channel list is not yet permission-filtered.** All community members see all channels until channel overwrites are enforced.
-3. **Audit records are not written for community/social actions.** Auth audit records exist; community moderation, role changes, invites, bans, and blocks need audit entries.
-4. **Community discovery/search, member search, full ban listing, role reorder, and community audit-log APIs** are not implemented.
-5. **DM messages** are Phase 3; only DM conversation metadata exists.
-6. **Full authorization matrix and adversarial escalation tests** are not complete. The current integration test covers the main flow, not every endpoint/hierarchy edge case.
-7. **Friend request re-request after decline** currently conflicts rather than reopening the request.
-8. **Owner account deletion with communities** is intentionally blocked with a clear error; ownership transfer or community deletion must happen first.
-9. **Community creation + default channel creation is not one transaction.** If default channel creation fails, the API soft-deletes the community; a database-level unit of work would be cleaner.
-10. **No community/member admin UI** exists; web work is Phase 6.
-11. **No rate limits** specific to community/invite/friend actions yet; global authenticated limits apply, but abuse controls need per-action budgets.
-12. **No channel permission overwrite tests** despite the pure evaluator tests.
-13. **Two optional-dependency audit advisories are explicitly ignored.** `rsa` is present because of jsonwebtoken’s optional RSA support (Tulpar uses HS256 only), and `libsqlite3-sys` is present because of SQLx’s optional SQLite support (Tulpar enables PostgreSQL only). The CI comments document both; the lockfile should be cleaned if upstream features allow.
+1. **Audit records are not written for community/social actions.** Auth audit records exist; community moderation, role changes, invites, bans, and blocks need audit entries.
+2. **Community discovery/search, member search, full ban listing, role reorder, and community audit-log APIs** are not implemented.
+3. **DM messages** are Phase 3; only DM conversation metadata exists.
+4. **Full authorization matrix and adversarial escalation tests** are not complete. The current integration test covers the main flow, channel overwrite visibility, and basic hierarchy, not every endpoint/hierarchy edge case.
+5. **Owner account deletion with communities** is intentionally blocked with a clear error; ownership transfer or community deletion must happen first.
+6. **Community creation + default channel creation is not one transaction.** If default channel creation fails, the API soft-deletes the community; a database-level unit of work would be cleaner.
+7. **No community/member admin UI** exists; web work is Phase 6.
+8. **No rate limits** specific to community/invite/friend actions yet; global authenticated limits apply, but abuse controls need per-action budgets.
+9. **Two optional-dependency audit advisories are explicitly ignored.** `rsa` is present because of jsonwebtoken’s optional RSA support (Tulpar uses HS256 only), and `libsqlite3-sys` is present because of SQLx’s optional SQLite support (Tulpar enables PostgreSQL only). The CI comments document both; the lockfile should be cleaned if upstream features allow.
+10. **Channel scope is enforced for channel lookup/listing; future message and voice paths must reuse the same evaluator.**
 
 ---
 

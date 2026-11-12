@@ -53,8 +53,12 @@ fn require_target_below(actor: &CommunityAccess, target: &CommunityAccess) -> Re
     Ok(())
 }
 
-async fn details(state: &AppState, community: Community) -> Result<CommunityDetailsDto, ApiError> {
-    let channels = state.channels.list_for_community(community.id).await?;
+async fn details(
+    state: &AppState,
+    community: Community,
+    viewer_id: Uuid,
+) -> Result<CommunityDetailsDto, ApiError> {
+    let channels = super::channels::visible_channels(state, community.id, viewer_id).await?;
     let roles = state.communities.list_roles(community.id).await?;
     let member_count = state.communities.member_count(community.id).await?;
     Ok(CommunityDetailsDto {
@@ -96,7 +100,7 @@ pub async fn create_community(
         return Err(error.into());
     }
 
-    Ok(Json(details(&state, community).await?))
+    Ok(Json(details(&state, community, current.user().id).await?))
 }
 
 #[utoipa::path(
@@ -140,7 +144,7 @@ pub async fn get_community(
     {
         return Err(ApiError::not_found("Community not found."));
     }
-    Ok(Json(details(&state, community).await?))
+    Ok(Json(details(&state, community, current.user().id).await?))
 }
 
 #[utoipa::path(
@@ -386,9 +390,17 @@ pub async fn ban_member(
     if let Ok(target) = state.communities.access(community_id, user_id).await {
         require_target_below(&actor, &target)?;
     }
-    let expires_at = payload
-        .expires_in_seconds
-        .map(|seconds| Utc::now() + Duration::seconds(seconds.max(0)));
+    let expires_at = match payload.expires_in_seconds {
+        None => None,
+        Some(seconds) if (1..=365 * 24 * 60 * 60).contains(&seconds) => {
+            Some(Utc::now() + Duration::seconds(seconds))
+        }
+        Some(_) => {
+            return Err(ApiError::validation(
+                "Ban expiry must be between 1 second and 365 days.",
+            ))
+        }
+    };
     state
         .communities
         .ban(
@@ -728,7 +740,8 @@ pub async fn list_channels(
         .communities
         .access(community_id, current.user().id)
         .await?;
-    let channels = state.channels.list_for_community(community_id).await?;
+    let channels =
+        super::channels::visible_channels(&state, community_id, current.user().id).await?;
     Ok(Json(channels.into_iter().map(ChannelDto::from).collect()))
 }
 
@@ -752,6 +765,14 @@ pub async fn create_channel(
         .access(community_id, current.user().id)
         .await?;
     require_permission(&access, Permissions::MANAGE_CHANNELS)?;
+    if let Some(parent_id) = payload.parent_id {
+        let parent = state.channels.get(parent_id).await?;
+        if parent.community_id != Some(community_id) || parent.kind != "category" {
+            return Err(ApiError::validation(
+                "The parent channel must be a category in this community.",
+            ));
+        }
+    }
     let channel = state
         .channels
         .create_community_channel(

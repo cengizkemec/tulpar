@@ -308,6 +308,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/channels/{channel_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_channel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_overwrites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/permissions/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["my_permissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/permissions/roles/{role_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_role_overwrite"];
+        post?: never;
+        delete: operations["delete_role_overwrite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/permissions/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_user_overwrite"];
+        post?: never;
+        delete: operations["delete_user_overwrite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/communities": {
         parameters: {
             query?: never;
@@ -791,6 +871,21 @@ export interface components {
             /** Format: int32 */
             user_limit?: number | null;
         };
+        ChannelOverwriteDto: {
+            allow: string[];
+            /** Format: uuid */
+            channel_id: string;
+            deny: string[];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            role_id?: string | null;
+            /** Format: uuid */
+            user_id?: string | null;
+        };
+        ChannelPermissionsDto: {
+            permissions: string[];
+        };
         CommunityDetailsDto: {
             channels: components["schemas"]["ChannelDto"][];
             community: components["schemas"]["CommunityDto"];
@@ -994,6 +1089,10 @@ export interface components {
             /** Format: uuid */
             user_id: string;
             username: string;
+        };
+        OverwriteRequest: {
+            allow?: string[];
+            deny?: string[];
         };
         ProblemDetails: {
             code: string;
@@ -1713,6 +1812,174 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description User unblocked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_channel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelDto"];
+                };
+            };
+        };
+    };
+    list_overwrites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelOverwriteDto"][];
+                };
+            };
+        };
+    };
+    my_permissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelPermissionsDto"];
+                };
+            };
+        };
+    };
+    set_role_overwrite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+                /** @description Role identifier */
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverwriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelOverwriteDto"];
+                };
+            };
+        };
+    };
+    delete_role_overwrite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+                /** @description Role identifier */
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Overwrite removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_user_overwrite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+                /** @description User identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverwriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelOverwriteDto"];
+                };
+            };
+        };
+    };
+    delete_user_overwrite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+                /** @description User identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Overwrite removed */
             204: {
                 headers: {
                     [name: string]: unknown;

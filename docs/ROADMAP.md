@@ -107,7 +107,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Basic user profiles.
 - [ ] User search and full community discovery/search.
 - [ ] Community settings polish, discovery listing, and audit-log API.
-- [ ] Channel permission overwrite REST endpoints and channel-scoped enforcement.
+- [x] Channel permission overwrite REST endpoints and channel-scoped listing/lookup enforcement.
 - [ ] Audit records for community/social actions.
 - [ ] Full authorization matrix and adversarial escalation tests for every endpoint.
 - [ ] Community/role/channel admin UI foundations (web scaffolding does not exist yet).
@@ -393,7 +393,7 @@ Phase 0 is approved. Phase 1 is implemented and its remaining technical checks a
 - [x] SMTP delivery is implemented and tested against a local SMTP capture.
 - [x] Account deletion and data export follow the documented policy.
 - [x] CI workflow covers format, clippy, tests, secret scanning, dependency audit, and TypeScript contracts.
-- [ ] The CI workflow has passed on GitHub (the push is being verified).
+- [x] The CI workflow has passed on GitHub (commit `2003fc3`).
 - [x] Generated TypeScript types are produced from the OpenAPI document and typecheck.
 - [x] The development Compose stack is created and verified from a local build context.
 - [x] The OpenAPI Bearer security scheme is registered.

@@ -2667,6 +2667,7 @@ dependencies = [
  "thiserror",
  "tulpar-common",
  "tulpar-core",
+ "tulpar-permissions",
  "uuid",
 ]
 

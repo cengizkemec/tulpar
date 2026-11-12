@@ -406,6 +406,52 @@ impl From<MemberView> for MemberDto {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct ChannelOverwriteDto {
+    pub id: Uuid,
+    pub channel_id: Uuid,
+    pub role_id: Option<Uuid>,
+    pub user_id: Option<Uuid>,
+    pub allow: Vec<String>,
+    pub deny: Vec<String>,
+}
+
+impl From<channels::ChannelOverwrite> for ChannelOverwriteDto {
+    fn from(value: channels::ChannelOverwrite) -> Self {
+        Self {
+            id: value.id,
+            channel_id: value.channel_id,
+            role_id: value.role_id,
+            user_id: value.user_id,
+            allow: value
+                .allow_permissions()
+                .names()
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            deny: value
+                .deny_permissions()
+                .names()
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct OverwriteRequest {
+    #[serde(default)]
+    pub allow: Vec<String>,
+    #[serde(default)]
+    pub deny: Vec<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ChannelPermissionsDto {
+    pub permissions: Vec<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ChannelDto {
     pub id: Uuid,
     pub community_id: Option<Uuid>,
