@@ -47,12 +47,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Moderator message-delete and pin audit records.
 - Messaging integration test covering idempotency, edits, reactions, pins, read states, search, slowmode, timeouts, tombstones, and DMs.
 
-### Planned — Phase 3 completion
+### Added — Phase 3 completion
 
-- WebSocket gateway, presence, typing, and reconnect/resync.
-- Attachments, file validation, quotas, and storage abstraction.
-- Mentions, notifications, and preferences.
-- Outbox dispatcher, event contracts, and gateway load tests.
+- WebSocket gateway with single-use tickets, HELLO/IDENTIFY/READY, heartbeats, sequence numbers, permission-scoped dispatch, presence, typing, and slow-consumer handling.
+- `/sync` bootstrap snapshot and per-channel `after` catch-up.
+- Local attachment storage, upload validation, attachment-only messages, and permission-checked downloads.
+- User mentions with member, role, and `@everyone` authorization.
+- In-app notifications, notification preferences, channel/community mute enforcement, and mark-read APIs.
+- Transactional outbox events and a background dispatcher for `NOTIFICATION_CREATE` gateway delivery.
+- Docker uploads volume with a privilege-dropping entrypoint.
+
+### Planned — Phase 3 follow-ups
+
+- Multi-node Redis fan-out and shared presence/ticket state.
+- Gateway multi-client load testing.
+- S3/MinIO storage, attachment scanning, quotas, and cleanup.
+- Role/`@everyone` notification fan-out and per-community/channel setting APIs.
 - Generated SDK/API client wrappers.
 
 ### Planned — Phase 1/2 hardening

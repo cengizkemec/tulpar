@@ -8,8 +8,10 @@ use axum::{
 use channels::ChannelError;
 use communities::CommunityError;
 use messaging::MessageError;
+use notifications::NotificationError;
 use serde::Serialize;
 use social::SocialError;
+use storage::StorageError;
 use users::UserError;
 use utoipa::ToSchema;
 
@@ -269,6 +271,32 @@ impl From<ChannelError> for ApiError {
             ChannelError::Database(error) => {
                 tracing::error!(%error, "channel database error");
                 Self::dependency_unavailable("The database is temporarily unavailable.")
+            }
+        }
+    }
+}
+
+impl From<NotificationError> for ApiError {
+    fn from(error: NotificationError) -> Self {
+        match error {
+            NotificationError::NotFound => Self::not_found("Notification not found."),
+            NotificationError::Invalid(message) => Self::validation(message),
+            NotificationError::Database(error) => {
+                tracing::error!(%error, "notification database error");
+                Self::dependency_unavailable("The database is temporarily unavailable.")
+            }
+        }
+    }
+}
+
+impl From<StorageError> for ApiError {
+    fn from(error: StorageError) -> Self {
+        match error {
+            StorageError::Invalid(message) => Self::validation(message),
+            StorageError::NotFound => Self::not_found("File not found."),
+            StorageError::Io(error) => {
+                tracing::error!(%error, "storage I/O error");
+                Self::dependency_unavailable("Storage is temporarily unavailable.")
             }
         }
     }

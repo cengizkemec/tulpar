@@ -7,7 +7,8 @@ use uuid::Uuid;
 use audit::AuditLog;
 use channels::{Channel, DirectConversation};
 use communities::{BanView, Community, CommunityAccess, Invite, MemberView, Role};
-use messaging::{Message, Reaction, ReadState};
+use messaging::{Attachment, Message, Reaction, ReadState};
+use notifications::{Notification, NotificationPreferences};
 use social::{BlockedUser, FriendUser, FriendshipView};
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -837,6 +838,31 @@ pub struct UserSearchQuery {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct AttachmentDto {
+    pub id: Uuid,
+    pub message_id: Uuid,
+    pub filename: String,
+    pub content_type: String,
+    pub size_bytes: i64,
+    pub spoiler: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<Attachment> for AttachmentDto {
+    fn from(value: Attachment) -> Self {
+        Self {
+            id: value.id,
+            message_id: value.message_id,
+            filename: value.filename,
+            content_type: value.content_type,
+            size_bytes: value.size_bytes,
+            spoiler: value.spoiler,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct MessageDto {
     pub id: Uuid,
     pub channel_id: Uuid,
@@ -846,10 +872,11 @@ pub struct MessageDto {
     pub edited_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
+    pub attachments: Vec<AttachmentDto>,
 }
 
-impl From<Message> for MessageDto {
-    fn from(value: Message) -> Self {
+impl MessageDto {
+    pub fn from_message(value: Message, attachments: Vec<Attachment>) -> Self {
         Self {
             id: value.id,
             channel_id: value.channel_id,
@@ -859,8 +886,17 @@ impl From<Message> for MessageDto {
             edited_at: value.edited_at,
             deleted_at: value.deleted_at,
             created_at: value.created_at,
+            attachments: attachments.into_iter().map(AttachmentDto::from).collect(),
         }
     }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UploadedFileDto {
+    pub id: Uuid,
+    pub filename: String,
+    pub content_type: String,
+    pub size_bytes: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -901,11 +937,14 @@ impl From<ReadState> for ReadStateDto {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct SendMessageRequest {
-    pub content: String,
+    #[serde(default)]
+    pub content: Option<String>,
     #[serde(default)]
     pub reply_to_id: Option<Uuid>,
     #[serde(default)]
     pub client_nonce: Option<Uuid>,
+    #[serde(default)]
+    pub attachment_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -934,4 +973,147 @@ pub struct MessageSearchQuery {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ReadStateRequest {
     pub message_id: Uuid,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct NotificationDto {
+    pub id: Uuid,
+    pub kind: String,
+    pub community_id: Option<Uuid>,
+    pub channel_id: Option<Uuid>,
+    pub message_id: Option<Uuid>,
+    pub actor_user_id: Option<Uuid>,
+    pub payload: serde_json::Value,
+    pub read_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<Notification> for NotificationDto {
+    fn from(value: Notification) -> Self {
+        Self {
+            id: value.id,
+            kind: value.kind,
+            community_id: value.community_id,
+            channel_id: value.channel_id,
+            message_id: value.message_id,
+            actor_user_id: value.actor_user_id,
+            payload: value.payload,
+            read_at: value.read_at,
+            created_at: value.created_at,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct NotificationPreferencesDto {
+    pub desktop_enabled: bool,
+    pub sound_enabled: bool,
+    pub mentions_only: bool,
+    pub suppress_everyone: bool,
+    pub email_enabled: bool,
+    pub updated_at: DateTime<Utc>,
+}
+
+impl From<NotificationPreferences> for NotificationPreferencesDto {
+    fn from(value: NotificationPreferences) -> Self {
+        Self {
+            desktop_enabled: value.desktop_enabled,
+            sound_enabled: value.sound_enabled,
+            mentions_only: value.mentions_only,
+            suppress_everyone: value.suppress_everyone,
+            email_enabled: value.email_enabled,
+            updated_at: value.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct NotificationListQuery {
+    #[serde(default)]
+    pub before: Option<Uuid>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MarkNotificationsReadRequest {
+    #[serde(default)]
+    pub ids: Option<Vec<Uuid>>,
+    #[serde(default)]
+    pub all: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateNotificationPreferencesRequest {
+    #[serde(default)]
+    pub desktop_enabled: Option<bool>,
+    #[serde(default)]
+    pub sound_enabled: Option<bool>,
+    #[serde(default)]
+    pub mentions_only: Option<bool>,
+    #[serde(default)]
+    pub suppress_everyone: Option<bool>,
+    #[serde(default)]
+    pub email_enabled: Option<bool>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MarkNotificationsReadResponse {
+    pub updated: u64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GatewayTicketDto {
+    pub ticket: String,
+    pub expires_in: u64,
+    pub gateway_url: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SyncCommunityDto {
+    pub community: CommunityDto,
+    pub roles: Vec<RoleDto>,
+    pub channels: Vec<ChannelDto>,
+    pub read_states: Vec<ReadStateDto>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SyncInstanceDto {
+    pub name: String,
+    pub public_url: String,
+    pub features: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SyncGatewayDto {
+    pub url: String,
+    pub heartbeat_interval_ms: u64,
+    pub protocol_version: u16,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SyncResponse {
+    pub server_time: DateTime<Utc>,
+    pub instance: SyncInstanceDto,
+    pub user: SelfUserDto,
+    pub settings: UserSettingsDto,
+    pub communities: Vec<SyncCommunityDto>,
+    pub friends: Vec<FriendUserDto>,
+    pub friend_requests: Vec<FriendshipDto>,
+    pub blocks: Vec<BlockedUserDto>,
+    pub dms: Vec<DirectConversationDto>,
+    pub unread_counts: std::collections::HashMap<Uuid, i64>,
+    pub notifications_unread: i64,
+    pub gateway: SyncGatewayDto,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SyncInstanceResponse {
+    pub name: String,
+    pub version: String,
+    pub api_version: String,
+    pub public_url: String,
+    pub features: serde_json::Value,
+    pub registration_enabled: bool,
+    pub require_email_verification: bool,
 }

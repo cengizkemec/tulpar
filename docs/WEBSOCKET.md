@@ -1,6 +1,6 @@
 # Tulpar WebSocket Gateway
 
-**Status:** Phase 0 protocol contract. Not implemented.
+**Status:** Phase 3 implemented for the v1 backend scope. Single-node tickets, gateway lifecycle, presence, typing, dispatch filtering, backpressure, and `/sync` recovery are implemented and integration-tested. Multi-node Redis fan-out and shared presence remain future work.
 
 **Endpoint:** `wss://<instance>/gateway`
 

@@ -6,9 +6,9 @@ Tulpar combines Discord-like communities and real-time social features with Team
 
 Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastructure. A community owner can run a Tulpar instance on their own server and retain full control of users, messages, files, voice infrastructure, and configuration.
 
-> **Project status: Phase 3 in progress — Real-time messaging foundation.**
+> **Project status: Phase 3 complete — Real-time messaging backend.**
 >
-> The backend includes authentication, sessions, SMTP email, account deletion/export, communities, members, roles, invites, bans, channels, channel permission overwrites, discovery, audit logs, friends, blocks, DM metadata, and persisted messages with edits, deletion, replies, reactions, pins, read states, search, slowmode, and DM message APIs. A verified Docker development stack, generated TypeScript contracts, and a green GitHub Actions pipeline exist. The WebSocket gateway, presence, attachments, notifications, voice/video, and the clients are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md), [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md), and [PHASE_3_REPORT.md](docs/PHASE_3_REPORT.md) for verification details and remaining work.
+> The backend includes authentication, communities, permissions, moderation, social features, persistent messaging, edits, deletion, replies, reactions, pins, read states, search, slowmode, DM messages, a WebSocket gateway with presence and typing, `/sync` recovery, attachments with local storage, mentions, notifications, and an outbox dispatcher. A verified Docker development stack, generated TypeScript contracts, and a green GitHub Actions pipeline exist. Voice/video and the clients are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md), [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md), and [PHASE_3_REPORT.md](docs/PHASE_3_REPORT.md) for verification details and remaining work.
 
 ---
 
@@ -16,7 +16,7 @@ Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastruct
 
 | Product | Purpose | Status |
 |---|---|---|
-| **Tulpar Server** | Self-hosted Rust backend: auth, users, communities, messaging, permissions, voice authorization, files, administration, APIs | Backend through Phase 3 messaging APIs |
+| **Tulpar Server** | Self-hosted Rust backend: auth, users, communities, messaging, gateway, permissions, voice authorization, files, administration, APIs | Backend through Phase 3 |
 | **Tulpar Web** | Full browser client and PWA | Planned, Phase 6 |
 | **Tulpar Desktop** | Tauri 2 desktop client for Windows 10/11 and Linux | Planned, Phase 7 |
 | **Tulpar Embed** | Secure iframe widgets and SDK for third-party websites | Planned, Phase 8 |

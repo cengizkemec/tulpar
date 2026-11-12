@@ -107,6 +107,17 @@ async fn serve() -> Result<()> {
 
     let state = AppState::new(config.clone(), pool, redis, email)
         .context("API state initialization failed")?;
+    let worker_state = state.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+            match api::workers::dispatch_outbox_once(&worker_state).await {
+                Ok(0) => {}
+                Ok(processed) => tracing::debug!(processed, "outbox batch dispatched"),
+                Err(error) => tracing::error!(%error, "outbox dispatch failed"),
+            }
+        }
+    });
     let app = router(state);
     let listener = tokio::net::TcpListener::bind(&config.server.bind)
         .await

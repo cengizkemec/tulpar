@@ -8,6 +8,7 @@ pub mod extract;
 pub mod openapi;
 pub mod routes;
 pub mod state;
+pub mod workers;
 
 use std::time::Duration;
 
@@ -77,6 +78,11 @@ pub fn router(state: AppState) -> Router {
         )
         .route("/me/export", get(routes::users::export_me))
         .route("/me/communities", get(routes::communities::list_mine))
+        .route(
+            "/me/notification-preferences",
+            get(routes::notifications::get_preferences)
+                .put(routes::notifications::update_preferences),
+        )
         .route("/{user_id}", get(routes::users::get_user));
 
     let communities = Router::new()
@@ -189,6 +195,10 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/{channel_id}/pins/{message_id}",
             put(routes::messages::pin_message).delete(routes::messages::unpin_message),
+        )
+        .route(
+            "/{channel_id}/attachments",
+            post(routes::attachments::upload_attachment),
         );
 
     let messages = Router::new()
@@ -205,7 +215,24 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/{message_id}/reactions/{emoji}",
             put(routes::messages::add_reaction).delete(routes::messages::remove_reaction),
+        )
+        .route(
+            "/{message_id}/attachments/{attachment_id}",
+            get(routes::attachments::download_attachment),
         );
+
+    let notifications = Router::new()
+        .route("/", get(routes::notifications::list_notifications))
+        .route(
+            "/read",
+            post(routes::notifications::mark_notifications_read),
+        );
+
+    let gateway = Router::new().route("/ticket", post(routes::gateway::issue_ticket));
+
+    let sync = Router::new()
+        .route("/", get(routes::sync::sync))
+        .route("/instance", get(routes::sync::sync_instance));
 
     let friends = Router::new()
         .route("/", get(routes::social::list_friends))
@@ -236,19 +263,27 @@ pub fn router(state: AppState) -> Router {
     );
 
     let cors = cors_layer(&state);
-    let body_limit = state.config.server.body_limit_bytes;
+    let body_limit = state
+        .config
+        .server
+        .body_limit_bytes
+        .max(state.config.storage.max_upload_bytes as usize + 64 * 1024);
     let timeout = Duration::from_secs(state.config.server.request_timeout_seconds);
 
     Router::new()
         .route("/health/live", get(routes::health::live))
         .route("/health/ready", get(routes::health::ready))
         .route("/api/v1/version", get(routes::health::version))
+        .route("/gateway", get(routes::gateway::gateway))
         .nest("/api/v1/auth", auth)
         .nest("/api/v1/users", users)
         .nest("/api/v1/communities", communities)
         .nest("/api/v1/invites", invites)
         .nest("/api/v1/channels", channels)
         .nest("/api/v1/messages", messages)
+        .nest("/api/v1/notifications", notifications)
+        .nest("/api/v1/gateway", gateway)
+        .nest("/api/v1/sync", sync)
         .nest("/api/v1/friends", friends)
         .nest("/api/v1/blocks", blocks)
         .nest("/api/v1/dms", dms)

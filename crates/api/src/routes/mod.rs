@@ -1,7 +1,11 @@
+pub mod attachments;
 pub mod auth;
 pub mod channels;
 pub mod communities;
+pub mod gateway;
 pub mod health;
 pub mod messages;
+pub mod notifications;
 pub mod social;
+pub mod sync;
 pub mod users;

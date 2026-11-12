@@ -45,6 +45,37 @@ pub struct Reaction {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct Attachment {
+    pub id: Uuid,
+    pub message_id: Uuid,
+    pub file_id: Uuid,
+    pub filename: String,
+    pub content_type: String,
+    pub size_bytes: i64,
+    pub spoiler: bool,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone)]
+pub struct AttachmentDownload {
+    pub attachment: Attachment,
+    pub object_key: String,
+}
+
+#[derive(FromRow)]
+struct AttachmentDownloadRow {
+    id: Uuid,
+    message_id: Uuid,
+    file_id: Uuid,
+    filename: String,
+    content_type: String,
+    size_bytes: i64,
+    spoiler: bool,
+    created_at: DateTime<Utc>,
+    object_key: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct ReadState {
     pub channel_id: Uuid,
@@ -57,9 +88,10 @@ pub struct ReadState {
 pub struct NewMessage {
     pub channel_id: Uuid,
     pub author_id: Uuid,
-    pub content: String,
+    pub content: Option<String>,
     pub reply_to_id: Option<Uuid>,
     pub client_nonce: Option<Uuid>,
+    pub attachment_ids: Vec<Uuid>,
 }
 
 const MESSAGE_COLUMNS: &str = r#"
@@ -79,16 +111,35 @@ impl MessageService {
 
     /// Persist a message. The boolean is `false` when an idempotent nonce replay returned an existing message.
     pub async fn create(&self, input: NewMessage) -> Result<(Message, bool), MessageError> {
-        let content = input.content.trim();
-        if content.is_empty() {
+        let content = input
+            .content
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty());
+        if let Some(content) = content {
+            if content.chars().count() > 8000 {
+                return Err(MessageError::Invalid(
+                    "message content must be at most 8000 characters".into(),
+                ));
+            }
+        }
+        if content.is_none() && input.attachment_ids.is_empty() {
             return Err(MessageError::Invalid(
-                "message content must not be empty".into(),
+                "a message must contain text or at least one attachment".into(),
             ));
         }
-        if content.chars().count() > 8000 {
+        if input.attachment_ids.len() > 10 {
             return Err(MessageError::Invalid(
-                "message content must be at most 8000 characters".into(),
+                "a message may contain at most 10 attachments".into(),
             ));
+        }
+        let mut seen = std::collections::HashSet::new();
+        for attachment_id in &input.attachment_ids {
+            if !seen.insert(*attachment_id) {
+                return Err(MessageError::Invalid(
+                    "duplicate attachment in message".into(),
+                ));
+            }
         }
 
         let mut tx = self.pool.begin().await?;
@@ -103,6 +154,28 @@ impl MessageService {
                 Some(_) => return Err(MessageError::ReplyTargetInvalid),
                 None => return Err(MessageError::NotFound),
             }
+        }
+
+        let mut files = Vec::with_capacity(input.attachment_ids.len());
+        for file_id in &input.attachment_ids {
+            let file: Option<(String, String, i64)> = sqlx::query_as(
+                r#"
+                SELECT original_filename, content_type, size_bytes
+                FROM files
+                WHERE id = $1 AND owner_user_id = $2 AND status = 'ready'
+                  AND purpose = 'attachment' AND deleted_at IS NULL
+                "#,
+            )
+            .bind(file_id)
+            .bind(input.author_id)
+            .fetch_optional(&mut *tx)
+            .await?;
+            let Some((filename, content_type, size_bytes)) = file else {
+                return Err(MessageError::Invalid(
+                    "an attachment is missing, not ready, or owned by another user".into(),
+                ));
+            };
+            files.push((*file_id, filename, content_type, size_bytes));
         }
 
         let inserted = sqlx::query_as::<_, Message>(&format!(
@@ -139,6 +212,23 @@ impl MessageService {
             return Ok((existing, false));
         };
 
+        for (file_id, filename, content_type, size_bytes) in files {
+            sqlx::query(
+                r#"
+                INSERT INTO attachments (id, message_id, file_id, filename, content_type, size_bytes)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                "#,
+            )
+            .bind(tulpar_core::new_id())
+            .bind(message.id)
+            .bind(file_id)
+            .bind(filename)
+            .bind(content_type)
+            .bind(size_bytes)
+            .execute(&mut *tx)
+            .await?;
+        }
+
         sqlx::query(
             "UPDATE channels SET last_message_id = $2, last_message_at = $3, updated_at = now() WHERE id = $1",
         )
@@ -160,6 +250,119 @@ impl MessageService {
         .fetch_optional(&self.pool)
         .await?
         .ok_or(MessageError::NotFound)
+    }
+
+    pub async fn attachments(&self, message_id: Uuid) -> Result<Vec<Attachment>, MessageError> {
+        let attachments = sqlx::query_as::<_, Attachment>(
+            r#"
+            SELECT id, message_id, file_id, filename, content_type, size_bytes, spoiler, created_at
+            FROM attachments
+            WHERE message_id = $1
+            ORDER BY created_at, id
+            "#,
+        )
+        .bind(message_id)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(attachments)
+    }
+
+    pub async fn attachments_for_messages(
+        &self,
+        message_ids: &[Uuid],
+    ) -> Result<Vec<Attachment>, MessageError> {
+        if message_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let attachments = sqlx::query_as::<_, Attachment>(
+            r#"
+            SELECT id, message_id, file_id, filename, content_type, size_bytes, spoiler, created_at
+            FROM attachments
+            WHERE message_id = ANY($1)
+            ORDER BY created_at, id
+            "#,
+        )
+        .bind(message_ids)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(attachments)
+    }
+
+    pub async fn attachment_download(
+        &self,
+        message_id: Uuid,
+        attachment_id: Uuid,
+    ) -> Result<AttachmentDownload, MessageError> {
+        let row = sqlx::query_as::<_, AttachmentDownloadRow>(
+            r#"
+            SELECT a.id, a.message_id, a.file_id, a.filename, a.content_type,
+                   a.size_bytes, a.spoiler, a.created_at, f.object_key
+            FROM attachments a
+            JOIN files f ON f.id = a.file_id
+            WHERE a.message_id = $1 AND a.id = $2 AND f.deleted_at IS NULL
+            "#,
+        )
+        .bind(message_id)
+        .bind(attachment_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(MessageError::NotFound)?;
+        Ok(AttachmentDownload {
+            attachment: Attachment {
+                id: row.id,
+                message_id: row.message_id,
+                file_id: row.file_id,
+                filename: row.filename,
+                content_type: row.content_type,
+                size_bytes: row.size_bytes,
+                spoiler: row.spoiler,
+                created_at: row.created_at,
+            },
+            object_key: row.object_key,
+        })
+    }
+
+    pub async fn add_user_mention(
+        &self,
+        message_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), MessageError> {
+        sqlx::query(
+            "INSERT INTO message_mentions (id, message_id, kind, user_id) VALUES ($1, $2, 'user', $3)",
+        )
+        .bind(tulpar_core::new_id())
+        .bind(message_id)
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn add_role_mention(
+        &self,
+        message_id: Uuid,
+        role_id: Uuid,
+    ) -> Result<(), MessageError> {
+        sqlx::query(
+            "INSERT INTO message_mentions (id, message_id, kind, role_id) VALUES ($1, $2, 'role', $3)",
+        )
+        .bind(tulpar_core::new_id())
+        .bind(message_id)
+        .bind(role_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn add_everyone_mention(&self, message_id: Uuid) -> Result<(), MessageError> {
+        sqlx::query(
+            "INSERT INTO message_mentions (id, message_id, kind) VALUES ($1, $2, 'everyone')",
+        )
+        .bind(tulpar_core::new_id())
+        .bind(message_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
     }
 
     /// Newest-first keyset pagination. `before` and `after` are message IDs.

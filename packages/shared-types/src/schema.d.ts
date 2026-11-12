@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/channels/{channel_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["upload_attachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/channels/{channel_id}/messages": {
         parameters: {
             query?: never;
@@ -820,6 +836,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gateway/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issue_ticket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invites/{code}": {
         parameters: {
             query?: never;
@@ -852,6 +884,22 @@ export interface paths {
         patch: operations["edit_message"];
         trace?: never;
     };
+    "/api/v1/messages/{message_id}/attachments/{attachment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["download_attachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/messages/{message_id}/reactions": {
         parameters: {
             query?: never;
@@ -879,6 +927,70 @@ export interface paths {
         put: operations["add_reaction"];
         post?: never;
         delete: operations["remove_reaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_notifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["mark_notifications_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sync"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sync/instance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sync_instance"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -948,6 +1060,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/notification-preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_preferences"];
+        put: operations["update_preferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/settings": {
         parameters: {
             query?: never;
@@ -988,6 +1116,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["version"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gateway": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["gateway"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1037,6 +1181,19 @@ export interface components {
             /** Format: int64 */
             expires_in: number;
             token_type: string;
+        };
+        AttachmentDto: {
+            content_type: string;
+            /** Format: date-time */
+            created_at: string;
+            filename: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            message_id: string;
+            /** Format: int64 */
+            size_bytes: number;
+            spoiler: boolean;
         };
         AuditLogDto: {
             action: string;
@@ -1273,6 +1430,12 @@ export interface components {
             status: string;
             user: components["schemas"]["FriendUserDto"];
         };
+        GatewayTicketDto: {
+            /** Format: int64 */
+            expires_in: number;
+            gateway_url: string;
+            ticket: string;
+        };
         HealthChecks: {
             database: string;
             redis: string;
@@ -1327,6 +1490,14 @@ export interface components {
         LogoutRequest: {
             refresh_token?: string | null;
         };
+        MarkNotificationsReadRequest: {
+            all?: boolean | null;
+            ids?: string[] | null;
+        };
+        MarkNotificationsReadResponse: {
+            /** Format: int64 */
+            updated: number;
+        };
         MemberDto: {
             /** Format: uuid */
             avatar_file_id?: string | null;
@@ -1346,6 +1517,7 @@ export interface components {
             query?: string | null;
         };
         MessageDto: {
+            attachments: components["schemas"]["AttachmentDto"][];
             /** Format: uuid */
             author_id?: string | null;
             /** Format: uuid */
@@ -1374,6 +1546,39 @@ export interface components {
             /** Format: int64 */
             limit?: number | null;
             query?: string | null;
+        };
+        NotificationDto: {
+            /** Format: uuid */
+            actor_user_id?: string | null;
+            /** Format: uuid */
+            channel_id?: string | null;
+            /** Format: uuid */
+            community_id?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            /** Format: uuid */
+            message_id?: string | null;
+            payload: unknown;
+            /** Format: date-time */
+            read_at?: string | null;
+        };
+        NotificationListQuery: {
+            /** Format: uuid */
+            before?: string | null;
+            /** Format: int64 */
+            limit?: number | null;
+        };
+        NotificationPreferencesDto: {
+            desktop_enabled: boolean;
+            email_enabled: boolean;
+            mentions_only: boolean;
+            sound_enabled: boolean;
+            suppress_everyone: boolean;
+            /** Format: date-time */
+            updated_at: string;
         };
         OverwriteRequest: {
             allow?: string[];
@@ -1499,9 +1704,10 @@ export interface components {
             user_id: string;
         };
         SendMessageRequest: {
+            attachment_ids?: string[];
             /** Format: uuid */
             client_nonce?: string | null;
-            content: string;
+            content?: string | null;
             /** Format: uuid */
             reply_to_id?: string | null;
         };
@@ -1530,6 +1736,51 @@ export interface components {
             show_typing_indicators?: boolean | null;
             theme?: string | null;
         };
+        SyncCommunityDto: {
+            channels: components["schemas"]["ChannelDto"][];
+            community: components["schemas"]["CommunityDto"];
+            read_states: components["schemas"]["ReadStateDto"][];
+            roles: components["schemas"]["RoleDto"][];
+        };
+        SyncGatewayDto: {
+            /** Format: int64 */
+            heartbeat_interval_ms: number;
+            /** Format: int32 */
+            protocol_version: number;
+            url: string;
+        };
+        SyncInstanceDto: {
+            features: unknown;
+            name: string;
+            public_url: string;
+        };
+        SyncInstanceResponse: {
+            api_version: string;
+            features: unknown;
+            name: string;
+            public_url: string;
+            registration_enabled: boolean;
+            require_email_verification: boolean;
+            version: string;
+        };
+        SyncResponse: {
+            blocks: components["schemas"]["BlockedUserDto"][];
+            communities: components["schemas"]["SyncCommunityDto"][];
+            dms: components["schemas"]["DirectConversationDto"][];
+            friend_requests: components["schemas"]["FriendshipDto"][];
+            friends: components["schemas"]["FriendUserDto"][];
+            gateway: components["schemas"]["SyncGatewayDto"];
+            instance: components["schemas"]["SyncInstanceDto"];
+            /** Format: int64 */
+            notifications_unread: number;
+            /** Format: date-time */
+            server_time: string;
+            settings: components["schemas"]["UserSettingsDto"];
+            unread_counts: {
+                [key: string]: number;
+            };
+            user: components["schemas"]["SelfUserDto"];
+        };
         TransferOwnershipRequest: {
             /** Format: uuid */
             new_owner_id: string;
@@ -1544,6 +1795,13 @@ export interface components {
             /** Format: int64 */
             timeout_seconds?: number | null;
         };
+        UpdateNotificationPreferencesRequest: {
+            desktop_enabled?: boolean | null;
+            email_enabled?: boolean | null;
+            mentions_only?: boolean | null;
+            sound_enabled?: boolean | null;
+            suppress_everyone?: boolean | null;
+        };
         UpdateRoleRequest: {
             /** Format: int32 */
             color?: number | null;
@@ -1552,6 +1810,14 @@ export interface components {
             permissions?: string[] | null;
             /** Format: int32 */
             position?: number | null;
+        };
+        UploadedFileDto: {
+            content_type: string;
+            filename: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            size_bytes: number;
         };
         UserExport: {
             /** Format: date-time */
@@ -2169,6 +2435,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChannelDto"];
+                };
+            };
+        };
+    };
+    upload_attachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        /** @description File upload */
+        requestBody: {
+            content: {
+                "multipart/form-data": string;
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadedFileDto"];
                 };
             };
         };
@@ -3323,6 +3616,25 @@ export interface operations {
             };
         };
     };
+    issue_ticket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GatewayTicketDto"];
+                };
+            };
+        };
+    };
     preview_invite: {
         parameters: {
             query?: never;
@@ -3471,6 +3783,29 @@ export interface operations {
             };
         };
     };
+    download_attachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Message identifier */
+                message_id: string;
+                /** @description Attachment identifier */
+                attachment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Attachment bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_reactions: {
         parameters: {
             query?: never;
@@ -3536,6 +3871,91 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_notifications: {
+        parameters: {
+            query?: {
+                /** @description Return notifications older than this ID */
+                before?: string;
+                /** @description Maximum notifications, 1-100 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationDto"][];
+                };
+            };
+        };
+    };
+    mark_notifications_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkNotificationsReadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarkNotificationsReadResponse"];
+                };
+            };
+        };
+    };
+    sync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncResponse"];
+                };
+            };
+        };
+    };
+    sync_instance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncInstanceResponse"];
+                };
             };
         };
     };
@@ -3692,6 +4112,48 @@ export interface operations {
             };
         };
     };
+    get_preferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPreferencesDto"];
+                };
+            };
+        };
+    };
+    update_preferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNotificationPreferencesRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPreferencesDto"];
+                };
+            };
+        };
+    };
     get_settings: {
         parameters: {
             query?: never;
@@ -3790,6 +4252,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VersionResponse"];
                 };
+            };
+        };
+    };
+    gateway: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WebSocket upgrade */
+            101: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

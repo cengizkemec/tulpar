@@ -1,6 +1,6 @@
 # Tulpar Database Design
 
-**Status:** Phase 3 in progress. Migrations `0001` and `0002` implement identity, sessions, communities, permissions, channels, and social metadata. Migration `0003` adds messages, reactions, mentions, pins, read states, and search indexes. Notification, voice, integration, and embed tables remain planned; attachment upload and outbox dispatch are not implemented yet.
+**Status:** Phase 3 complete for the v1 backend scope. Migrations `0001`–`0004` implement identity, sessions, communities, permissions, channels, social metadata, messages, reactions, mentions, pins, read states, attachments, notifications, and notification preferences. Voice, integration, and embed tables remain planned; S3/MinIO storage and multi-node event fan-out are follow-ups.
 
 **Database:** PostgreSQL 16 or newer.
 

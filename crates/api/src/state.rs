@@ -5,10 +5,14 @@ use auth::{AuthError, AuthService, EmailSender};
 use channels::ChannelService;
 use communities::CommunityService;
 use config::AppConfig;
+use events::OutboxService;
+use gateway::{GatewayHub, GatewayTickets};
 use messaging::MessageService;
+use notifications::NotificationService;
 use realtime::{RateLimiter, RedisStore};
 use social::SocialService;
 use sqlx::PgPool;
+use storage::StorageService;
 use users::UserService;
 use uuid::Uuid;
 
@@ -26,6 +30,11 @@ pub struct AppState {
     pub channels: ChannelService,
     pub social: SocialService,
     pub messages: MessageService,
+    pub notifications: NotificationService,
+    pub outbox: OutboxService,
+    pub gateway: GatewayHub,
+    pub tickets: GatewayTickets,
+    pub storage: StorageService,
 }
 
 impl AppState {
@@ -37,6 +46,8 @@ impl AppState {
     ) -> Result<Self, AuthError> {
         let auth = Arc::new(AuthService::new(db.clone(), config.clone(), email)?);
         let rate_limiter = RateLimiter::new(redis.clone());
+        let tickets = GatewayTickets::new(redis.clone());
+        let storage = StorageService::new(&config.storage.root, config.storage.max_upload_bytes);
         Ok(Self {
             config,
             users: UserService::new(db.clone()),
@@ -45,6 +56,11 @@ impl AppState {
             channels: ChannelService::new(db.clone()),
             social: SocialService::new(db.clone()),
             messages: MessageService::new(db.clone()),
+            notifications: NotificationService::new(db.clone()),
+            outbox: OutboxService::new(db.clone()),
+            gateway: GatewayHub::default(),
+            tickets,
+            storage,
             auth,
             db,
             redis,

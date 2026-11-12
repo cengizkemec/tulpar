@@ -81,6 +81,16 @@ impl RedisStore {
             .await?;
         Ok(())
     }
+
+    /// Atomically read and delete a key. Returns `None` when the key is absent or expired.
+    pub async fn get_del(&self, key: &str) -> Result<Option<String>, RealtimeError> {
+        let mut connection = self.connection().await?;
+        let value: Option<String> = redis::cmd("GETDEL")
+            .arg(key)
+            .query_async(&mut connection)
+            .await?;
+        Ok(value)
+    }
 }
 
 /// Rate-limit decision returned to callers.

@@ -358,6 +358,20 @@ async fn messaging_flow(pool: PgPool) {
         .unwrap()
         .to_string();
 
+    let catch_up = with_auth(
+        Request::builder().method("GET").uri(format!(
+            "/api/v1/channels/{channel_id}/messages?after={first_id}"
+        )),
+        &member_token,
+    )
+    .body(Body::empty())
+    .unwrap();
+    let response = app.clone().oneshot(catch_up).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let caught_up = body_json(response).await;
+    assert_eq!(caught_up.as_array().unwrap().len(), 2);
+    assert_eq!(caught_up[0]["id"], second_id);
+
     let unread = with_auth(
         Request::builder()
             .method("GET")

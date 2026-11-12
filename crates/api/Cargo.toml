@@ -12,15 +12,20 @@ axum.workspace = true
 channels = { package = "tulpar-channels", path = "../channels" }
 chrono.workspace = true
 communities = { package = "tulpar-communities", path = "../communities" }
+events = { package = "tulpar-events", path = "../events" }
+gateway = { package = "tulpar-gateway", path = "../gateway" }
 messaging = { package = "tulpar-messaging", path = "../messaging" }
+notifications = { package = "tulpar-notifications", path = "../notifications" }
 common = { package = "tulpar-common", path = "../common" }
 config = { package = "tulpar-config", path = "../config" }
+futures-util.workspace = true
 tulpar_core = { package = "tulpar-core", path = "../core" }
 http.workspace = true
 permissions = { package = "tulpar-permissions", path = "../permissions" }
 realtime = { package = "tulpar-realtime", path = "../realtime" }
 serde.workspace = true
 social = { package = "tulpar-social", path = "../social" }
+storage = { package = "tulpar-storage", path = "../storage" }
 serde_json.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true
@@ -35,4 +40,5 @@ uuid.workspace = true
 
 [dev-dependencies]
 async-trait = "0.1"
+tokio-tungstenite = "0.28"
 

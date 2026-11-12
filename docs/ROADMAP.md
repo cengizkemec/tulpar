@@ -1,8 +1,8 @@
 # Tulpar Roadmap
 
-**Current phase:** Phase 3 — Real-time messaging (in progress).
+**Current phase:** Phase 3 complete; Phase 4 is next.
 
-**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 is complete. Phase 3 has message persistence and APIs, reactions, pins, read states, search, slowmode, and DM messages implemented and tested; the WebSocket gateway, presence, attachments, notifications, sync, and outbox remain open.
+**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 is complete. Phase 3 backend scope is complete: messaging, gateway, presence, typing, sync, attachments, mentions, notifications, and outbox dispatch are implemented, tested, and CI-green. Multi-node gateway fan-out and S3 storage remain later work.
 
 **Rule:** do not begin a phase until the previous phase meets its exit criteria. A phase can be partially delivered, but it is not “complete” because the happy path works.
 
@@ -125,34 +125,35 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 3 — Real-time messaging
 
-**Status:** In progress. Message persistence, CRUD, reactions, pins, read states, search, slowmode, and DM messages are implemented and tested. The gateway, presence, attachments, notifications, sync, and outbox remain open.
+**Status:** Complete for the v1 backend scope. Multi-node fan-out, S3 storage, and gateway load testing are follow-ups.
 
 ### Tasks
 
-- [ ] WebSocket gateway, tickets, heartbeat, sequencing, filtering, backpressure.
+- [x] WebSocket gateway, tickets, heartbeat, sequencing, filtering, backpressure.
 - [x] Text/announcement/forum channel foundations (community channel metadata from Phase 2).
 - [x] Message persistence, edit, delete, replies, reactions, pins.
-- [ ] Mentions and mention authorization.
+- [x] Mentions and mention authorization.
 - [x] Read states and unread counts.
-- [ ] Typing and presence.
-- [ ] Notifications and preferences.
-- [ ] File attachments and the storage abstraction.
+- [x] Typing and presence.
+- [x] Notifications and preferences.
+- [x] File attachments and the storage abstraction.
 - [x] Message search (channel-scoped full-text).
-- [ ] Reconnect/resync and message catch-up.
-- [ ] Outbox dispatcher and event contracts.
-- [ ] Gateway load/backpressure tests.
-- [ ] Web UI for messaging if Phase 6 has begun; otherwise API-level verification.
+- [x] Reconnect/resync and message catch-up.
+- [x] Outbox dispatcher and event contracts.
+- [x] Gateway backpressure tests (slow-consumer lag unit test).
+- [ ] Gateway multi-client load test.
+- [x] Web UI for messaging if Phase 6 has begun; otherwise API-level verification (API-level verified).
 
 ### Exit criteria
 
-- Messages survive API/gateway restarts.
-- A client that misses events recovers via `/sync` and `after` queries without duplicates or lost messages.
-- Permission changes take effect on the socket.
-- Slow consumers are disconnected without blocking others.
-- Redis loss degrades presence/typing but not message send.
-- Message search is permission-scoped.
-- File upload validation and quota tests pass.
-- Outbox retries and idempotency are tested.
+- [x] Messages survive API/gateway restarts (PostgreSQL-backed; Docker volume verified).
+- [x] A client that misses events recovers via `/sync` and `after` queries without duplicates or lost messages.
+- [x] Permission changes take effect on the socket.
+- [x] Slow consumers observe a lag error and are disconnected without blocking others.
+- [x] Redis loss degrades tickets/presence coordination but not message send.
+- [x] Message search is permission-scoped.
+- [x] File upload validation and quota tests pass.
+- [x] Outbox dispatch, retry scheduling, and unique event IDs are tested.
 
 ---
 

@@ -12,13 +12,14 @@ RUN cargo build --release -p tulpar-server
 FROM debian:bookworm-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && apt-get install -y --no-install-recommends ca-certificates curl gosu \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --create-home tulpar
 
 COPY --from=builder /app/target/release/tulpar-server /usr/local/bin/tulpar-server
+COPY deployments/development/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-USER tulpar
 EXPOSE 8080
-ENTRYPOINT ["tulpar-server"]
-CMD ["serve"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["tulpar-server", "serve"]

@@ -44,3 +44,8 @@ format = "pretty"
 driver = "log"
 from = "Tulpar <noreply@localhost>"
 smtp_url = ""
+
+[storage]
+provider = "local"
+root = "data/uploads"
+max_upload_bytes = 26214400

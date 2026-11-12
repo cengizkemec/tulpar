@@ -13,7 +13,9 @@ docker compose --env-file deployments/development/.env \
 curl http://127.0.0.1:18080/health/ready
 ```
 
-The `.env` file contains development-only values and must remain untracked. The API health endpoint reported database and Redis as `up`, and a real community creation succeeded through the Docker API. Use `down` without `-v` to preserve the PostgreSQL volume.
+The `.env` file contains development-only values and must remain untracked. The API health endpoint reported database and Redis as `up`, and real community/message/upload/WebSocket flows succeeded through the Docker API. Use `down` without `-v` to preserve the PostgreSQL and `uploads` volumes.
+
+The API container starts as root only to create and chown the uploads volume, then drops to the `tulpar` user through `gosu`. `TULPAR__STORAGE__ROOT` and `TULPAR__STORAGE__MAX_UPLOAD_BYTES` control the local storage path and per-file limit.
 
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 

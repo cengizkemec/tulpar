@@ -32,6 +32,7 @@ pub struct AppConfig {
     pub cors: CorsConfig,
     pub log: LogConfig,
     pub email: EmailConfig,
+    pub storage: StorageConfig,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -99,6 +100,13 @@ pub struct EmailConfig {
     pub smtp_url: String,
 }
 
+#[derive(Clone, Deserialize, Serialize)]
+pub struct StorageConfig {
+    pub provider: String,
+    pub root: String,
+    pub max_upload_bytes: u64,
+}
+
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -150,6 +158,11 @@ impl Default for AppConfig {
                 driver: "log".to_string(),
                 from: "Tulpar <noreply@localhost>".to_string(),
                 smtp_url: String::new(),
+            },
+            storage: StorageConfig {
+                provider: "local".to_string(),
+                root: "data/uploads".to_string(),
+                max_upload_bytes: 25 * 1024 * 1024,
             },
         }
     }
@@ -257,6 +270,22 @@ impl AppConfig {
                 "unsupported email.driver={}",
                 self.email.driver
             )));
+        }
+
+        if self.storage.provider != "local" {
+            return Err(ConfigError::Invalid(
+                "storage.provider must be local in this release".into(),
+            ));
+        }
+        if self.storage.root.trim().is_empty() {
+            return Err(ConfigError::Invalid(
+                "storage.root must not be empty".into(),
+            ));
+        }
+        if self.storage.max_upload_bytes == 0 {
+            return Err(ConfigError::Invalid(
+                "storage.max_upload_bytes must be positive".into(),
+            ));
         }
 
         Ok(())

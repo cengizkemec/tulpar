@@ -18,14 +18,14 @@ use crate::{
     state::AppState,
 };
 
-struct ChannelAuthorization {
+pub(crate) struct ChannelAuthorization {
     channel: Channel,
     community: Option<CommunityAccess>,
     permissions: Option<Permissions>,
 }
 
 impl ChannelAuthorization {
-    fn require(&self, permission: Permissions) -> Result<(), ApiError> {
+    pub(crate) fn require(&self, permission: Permissions) -> Result<(), ApiError> {
         if let Some(permissions) = &self.permissions {
             if !permissions.contains(permission) {
                 return Err(ApiError::forbidden(
@@ -48,7 +48,7 @@ impl ChannelAuthorization {
     }
 }
 
-async fn authorize_channel(
+pub(crate) async fn authorize_channel(
     state: &AppState,
     user_id: Uuid,
     channel_id: Uuid,
@@ -81,7 +81,7 @@ async fn authorize_channel(
     })
 }
 
-async fn authorize_message(
+pub(crate) async fn authorize_message(
     state: &AppState,
     user_id: Uuid,
     message_id: Uuid,
@@ -89,6 +89,239 @@ async fn authorize_message(
     let message = state.messages.get(message_id).await?;
     let authorization = authorize_channel(state, user_id, message.channel_id).await?;
     Ok((message, authorization))
+}
+
+async fn message_dto(state: &AppState, message: Message) -> Result<MessageDto, ApiError> {
+    let attachments = state.messages.attachments(message.id).await?;
+    Ok(MessageDto::from_message(message, attachments))
+}
+
+async fn message_dtos(
+    state: &AppState,
+    messages: Vec<Message>,
+) -> Result<Vec<MessageDto>, ApiError> {
+    let ids = messages
+        .iter()
+        .map(|message| message.id)
+        .collect::<Vec<_>>();
+    let attachments = state.messages.attachments_for_messages(&ids).await?;
+    let mut grouped: std::collections::HashMap<Uuid, Vec<messaging::Attachment>> =
+        std::collections::HashMap::new();
+    for attachment in attachments {
+        grouped
+            .entry(attachment.message_id)
+            .or_default()
+            .push(attachment);
+    }
+    Ok(messages
+        .into_iter()
+        .map(|message| {
+            let attachments = grouped.remove(&message.id).unwrap_or_default();
+            MessageDto::from_message(message, attachments)
+        })
+        .collect())
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum MentionTarget {
+    User(Uuid),
+    Role(Uuid),
+    Everyone,
+}
+
+fn parse_mentions(content: Option<&str>) -> Vec<MentionTarget> {
+    let Some(content) = content else {
+        return Vec::new();
+    };
+    let mut mentions = Vec::new();
+    for raw in content.split_whitespace() {
+        let token = raw.trim_matches(|character: char| {
+            matches!(
+                character,
+                ',' | '.' | '!' | '?' | ':' | ';' | ')' | ']' | '"' | '\''
+            )
+        });
+        if token == "@everyone" {
+            mentions.push(MentionTarget::Everyone);
+        } else if let Some(id) = token
+            .strip_prefix("<@&")
+            .and_then(|value| value.strip_suffix('>'))
+        {
+            if let Ok(id) = id.parse() {
+                mentions.push(MentionTarget::Role(id));
+            }
+        } else if let Some(id) = token
+            .strip_prefix("<@")
+            .and_then(|value| value.strip_suffix('>'))
+        {
+            if let Ok(id) = id.parse() {
+                mentions.push(MentionTarget::User(id));
+            }
+        }
+    }
+    mentions.sort_by_key(|mention| match mention {
+        MentionTarget::User(id) | MentionTarget::Role(id) => id.to_string(),
+        MentionTarget::Everyone => String::new(),
+    });
+    mentions.dedup();
+    mentions
+}
+
+async fn validate_mentions(
+    state: &AppState,
+    authorization: &ChannelAuthorization,
+    content: Option<&str>,
+) -> Result<(), ApiError> {
+    let mentions = parse_mentions(content);
+    if mentions.is_empty() {
+        return Ok(());
+    }
+    let Some(community_id) = authorization.community_id() else {
+        return Ok(());
+    };
+    for mention in mentions {
+        match mention {
+            MentionTarget::User(user_id) => {
+                if !state.communities.is_member(community_id, user_id).await? {
+                    return Err(ApiError::validation(
+                        "Mentioned users must be community members.",
+                    ));
+                }
+            }
+            MentionTarget::Role(role_id) => {
+                if !authorization.can(Permissions::MENTION_ROLES) {
+                    return Err(ApiError::forbidden(
+                        "mention_roles",
+                        "You cannot mention this role.",
+                    ));
+                }
+                let role = state.communities.get_role(role_id).await?;
+                if role.community_id != community_id {
+                    return Err(ApiError::validation(
+                        "Mentioned role is not in this community.",
+                    ));
+                }
+            }
+            MentionTarget::Everyone => {
+                if !authorization.can(Permissions::MENTION_EVERYONE) {
+                    return Err(ApiError::forbidden(
+                        "mention_everyone",
+                        "You cannot mention everyone.",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn apply_mentions(
+    state: &AppState,
+    authorization: &ChannelAuthorization,
+    message: &Message,
+    author_id: Uuid,
+    content: Option<&str>,
+) -> Result<(), ApiError> {
+    let mentions = parse_mentions(content);
+    if mentions.is_empty() {
+        return Ok(());
+    }
+    let community_id = authorization.community_id();
+    let Some(community_id) = community_id else {
+        // DMs only allow direct user mentions of a participant.
+        for mention in mentions {
+            if let MentionTarget::User(user_id) = mention {
+                if user_id != author_id
+                    && state
+                        .channels
+                        .direct_other_user(message.channel_id, author_id)
+                        .await?
+                        == Some(user_id)
+                {
+                    state.messages.add_user_mention(message.id, user_id).await?;
+                }
+            }
+        }
+        return Ok(());
+    };
+
+    for mention in mentions {
+        match mention {
+            MentionTarget::User(user_id) => {
+                if !state.communities.is_member(community_id, user_id).await? {
+                    return Err(ApiError::validation(
+                        "Mentioned users must be community members.",
+                    ));
+                }
+                state.messages.add_user_mention(message.id, user_id).await?;
+                if user_id != author_id
+                    && state
+                        .notifications
+                        .should_notify(user_id, Some(community_id), Some(message.channel_id))
+                        .await
+                        .unwrap_or(true)
+                {
+                    if let Err(error) = state
+                        .notifications
+                        .create(notifications::NewNotification {
+                            user_id,
+                            kind: "mention".to_string(),
+                            community_id: Some(community_id),
+                            channel_id: Some(message.channel_id),
+                            message_id: Some(message.id),
+                            actor_user_id: Some(author_id),
+                            payload: serde_json::json!({
+                                "message_id": message.id,
+                                "channel_id": message.channel_id,
+                            }),
+                        })
+                        .await
+                    {
+                        tracing::error!(%error, "failed to create mention notification");
+                    }
+                }
+            }
+            MentionTarget::Role(role_id) => {
+                if !authorization.can(Permissions::MENTION_ROLES) {
+                    return Err(ApiError::forbidden(
+                        "mention_roles",
+                        "You cannot mention this role.",
+                    ));
+                }
+                let role = state.communities.get_role(role_id).await?;
+                if role.community_id != community_id {
+                    return Err(ApiError::validation(
+                        "Mentioned role is not in this community.",
+                    ));
+                }
+                state.messages.add_role_mention(message.id, role_id).await?;
+            }
+            MentionTarget::Everyone => {
+                if !authorization.can(Permissions::MENTION_EVERYONE) {
+                    return Err(ApiError::forbidden(
+                        "mention_everyone",
+                        "You cannot mention everyone.",
+                    ));
+                }
+                state.messages.add_everyone_mention(message.id).await?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn publish_message_event(
+    state: &AppState,
+    authorization: &ChannelAuthorization,
+    event: &str,
+    message: &MessageDto,
+) {
+    state.gateway.publish(gateway::GatewayEvent::channel(
+        event,
+        authorization.community_id(),
+        message.channel_id,
+        serde_json::to_value(message).unwrap_or_default(),
+    ));
 }
 
 #[utoipa::path(
@@ -129,17 +362,35 @@ pub async fn send_message(
         }
     }
 
-    let (message, _created) = state
+    validate_mentions(&state, &authorization, payload.content.as_deref()).await?;
+    let (message, created) = state
         .messages
         .create(NewMessage {
             channel_id,
             author_id: current.user().id,
-            content: payload.content,
+            content: payload.content.clone(),
             reply_to_id: payload.reply_to_id,
             client_nonce: payload.client_nonce,
+            attachment_ids: payload.attachment_ids,
         })
         .await?;
-    Ok(Json(message.into()))
+
+    if created {
+        apply_mentions(
+            &state,
+            &authorization,
+            &message,
+            current.user().id,
+            payload.content.as_deref(),
+        )
+        .await?;
+    }
+
+    let dto = message_dto(&state, message).await?;
+    if created {
+        publish_message_event(&state, &authorization, "MESSAGE_CREATE", &dto);
+    }
+    Ok(Json(dto))
 }
 
 #[utoipa::path(
@@ -172,7 +423,7 @@ pub async fn list_messages(
             params.limit.unwrap_or(50),
         )
         .await?;
-    Ok(Json(messages.into_iter().map(MessageDto::from).collect()))
+    Ok(Json(message_dtos(&state, messages).await?))
 }
 
 #[utoipa::path(
@@ -205,7 +456,7 @@ pub async fn search_messages(
         .messages
         .search(channel_id, query, params.limit.unwrap_or(25))
         .await?;
-    Ok(Json(messages.into_iter().map(MessageDto::from).collect()))
+    Ok(Json(message_dtos(&state, messages).await?))
 }
 
 #[utoipa::path(
@@ -222,7 +473,7 @@ pub async fn get_message(
     Path(message_id): Path<Uuid>,
 ) -> Result<Json<MessageDto>, ApiError> {
     let (message, _) = authorize_message(&state, current.user().id, message_id).await?;
-    Ok(Json(message.into()))
+    Ok(Json(message_dto(&state, message).await?))
 }
 
 #[utoipa::path(
@@ -240,15 +491,18 @@ pub async fn edit_message(
     Path(message_id): Path<Uuid>,
     Json(payload): Json<EditMessageRequest>,
 ) -> Result<Json<MessageDto>, ApiError> {
-    let (message, _) = authorize_message(&state, current.user().id, message_id).await?;
+    let (message, authorization) = authorize_message(&state, current.user().id, message_id).await?;
     if message.author_id != Some(current.user().id) {
         return Err(ApiError::forbidden(
             "not_author",
             "Only the author can edit this message.",
         ));
     }
+    validate_mentions(&state, &authorization, Some(&payload.content)).await?;
     let message = state.messages.edit(message_id, &payload.content).await?;
-    Ok(Json(message.into()))
+    let dto = message_dto(&state, message).await?;
+    publish_message_event(&state, &authorization, "MESSAGE_UPDATE", &dto);
+    Ok(Json(dto))
 }
 
 #[utoipa::path(
@@ -268,10 +522,21 @@ pub async fn delete_message(
     if message.author_id != Some(current.user().id) {
         authorization.require(Permissions::MANAGE_MESSAGES)?;
     }
-    state
+    let deleted = state
         .messages
         .soft_delete(message_id, current.user().id)
         .await?;
+    state.gateway.publish(gateway::GatewayEvent::channel(
+        "MESSAGE_DELETE",
+        authorization.community_id(),
+        deleted.channel_id,
+        serde_json::json!({
+            "id": deleted.id,
+            "channel_id": deleted.channel_id,
+            "deleted_at": deleted.deleted_at,
+            "deleted_by": deleted.deleted_by,
+        }),
+    ));
     if let Some(community_id) = authorization.community_id() {
         state
             .record_audit(
@@ -329,6 +594,17 @@ pub async fn add_reaction(
         .messages
         .add_reaction(message_id, current.user().id, &emoji)
         .await?;
+    state.gateway.publish(gateway::GatewayEvent::channel(
+        "MESSAGE_REACTION_ADD",
+        authorization.community_id(),
+        message.channel_id,
+        serde_json::json!({
+            "message_id": message_id,
+            "channel_id": message.channel_id,
+            "user_id": current.user().id,
+            "emoji": emoji,
+        }),
+    ));
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -348,11 +624,22 @@ pub async fn remove_reaction(
     current: CurrentUser,
     Path((message_id, emoji)): Path<(Uuid, String)>,
 ) -> Result<axum::http::StatusCode, ApiError> {
-    let (_, _) = authorize_message(&state, current.user().id, message_id).await?;
+    let (message, authorization) = authorize_message(&state, current.user().id, message_id).await?;
     state
         .messages
         .remove_reaction(message_id, current.user().id, &emoji)
         .await?;
+    state.gateway.publish(gateway::GatewayEvent::channel(
+        "MESSAGE_REACTION_REMOVE",
+        authorization.community_id(),
+        message.channel_id,
+        serde_json::json!({
+            "message_id": message_id,
+            "channel_id": message.channel_id,
+            "user_id": current.user().id,
+            "emoji": emoji,
+        }),
+    ));
     Ok(axum::http::StatusCode::NO_CONTENT)
 }
 
@@ -397,6 +684,15 @@ pub async fn set_read_state(
         .messages
         .set_read_state(current.user().id, channel_id, payload.message_id)
         .await?;
+    state.gateway.publish(gateway::GatewayEvent::user(
+        "READ_STATE_UPDATE",
+        current.user().id,
+        serde_json::json!({
+            "channel_id": read_state.channel_id,
+            "last_read_message_id": read_state.last_read_message_id,
+            "unread_count": read_state.unread_count,
+        }),
+    ));
     Ok(Json(read_state.into()))
 }
 
@@ -416,7 +712,7 @@ pub async fn list_pins(
     let authorization = authorize_channel(&state, current.user().id, channel_id).await?;
     authorization.require(Permissions::READ_MESSAGE_HISTORY)?;
     let messages = state.messages.list_pins(channel_id).await?;
-    Ok(Json(messages.into_iter().map(MessageDto::from).collect()))
+    Ok(Json(message_dtos(&state, messages).await?))
 }
 
 #[utoipa::path(
@@ -441,6 +737,17 @@ pub async fn pin_message(
         .messages
         .pin(channel_id, message_id, current.user().id)
         .await?;
+    state.gateway.publish(gateway::GatewayEvent::channel(
+        "MESSAGE_PIN_UPDATE",
+        authorization.community_id(),
+        channel_id,
+        serde_json::json!({
+            "channel_id": channel_id,
+            "message_id": message_id,
+            "pinned": true,
+            "pinned_by": current.user().id,
+        }),
+    ));
     if let Some(community_id) = authorization.community_id() {
         state
             .record_audit(
@@ -473,6 +780,17 @@ pub async fn unpin_message(
     let authorization = authorize_channel(&state, current.user().id, channel_id).await?;
     authorization.require(Permissions::PIN_MESSAGES)?;
     state.messages.unpin(channel_id, message_id).await?;
+    state.gateway.publish(gateway::GatewayEvent::channel(
+        "MESSAGE_PIN_UPDATE",
+        authorization.community_id(),
+        channel_id,
+        serde_json::json!({
+            "channel_id": channel_id,
+            "message_id": message_id,
+            "pinned": false,
+            "pinned_by": current.user().id,
+        }),
+    ));
     if let Some(community_id) = authorization.community_id() {
         state
             .record_audit(
