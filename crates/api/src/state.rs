@@ -1,8 +1,11 @@
 use std::sync::Arc;
 
 use auth::{AuthError, AuthService, EmailSender};
+use channels::ChannelService;
+use communities::CommunityService;
 use config::AppConfig;
 use realtime::{RateLimiter, RedisStore};
+use social::SocialService;
 use sqlx::PgPool;
 use users::UserService;
 
@@ -15,6 +18,9 @@ pub struct AppState {
     pub rate_limiter: RateLimiter,
     pub auth: Arc<AuthService>,
     pub users: UserService,
+    pub communities: CommunityService,
+    pub channels: ChannelService,
+    pub social: SocialService,
 }
 
 impl AppState {
@@ -29,6 +35,9 @@ impl AppState {
         Ok(Self {
             config,
             users: UserService::new(db.clone()),
+            communities: CommunityService::new(db.clone()),
+            channels: ChannelService::new(db.clone()),
+            social: SocialService::new(db.clone()),
             auth,
             db,
             redis,

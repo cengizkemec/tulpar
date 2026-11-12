@@ -17,7 +17,7 @@ use axum::{
     http::{header, HeaderName, HeaderValue, Method, StatusCode},
     middleware::{self, Next},
     response::Response,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use tower_http::{
@@ -75,7 +75,94 @@ pub fn router(state: AppState) -> Router {
             get(routes::users::get_settings).patch(routes::users::update_settings),
         )
         .route("/me/export", get(routes::users::export_me))
+        .route("/me/communities", get(routes::communities::list_mine))
         .route("/{user_id}", get(routes::users::get_user));
+
+    let communities = Router::new()
+        .route("/", post(routes::communities::create_community))
+        .route(
+            "/{community_id}",
+            get(routes::communities::get_community)
+                .patch(routes::communities::update_community)
+                .delete(routes::communities::delete_community),
+        )
+        .route(
+            "/{community_id}/join",
+            post(routes::communities::join_public),
+        )
+        .route(
+            "/{community_id}/permissions/me",
+            get(routes::communities::my_permissions),
+        )
+        .route(
+            "/{community_id}/members",
+            get(routes::communities::list_members),
+        )
+        .route(
+            "/{community_id}/members/{user_id}",
+            axum::routing::patch(routes::communities::update_member)
+                .delete(routes::communities::kick_member),
+        )
+        .route(
+            "/{community_id}/bans/{user_id}",
+            put(routes::communities::ban_member).delete(routes::communities::unban_member),
+        )
+        .route(
+            "/{community_id}/roles",
+            get(routes::communities::list_roles).post(routes::communities::create_role),
+        )
+        .route(
+            "/{community_id}/roles/{role_id}",
+            axum::routing::patch(routes::communities::update_role)
+                .delete(routes::communities::delete_role),
+        )
+        .route(
+            "/{community_id}/members/{user_id}/roles/{role_id}",
+            put(routes::communities::assign_role).delete(routes::communities::remove_role),
+        )
+        .route(
+            "/{community_id}/channels",
+            get(routes::communities::list_channels).post(routes::communities::create_channel),
+        )
+        .route(
+            "/{community_id}/invites",
+            get(routes::communities::list_invites).post(routes::communities::create_invite),
+        );
+
+    let invites = Router::new().route(
+        "/{code}",
+        get(routes::communities::preview_invite)
+            .post(routes::communities::join_invite)
+            .delete(routes::communities::revoke_invite),
+    );
+
+    let friends = Router::new()
+        .route("/", get(routes::social::list_friends))
+        .route(
+            "/requests",
+            get(routes::social::list_requests).post(routes::social::send_request),
+        )
+        .route(
+            "/requests/{request_id}/accept",
+            post(routes::social::accept_request),
+        )
+        .route(
+            "/requests/{request_id}/decline",
+            post(routes::social::decline_request),
+        )
+        .route("/{user_id}", delete(routes::social::remove_friend));
+
+    let blocks = Router::new()
+        .route("/", get(routes::social::list_blocks))
+        .route(
+            "/{user_id}",
+            put(routes::social::block_user).delete(routes::social::unblock_user),
+        );
+
+    let dms = Router::new().route(
+        "/",
+        get(routes::social::list_dms).post(routes::social::create_dm),
+    );
 
     let cors = cors_layer(&state);
     let body_limit = state.config.server.body_limit_bytes;
@@ -87,6 +174,11 @@ pub fn router(state: AppState) -> Router {
         .route("/api/v1/version", get(routes::health::version))
         .nest("/api/v1/auth", auth)
         .nest("/api/v1/users", users)
+        .nest("/api/v1/communities", communities)
+        .nest("/api/v1/invites", invites)
+        .nest("/api/v1/friends", friends)
+        .nest("/api/v1/blocks", blocks)
+        .nest("/api/v1/dms", dms)
         .with_state(state)
         .merge(SwaggerUi::new("/docs").url("/api/v1/openapi.json", openapi::document()))
         .layer(CompressionLayer::new())

@@ -54,6 +54,23 @@ jobs:
       - name: Tests
         run: cargo test --workspace
 
+  types:
+    name: TypeScript contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm generate:types
+      - run: git diff --exit-code -- packages/shared-types/src/schema.d.ts
+      - run: pnpm typecheck
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
@@ -70,6 +87,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: rustsec/audit-check@v2
+      - uses: taiki-e/install-action@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tool: cargo-audit
+      # RUSTSEC-2023-0071 is in the rsa crate, which is present in the lockfile
+      # through jsonwebtoken's optional RSA support. Tulpar signs and verifies
+      # HS256 tokens only and never uses RSA private-key operations.
+      - run: cargo audit --ignore RUSTSEC-2023-0071

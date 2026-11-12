@@ -1,0 +1,10 @@
+{
+  "name": "tulpar",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "scripts": {
+    "generate:types": "pnpm --filter @tulpar/shared-types generate",
+    "typecheck": "pnpm --filter @tulpar/shared-types typecheck"
+  }
+}

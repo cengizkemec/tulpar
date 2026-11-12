@@ -19,6 +19,7 @@ use crate::{
     get,
     path = "/api/v1/users/me",
     tag = "users",
+    security(("bearer_auth" = [])),
     responses((status = 200, body = SelfUserDto))
 )]
 pub async fn get_me(current: CurrentUser) -> Json<SelfUserDto> {
@@ -29,6 +30,7 @@ pub async fn get_me(current: CurrentUser) -> Json<SelfUserDto> {
     get,
     path = "/api/v1/users/me/export",
     tag = "users",
+    security(("bearer_auth" = [])),
     responses((status = 200, body = crate::dto::UserExport))
 )]
 pub async fn export_me(
@@ -63,6 +65,7 @@ pub async fn export_me(
     delete,
     path = "/api/v1/users/me",
     tag = "users",
+    security(("bearer_auth" = [])),
     request_body = DeleteAccountRequest,
     responses(
         (status = 204, description = "Account deleted"),
@@ -93,6 +96,7 @@ pub async fn delete_me(
     patch,
     path = "/api/v1/users/me",
     tag = "users",
+    security(("bearer_auth" = [])),
     request_body = ProfileUpdateRequest,
     responses(
         (status = 200, body = SelfUserDto),
@@ -147,6 +151,7 @@ pub async fn update_me(
     get,
     path = "/api/v1/users/me/settings",
     tag = "users",
+    security(("bearer_auth" = [])),
     responses((status = 200, body = UserSettingsDto))
 )]
 pub async fn get_settings(
@@ -161,6 +166,7 @@ pub async fn get_settings(
     patch,
     path = "/api/v1/users/me/settings",
     tag = "users",
+    security(("bearer_auth" = [])),
     request_body = SettingsUpdateRequest,
     responses(
         (status = 200, body = UserSettingsDto),
@@ -245,6 +251,7 @@ pub async fn update_settings(
     get,
     path = "/api/v1/users/{user_id}",
     tag = "users",
+    security(("bearer_auth" = [])),
     params(("user_id" = Uuid, Path, description = "User identifier")),
     responses(
         (status = 200, body = PublicUserDto),

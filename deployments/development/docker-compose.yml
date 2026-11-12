@@ -1,0 +1,96 @@
+name: tulpar-dev
+
+services:
+  postgres:
+    image: postgres@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
+    environment:
+      POSTGRES_USER: tulpar
+      POSTGRES_PASSWORD: ${TULPAR_POSTGRES_PASSWORD:?set TULPAR_POSTGRES_PASSWORD}
+      POSTGRES_DB: tulpar
+    ports:
+      - "${TULPAR_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tulpar -d tulpar"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      - "${TULPAR_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  livekit:
+    image: livekit/livekit-server@sha256:25cd902de7cacbd5f1f779f6a6ac1eae20ba8f56b0935934ce6b0ab80d1e3d20
+    command: ["--config", "/etc/livekit.yaml"]
+    environment:
+      LIVEKIT_KEYS: "devkey: ${TULPAR_LIVEKIT_SECRET:?set TULPAR_LIVEKIT_SECRET}"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "50000-50100:50000-50100/udp"
+    restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn@sha256:71c3c990283385567f11794ee692e3a47b66fd9b0bb39e42afbe776e331dd888
+    command:
+      - "--listening-port=3478"
+      - "--fingerprint"
+      - "--lt-cred-mech"
+      - "--user=tulpar:${TULPAR_TURN_PASSWORD:?set TULPAR_TURN_PASSWORD}"
+      - "--realm=tulpar.local"
+      - "--min-port=51000"
+      - "--max-port=51100"
+      - "--no-cli"
+      - "--no-multicast-peers"
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "51000-51100:51000-51100/udp"
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deployments/development/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TULPAR__INSTANCE__NAME: Tulpar Dev
+      TULPAR__INSTANCE__PUBLIC_URL: ${TULPAR_PUBLIC_URL:-http://localhost:8080}
+      TULPAR__INSTANCE__ENVIRONMENT: development
+      TULPAR__SERVER__BIND: 0.0.0.0:8080
+      TULPAR__DATABASE__URL: postgres://tulpar:${TULPAR_POSTGRES_PASSWORD}@postgres:5432/tulpar
+      TULPAR__REDIS__URL: redis://redis:6379
+      TULPAR__AUTH__JWT_SECRET: ${TULPAR_DEV_JWT_SECRET:?set TULPAR_DEV_JWT_SECRET}
+      TULPAR__AUTH__COOKIE_SECURE: "false"
+      TULPAR__AUTH__REQUIRE_EMAIL_VERIFICATION: "false"
+      TULPAR__EMAIL__DRIVER: log
+      TULPAR__LOG__LEVEL: info
+    ports:
+      - "${TULPAR_API_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -196,6 +196,7 @@ pub async fn logout(
     post,
     path = "/api/v1/auth/logout-all",
     tag = "auth",
+    security(("bearer_auth" = [])),
     responses((status = 204, description = "All sessions revoked"))
 )]
 pub async fn logout_all(
@@ -217,6 +218,7 @@ pub async fn logout_all(
     get,
     path = "/api/v1/auth/sessions",
     tag = "auth",
+    security(("bearer_auth" = [])),
     responses((status = 200, body = Vec<SessionDto>))
 )]
 pub async fn list_sessions(
@@ -247,6 +249,7 @@ pub async fn list_sessions(
     delete,
     path = "/api/v1/auth/sessions/{session_id}",
     tag = "auth",
+    security(("bearer_auth" = [])),
     params(("session_id" = Uuid, Path, description = "Session identifier")),
     responses(
         (status = 204, description = "Session revoked"),
@@ -269,6 +272,7 @@ pub async fn revoke_session(
     delete,
     path = "/api/v1/auth/sessions",
     tag = "auth",
+    security(("bearer_auth" = [])),
     responses((status = 204, description = "Other sessions revoked"))
 )]
 pub async fn revoke_other_sessions(
@@ -393,6 +397,7 @@ pub async fn reset_password(
     post,
     path = "/api/v1/auth/password/change",
     tag = "auth",
+    security(("bearer_auth" = [])),
     request_body = ChangePasswordRequest,
     responses(
         (status = 200, description = "Password changed", body = AccessTokenResponse),
@@ -424,6 +429,7 @@ pub async fn change_password(
     post,
     path = "/api/v1/auth/reauth",
     tag = "auth",
+    security(("bearer_auth" = [])),
     request_body = ReauthRequest,
     responses(
         (status = 200, description = "Re-authenticated", body = AccessTokenResponse),
@@ -482,6 +488,7 @@ pub async fn device_code(
     post,
     path = "/api/v1/auth/device/approve",
     tag = "auth",
+    security(("bearer_auth" = [])),
     request_body = DeviceApproveRequest,
     responses((status = 204, description = "Device approved"))
 )]
@@ -503,6 +510,7 @@ pub async fn approve_device(
     post,
     path = "/api/v1/auth/device/deny",
     tag = "auth",
+    security(("bearer_auth" = [])),
     request_body = DeviceApproveRequest,
     responses((status = 204, description = "Device denied"))
 )]

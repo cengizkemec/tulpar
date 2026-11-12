@@ -5,7 +5,10 @@ use axum::{
     http::{header, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
 };
+use channels::ChannelError;
+use communities::CommunityError;
 use serde::Serialize;
+use social::SocialError;
 use users::UserError;
 use utoipa::ToSchema;
 
@@ -219,6 +222,78 @@ impl From<UserError> for ApiError {
             UserError::Invalid(message) => Self::validation(message),
             UserError::Database(error) => {
                 tracing::error!(%error, "user database error");
+                Self::dependency_unavailable("The database is temporarily unavailable.")
+            }
+        }
+    }
+}
+
+impl From<CommunityError> for ApiError {
+    fn from(error: CommunityError) -> Self {
+        match error {
+            CommunityError::NotFound
+            | CommunityError::MemberNotFound
+            | CommunityError::RoleNotFound => Self::not_found("Community resource not found."),
+            CommunityError::InviteInvalid => Self::new(
+                StatusCode::GONE,
+                "invite_expired",
+                "Invite no longer valid",
+                "The invite is expired, revoked, or exhausted.",
+            ),
+            CommunityError::AlreadyMember => {
+                Self::conflict("already_member", "You are already a member.")
+            }
+            CommunityError::Banned => {
+                Self::forbidden("banned", "You are banned from this community.")
+            }
+            CommunityError::RoleConflict => {
+                Self::conflict("role_conflict", "A role with that name already exists.")
+            }
+            CommunityError::Invalid(message) => Self::validation(message),
+            CommunityError::Database(error) => {
+                tracing::error!(%error, "community database error");
+                Self::dependency_unavailable("The database is temporarily unavailable.")
+            }
+        }
+    }
+}
+
+impl From<ChannelError> for ApiError {
+    fn from(error: ChannelError) -> Self {
+        match error {
+            ChannelError::NotFound | ChannelError::ConversationNotFound => {
+                Self::not_found("Channel not found.")
+            }
+            ChannelError::Invalid(message) => Self::validation(message),
+            ChannelError::Database(error) => {
+                tracing::error!(%error, "channel database error");
+                Self::dependency_unavailable("The database is temporarily unavailable.")
+            }
+        }
+    }
+}
+
+impl From<SocialError> for ApiError {
+    fn from(error: SocialError) -> Self {
+        match error {
+            SocialError::FriendshipNotFound => Self::not_found("Friend request not found."),
+            SocialError::AlreadyExists => {
+                Self::conflict("already_exists", "A friendship or request already exists.")
+            }
+            SocialError::SelfAction => {
+                Self::validation("You cannot perform that action on yourself.")
+            }
+            SocialError::RequestsDisabled => Self::forbidden(
+                "friend_requests_disabled",
+                "This user does not accept friend requests.",
+            ),
+            SocialError::DmDisabled => Self::forbidden(
+                "dm_disabled",
+                "This user does not accept direct messages from you.",
+            ),
+            SocialError::Blocked => Self::forbidden("blocked", "This user is blocked."),
+            SocialError::Database(error) => {
+                tracing::error!(%error, "social database error");
                 Self::dependency_unavailable("The database is temporarily unavailable.")
             }
         }

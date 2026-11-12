@@ -6,3 +6,10 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+chrono.workspace = true
+common = { package = "tulpar-common", path = "../common" }
+tulpar_core = { package = "tulpar-core", path = "../core" }
+serde.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+uuid.workspace = true

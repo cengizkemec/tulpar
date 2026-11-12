@@ -854,6 +854,18 @@ impl AuthService {
             return Err(AuthError::InvalidCredentials);
         }
 
+        let owned_communities: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM communities WHERE owner_user_id = $1 AND deleted_at IS NULL",
+        )
+        .bind(user_id)
+        .fetch_one(&self.pool)
+        .await?;
+        if owned_communities > 0 {
+            return Err(AuthError::InvalidInput(
+                "transfer or delete your communities before deleting your account".into(),
+            ));
+        }
+
         let admin_count: i64 =
             sqlx::query_scalar("SELECT COUNT(*) FROM instance_admins WHERE user_id = $1")
                 .bind(user_id)
