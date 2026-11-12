@@ -57,7 +57,10 @@ cargo clippy --workspace --all-targets -- -D warnings -> pass
 cargo test --workspace                             -> 28 tests passed
 pnpm generate:types                                -> pass
 pnpm typecheck                                     -> pass
+GitHub Actions (commit 61d9ed3)                    -> all jobs green
 ```
+
+The rebuilt Docker development stack returned `200` for health, community creation, message send, message list, and message search. The running container exposed 64 OpenAPI paths.
 
 The messaging integration test covers:
 
