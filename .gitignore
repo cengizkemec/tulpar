@@ -1,0 +1,86 @@
+# Rust
+/target/
+**/target/
+**/*.rs.bk
+*.pdb
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+dist-ssr/
+.vite/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+.storybook-out/
+
+# Tauri
+src-tauri/gen/schemas/
+src-tauri/target/
+*.msi
+*.msix
+*.nsis
+*.AppImage
+*.deb
+*.rpm
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+
+# Local databases and dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+
+# Logs and diagnostics
+logs/
+*.log
+diagnostics/
+crash-reports/
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Temporary files
+tmp/
+.temp/
+*.tmp
+*.swp
+*~
+
+# Tool caches
+.cargo/
+.rustup/
+.eslintcache
+.stylelintcache
+.turbo/
+.cache/
+
+# Local runtime configuration (may contain secrets)
+tulpar.toml

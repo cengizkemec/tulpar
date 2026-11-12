@@ -1,0 +1,46 @@
+[instance]
+name = "Tulpar"
+public_url = "http://localhost:8080"
+environment = "development"
+
+[server]
+bind = "127.0.0.1:8080"
+request_timeout_seconds = 30
+body_limit_bytes = 2097152
+
+[database]
+url = "postgres://tulpar@127.0.0.1:55432/tulpar_dev"
+max_connections = 10
+min_connections = 1
+acquire_timeout_seconds = 5
+
+[redis]
+url = "redis://127.0.0.1:6380"
+
+[auth]
+jwt_kid = "dev-2026-11"
+audience = "tulpar-api"
+access_token_ttl_seconds = 900
+refresh_token_ttl_seconds = 2592000
+session_absolute_ttl_seconds = 2592000
+cookie_secure = false
+registration_enabled = true
+require_email_verification = false
+max_sessions_per_user = 20
+password_min_length = 12
+password_max_length = 128
+email_verification_ttl_seconds = 86400
+password_reset_ttl_seconds = 3600
+reauth_window_seconds = 300
+
+[cors]
+allowed_origins = ["http://localhost:5173"]
+
+[log]
+level = "info,tower_http=debug"
+format = "pretty"
+
+[email]
+driver = "log"
+from = "Tulpar <noreply@localhost>"
+smtp_url = ""

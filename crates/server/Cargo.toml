@@ -1,0 +1,24 @@
+﻿[package]
+name = "tulpar-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+api = { package = "tulpar-api", path = "../api" }
+axum.workspace = true
+auth = { package = "tulpar-auth", path = "../auth" }
+clap.workspace = true
+common = { package = "tulpar-common", path = "../common" }
+config = { package = "tulpar-config", path = "../config" }
+database = { package = "tulpar-database", path = "../database" }
+realtime = { package = "tulpar-realtime", path = "../realtime" }
+rpassword.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+users = { package = "tulpar-users", path = "../users" }
+uuid.workspace = true

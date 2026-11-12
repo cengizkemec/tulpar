@@ -1,0 +1,15 @@
+﻿[package]
+name = "tulpar-audit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+chrono.workspace = true
+tulpar_core = { package = "tulpar-core", path = "../core" }
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+

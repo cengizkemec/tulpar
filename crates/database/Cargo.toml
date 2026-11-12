@@ -1,0 +1,15 @@
+﻿[package]
+name = "tulpar-database"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+config = { package = "tulpar-config", path = "../config" }
+tulpar_core = { package = "tulpar-core", path = "../core" }
+sqlx.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
