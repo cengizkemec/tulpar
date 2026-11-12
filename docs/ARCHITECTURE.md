@@ -1,6 +1,6 @@
 # Tulpar Architecture
 
-**Status:** Phase 0 approved; Phase 1 implements the identity/auth foundation. This document describes the target architecture; later sections remain planned and must not be treated as implemented.
+**Status:** Phase 0 approved; Phase 1 identity/auth is implemented and Phase 2 adds communities, permissions, channels, and social foundations. This document describes the target architecture; later sections remain planned and must not be treated as implemented.
 
 **Audience:** maintainers, contributors, operators, security reviewers, and client developers.
 
@@ -672,4 +672,4 @@ Phase 1 is in progress. Implemented and locally verified:
 - Registration, login, refresh rotation, logout, sessions, email verification, password reset/change, re-authentication, and device authorization.
 - User profile/settings endpoints and PostgreSQL integration tests.
 
-Still open before Phase 1 closes: SMTP delivery, account deletion/export, CI, generated TypeScript types, Docker Compose verification, and the OpenAPI security scheme. See [PHASE_1_REPORT.md](PHASE_1_REPORT.md) and [ROADMAP.md](ROADMAP.md).
+Phase 1 is closed apart from the license decision; Phase 2 now implements communities, roles, invites, channels, friends, blocks, and DM metadata. See [PHASE_1_REPORT.md](PHASE_1_REPORT.md), [PHASE_2_REPORT.md](PHASE_2_REPORT.md), and [ROADMAP.md](ROADMAP.md).

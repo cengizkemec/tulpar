@@ -1,6 +1,6 @@
 # Tulpar Security Model
 
-**Status:** Phase 1. The authentication, session, rate-limiting, CSRF/Origin, password-hashing, and local deployment controls are implemented. Many controls in this document belong to later phases and are not yet exercised. This is not a certification or an audit.
+**Status:** Phase 2. Authentication, sessions, rate limiting, CSRF/Origin checks, password hashing, community permission evaluation, friend/block privacy, and the local Docker deployment controls are implemented. Many controls in this document belong to later phases and are not yet exercised. This is not a certification or an audit.
 
 Security is a release blocker, not a later hardening phase. This document defines the threat model, required controls, known limitations, and the review process for changes.
 

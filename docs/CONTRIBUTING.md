@@ -1,6 +1,6 @@
 # Contributing to Tulpar
 
-**Status:** Phase 1. The Rust workspace, auth/API foundation, and local test harness exist. The project is not public-release ready and has no CI pipeline yet.
+**Status:** Phase 2. The Rust workspace, auth/community/social foundation, Docker development stack, generated TypeScript contracts, and GitHub CI workflow exist. The project is not public-release ready.
 
 Tulpar is a long-term, security-sensitive, self-hosted communication platform. Contributions must be deliberate, tested, documented, and consistent with the architecture.
 

@@ -1,6 +1,6 @@
 # Tulpar Deployment
 
-**Status:** Phase 1. The API runs locally against a user-local PostgreSQL 16 cluster and a portable Redis-compatible server for verification. Docker is not installed on the current machine, so the reference Compose stack is not created or tested yet. Production deployment remains Phase 9.
+**Status:** Phase 2. A development Docker Compose stack (`deployments/development`) builds and runs PostgreSQL, Redis, LiveKit, Coturn, and the API with health checks. It was verified from a local non-OneDrive build context because Docker Desktop cannot read the current OneDrive path directly. Production deployment remains Phase 9.
 
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 

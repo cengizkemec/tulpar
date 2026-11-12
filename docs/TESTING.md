@@ -1,6 +1,6 @@
 # Tulpar Testing Strategy
 
-**Status:** Phase 1. Unit tests exist for config, common helpers, password hashing, and rate limiting. PostgreSQL integration tests cover registration/login/refresh reuse, email verification, password reset, and generic invalid-login responses. CI, voice, frontend, and desktop suites do not exist yet.
+**Status:** Phase 2. Unit tests cover config, common helpers, password hashing, rate limiting, and the permission evaluator. PostgreSQL integration tests cover registration/login/refresh reuse, email verification, password reset, account deletion, communities, invites, roles, permissions, friendships, DMs, and blocking. GitHub Actions runs Rust checks/tests and TypeScript contract checks; voice, frontend, and desktop suites do not exist yet.
 
 **Rule:** a feature is not complete until it is tested at the level where it can fail. Mocked voice, mocked permissions, and happy-path-only API tests do not count as completion.
 

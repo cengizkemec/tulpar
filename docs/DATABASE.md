@@ -1,6 +1,6 @@
 # Tulpar Database Design
 
-**Status:** Phase 1. The initial migration implements identity, sessions, device authorization, user settings, files, audit, outbox, idempotency, and instance settings. The remaining tables in this document are the planned v1 schema and land in later phases.
+**Status:** Phase 2. The initial migration implements identity, sessions, device authorization, user settings, files, audit, outbox, idempotency, and instance settings. Migration `0002` adds communities, members, roles, invitations, bans, channels, permission overwrites, friends, blocks, and DM conversation metadata. Message, notification, voice, integration, and embed tables remain planned.
 
 **Database:** PostgreSQL 16 or newer.
 

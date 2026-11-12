@@ -90,7 +90,8 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-audit
-      # RUSTSEC-2023-0071 is in the rsa crate, which is present in the lockfile
-      # through jsonwebtoken's optional RSA support. Tulpar signs and verifies
-      # HS256 tokens only and never uses RSA private-key operations.
-      - run: cargo audit --ignore RUSTSEC-2023-0071
+      # These packages are present only as optional dependencies in Cargo.lock:
+      # - rsa: jsonwebtoken optional RSA support; Tulpar uses HS256 only and
+      #   never performs RSA private-key operations.
+      # - libsqlite3-sys: SQLx SQLite support; Tulpar enables PostgreSQL only.
+      - run: cargo audit --ignore RUSTSEC-2023-0071 --ignore RUSTSEC-2026-0459

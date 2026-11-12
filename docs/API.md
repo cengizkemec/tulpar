@@ -1,6 +1,6 @@
 # Tulpar REST API
 
-**Status:** Phase 1. Auth, session, device-authorization, and user profile/settings endpoints are implemented. The rest of this document is the planned v1 contract and is not implemented yet.
+**Status:** Phase 2. Auth, sessions, device authorization, user profile/settings, account deletion/export, communities, members, roles, invites, channels, friends, blocks, and DM conversation metadata are implemented. Message delivery, channel overwrite endpoints, discovery/search, full moderation listings, voice, and the developer platform are not implemented yet.
 
 **Base path:** `/api/v1`
 

@@ -25,12 +25,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Integration tests against PostgreSQL for auth, refresh reuse, email verification, password reset, account deletion, and export.
 - Local verification report in `docs/PHASE_1_REPORT.md`.
 
-### Planned — Phase 1 completion
+### Added — Phase 2
 
-- Docker Compose development stack (Docker is not installed on the current machine).
-- Full OpenAPI security scheme documentation.
-- Admin CLI end-to-end test.
+- Communities, members, roles, role assignments, invites, bans, and basic channel foundation.
+- Centralized permission bitfield and evaluator with role hierarchy, overwrite ordering, administrator bypass, owner bypass, and timeout handling.
+- Friendships, friend requests, blocking, and DM conversation metadata with privacy checks.
+- Community/member/role/invite/channel/friend/block/DM REST endpoints and OpenAPI schemas.
+- Phase 2 integration test covering community creation, invite join, role assignment, permissions, friendship, DM, and blocking.
+- Verified Docker development stack with pinned PostgreSQL, Redis, LiveKit, and Coturn images.
+
+### Planned — Phase 2 completion
+
+- Channel permission overwrite endpoints and channel-scoped evaluation.
+- Community discovery/search and full moderation listing endpoints.
+- Membership and role hierarchy edge cases beyond the integration test.
+- DM message storage and delivery (Phase 3).
+- Generated SDK/API client wrappers.
+
+### Planned — Phase 1/2 hardening
+
 - First successful GitHub Actions run.
+- `cargo deny` policy and dependency-review workflow.
+- Remove the documented audit exception or replace the RSA-bearing JWT dependency.
+- Move the repository outside OneDrive for direct Docker builds.
+- Full production Compose stack and runbooks (Phase 9).
 
 ### Notes
 

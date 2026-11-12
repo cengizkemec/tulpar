@@ -6,9 +6,9 @@ Tulpar combines Discord-like communities and real-time social features with Team
 
 Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastructure. A community owner can run a Tulpar instance on their own server and retain full control of users, messages, files, voice infrastructure, and configuration.
 
-> **Project status: Phase 1 — Core backend foundation.**
+> **Project status: Phase 2 — Communities, permissions, and social foundation.**
 >
-> The Rust workspace, configuration, PostgreSQL schema, Redis integration, health endpoints, OpenAPI document, authentication, sessions, device authorization, SMTP email delivery, account deletion/export, and user profile/settings endpoints are implemented and tested locally. There is no production-ready release yet. Docker Compose deployment has not been verified, and the CI workflow has not yet been proven on GitHub. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md) for the exact verification status and remaining work.
+> The backend now includes authentication, sessions, SMTP email, account deletion/export, communities, members, roles, invites, channels, the centralized permission evaluator, friends, blocks, and DM conversation metadata. A verified Docker development stack and generated TypeScript contracts exist. Text messages, WebSocket messaging, voice/video, and the clients are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md) and [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md) for verification details and remaining work.
 
 ---
 
@@ -122,6 +122,7 @@ The detailed crate dependency rules and ownership model are in [docs/ARCHITECTUR
 | [ROADMAP.md](docs/ROADMAP.md) | Phases 0–9, deliverables, exit criteria |
 | [PHASE_0_REPORT.md](docs/PHASE_0_REPORT.md) | Phase 0 review packet, risks, open questions, next steps |
 | [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md) | Phase 1 implementation and verification report |
+| [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md) | Phase 2 communities, permissions, and social report |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Development workflow, style, review and security rules |
 
 ## Development environment
@@ -135,7 +136,7 @@ The project targets:
 - Tauri 2 system dependencies for desktop builds.
 - Ubuntu Server 24.04 for production.
 
-The current development machine now has Rust stable and pnpm installed. Docker is still unavailable. Local verification uses a user-local PostgreSQL 16 cluster and a portable Redis-compatible server; see [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md). The local Node version is 26; the project target remains Node 24 LTS for CI and release builds.
+The current development machine has Rust stable, pnpm, Node.js, and Docker Desktop. The Docker development stack was built and run successfully from a local, non-OneDrive build context; Docker still cannot read the OneDrive source path directly. The local Node version is 26; the project target remains Node 24 LTS for CI and release builds.
 
 > **Windows development note:** this repository currently lives under a OneDrive-synced directory. Rust incremental compilation has produced access-denied warnings during local builds. Move the repository to a local, non-synced path, or set `CARGO_TARGET_DIR` outside OneDrive. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#17-development-environment-risks).
 

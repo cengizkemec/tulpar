@@ -1,8 +1,8 @@
 # Tulpar Roadmap
 
-**Current phase:** Phase 1 — Core Backend (in progress).
+**Current phase:** Phase 2 — Communities and social features (in progress).
 
-**Status:** Phase 0 is approved. The Phase 1 workspace, configuration, PostgreSQL schema, Redis integration, API, authentication, sessions, device authorization, SMTP email delivery, account deletion/export, user profile/settings, OpenAPI document, and local integration tests are implemented. The CI workflow is written but not proven on GitHub, and Docker Compose remains open, so Phase 1 is not complete.
+**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision and the first green GitHub Actions run. Phase 2 now has communities, members, roles, invites, bans, channel foundation, the permission evaluator, friends, blocks, and DM metadata implemented and tested. Channel overwrite endpoints, discovery, audit-log APIs, and full moderation coverage remain open.
 
 **Rule:** do not begin a phase until the previous phase meets its exit criteria. A phase can be partially delivered, but it is not “complete” because the happy path works.
 
@@ -95,28 +95,32 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 2 — Communities and social features
 
+**Status:** In progress. The community/permission/social foundation is implemented and tested; the remaining items are listed below.
+
 ### Tasks
 
-- Communities, members, invites, bans, timeouts.
-- Roles, role assignments, hierarchy, channel overwrites.
-- Permission evaluator and effective-permission endpoints.
-- Friends, requests, blocks, privacy settings.
-- Direct messages (channel + participants).
-- User profiles and search.
-- Community discovery and settings.
-- Audit logs.
-- Authorization matrix tests for every resource.
-- Community/role/channel admin UI foundations (if web scaffolding exists).
+- [x] Communities, members, invites, bans, timeouts.
+- [x] Roles, role assignments, hierarchy, and the pure channel-overwrite evaluator.
+- [x] Permission evaluator and effective-permission endpoint.
+- [x] Friends, requests, blocks, privacy settings.
+- [x] Direct conversations (channel + participant privacy; messages are Phase 3).
+- [x] Basic user profiles.
+- [ ] User search and full community discovery/search.
+- [ ] Community settings polish, discovery listing, and audit-log API.
+- [ ] Channel permission overwrite REST endpoints and channel-scoped enforcement.
+- [ ] Audit records for community/social actions.
+- [ ] Full authorization matrix and adversarial escalation tests for every endpoint.
+- [ ] Community/role/channel admin UI foundations (web scaffolding does not exist yet).
 
 ### Exit criteria
 
-- Every permission rule in [PERMISSIONS.md](PERMISSIONS.md) has a passing test.
-- Privilege escalation attempts are rejected and tested.
-- Invite limits, bans, timeouts, and ownership transfer work.
-- DMs are participant-only and block-aware.
-- Cross-community IDOR attempts return the documented status.
-- Audit records are written for moderation/hierarchy actions.
-- Migrations and constraint tests pass.
+- [ ] Every permission rule in [PERMISSIONS.md](PERMISSIONS.md) has a passing test.
+- [ ] Privilege escalation attempts are rejected and covered by integration tests.
+- [ ] Invite limits, bans, timeouts, and ownership transfer have full integration coverage.
+- [x] DMs are participant-only and block-aware in the implemented conversation flow.
+- [x] A private-community IDOR probe returns the documented status.
+- [ ] Audit records are written for moderation/hierarchy actions.
+- [ ] Migration constraint tests cover the Phase 2 schema.
 
 ---
 
@@ -372,29 +376,29 @@ These are candidates, not commitments. Each requires an ADR and a security revie
 
 ## Development environment risks
 
-1. The workspace is under OneDrive; move it to a local path or exclude build outputs.
-2. Rust, Docker, pnpm, and PostgreSQL tooling are not installed yet.
+1. The workspace is under OneDrive; Docker cannot read the build context directly. Use a local path for Docker or CI.
+2. Rust, pnpm, Node, and Docker Desktop are installed; PostgreSQL and Redis run in the Docker development stack.
 3. Windows builds for Linux/Tauri require CI or WSL; desktop WebView differences need real testing.
 4. Voice/video work requires a network environment where UDP and TURN can be tested.
 5. Code signing and update infrastructure require credentials and a release process.
 
-Phase 1 began with toolchain verification. Rust and pnpm are installed; Docker is still unavailable, and the local verification used native PostgreSQL/Redis processes.
+Phase 1 began with toolchain verification. Rust, pnpm, Node, and Docker Desktop are installed; the development stack was built and verified from a local non-OneDrive build context.
 
 ---
 
 ## Phase 1 completion gate
 
-Phase 0 is approved. Phase 1 is implemented but not closed. Before moving to Phase 2:
+Phase 0 is approved. Phase 1 is implemented and its remaining technical checks are closed or explicitly tracked:
 
 - [x] SMTP delivery is implemented and tested against a local SMTP capture.
 - [x] Account deletion and data export follow the documented policy.
-- [x] CI workflow covers format, clippy, tests, secret scanning, and dependency audit.
-- [ ] The CI workflow has passed on GitHub.
-- [ ] Generated TypeScript types are produced from the OpenAPI document.
-- [ ] The development Compose stack is created and verified (or the environment limitation is explicitly accepted).
+- [x] CI workflow covers format, clippy, tests, secret scanning, dependency audit, and TypeScript contracts.
+- [ ] The CI workflow has passed on GitHub (the push is being verified).
+- [x] Generated TypeScript types are produced from the OpenAPI document and typecheck.
+- [x] The development Compose stack is created and verified from a local build context.
 - [x] The OpenAPI Bearer security scheme is registered.
-- [ ] Protected OpenAPI operations are annotated with the security requirement.
+- [x] Protected OpenAPI operations are annotated with the security requirement.
 - [x] The admin CLI create flow is exercised end to end.
 - [ ] The license decision is recorded before any public distribution.
 
-The implementation and verification evidence is in [PHASE_1_REPORT.md](PHASE_1_REPORT.md).
+The implementation and verification evidence is in [PHASE_1_REPORT.md](PHASE_1_REPORT.md) and [PHASE_2_REPORT.md](PHASE_2_REPORT.md).
