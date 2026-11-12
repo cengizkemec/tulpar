@@ -2638,7 +2638,7 @@ version = "0.1.0"
 dependencies = [
  "argon2",
  "async-trait",
- "base64 0.22.1",
+ "base64 0.23.1",
  "chrono",
  "jsonwebtoken",
  "lettre",
@@ -2674,7 +2674,7 @@ dependencies = [
 name = "tulpar-common"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "email_address",
  "rand",
  "sha2",
