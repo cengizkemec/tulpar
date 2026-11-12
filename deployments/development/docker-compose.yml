@@ -48,8 +48,8 @@ services:
     command:
       - "--listening-port=3478"
       - "--fingerprint"
-      - "--lt-cred-mech"
-      - "--user=tulpar:${TULPAR_TURN_PASSWORD:?set TULPAR_TURN_PASSWORD}"
+      - "--use-auth-secret"
+      - "--static-auth-secret=${TULPAR_TURN_PASSWORD:?set TULPAR_TURN_PASSWORD}"
       - "--realm=tulpar.local"
       - "--min-port=51000"
       - "--max-port=51100"
@@ -84,6 +84,13 @@ services:
       TULPAR__LOG__LEVEL: info
       TULPAR__STORAGE__ROOT: /home/tulpar/uploads
       TULPAR__STORAGE__MAX_UPLOAD_BYTES: ${TULPAR_MAX_UPLOAD_BYTES:-26214400}
+      TULPAR__VOICE__LIVEKIT_URL: ws://localhost:7880
+      TULPAR__VOICE__LIVEKIT_API_URL: http://livekit:7880
+      TULPAR__VOICE__API_KEY: devkey
+      TULPAR__VOICE__API_SECRET: ${TULPAR_LIVEKIT_SECRET:?set TULPAR_LIVEKIT_SECRET}
+      TULPAR__VOICE__TURN_SECRET: ${TULPAR_TURN_PASSWORD:?set TULPAR_TURN_PASSWORD}
+      TULPAR__VOICE__STUN_URL: stun:localhost:3478
+      TULPAR__VOICE__TURN_URL: turn:localhost:3478
     ports:
       - "${TULPAR_API_PORT:-8080}:8080"
     volumes:

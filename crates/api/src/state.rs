@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use audit::{AuditEvent, AuditService};
-use auth::{AuthError, AuthService, EmailSender};
+use auth::{AuthError, AuthService, EmailSender, PasswordService};
 use channels::ChannelService;
 use communities::CommunityService;
 use config::AppConfig;
@@ -15,6 +15,7 @@ use sqlx::PgPool;
 use storage::StorageService;
 use users::UserService;
 use uuid::Uuid;
+use voice::{LiveKitAdmin, VoiceProjection};
 
 /// Shared API state.
 #[derive(Clone)]
@@ -35,6 +36,9 @@ pub struct AppState {
     pub gateway: GatewayHub,
     pub tickets: GatewayTickets,
     pub storage: StorageService,
+    pub passwords: PasswordService,
+    pub voice: VoiceProjection,
+    pub livekit_admin: Option<Arc<LiveKitAdmin>>,
 }
 
 impl AppState {
@@ -48,6 +52,14 @@ impl AppState {
         let rate_limiter = RateLimiter::new(redis.clone());
         let tickets = GatewayTickets::new(redis.clone());
         let storage = StorageService::new(&config.storage.root, config.storage.max_upload_bytes);
+        let passwords = PasswordService::new()?;
+        let livekit_admin = LiveKitAdmin::new(
+            &config.voice.livekit_api_url,
+            &config.voice.api_key,
+            &config.voice.api_secret,
+        )
+        .ok()
+        .map(Arc::new);
         Ok(Self {
             config,
             users: UserService::new(db.clone()),
@@ -61,6 +73,9 @@ impl AppState {
             gateway: GatewayHub::default(),
             tickets,
             storage,
+            passwords,
+            voice: VoiceProjection::new(),
+            livekit_admin,
             auth,
             db,
             redis,

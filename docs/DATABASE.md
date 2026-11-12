@@ -1,6 +1,6 @@
 # Tulpar Database Design
 
-**Status:** Phase 3 complete for the v1 backend scope. Migrations `0001`–`0004` implement identity, sessions, communities, permissions, channels, social metadata, messages, reactions, mentions, pins, read states, attachments, notifications, and notification preferences. Voice, integration, and embed tables remain planned; S3/MinIO storage and multi-node event fan-out are follow-ups.
+**Status:** Phase 4 voice backend implemented. Migrations `0001`–`0005` implement identity, sessions, communities, permissions, channels, social metadata, messaging, attachments, notifications, and durable LiveKit webhook deduplication. Live voice participant state is intentionally projected outside PostgreSQL; integration and embed tables remain planned. S3/MinIO storage and multi-node fan-out are follow-ups.
 
 **Database:** PostgreSQL 16 or newer.
 

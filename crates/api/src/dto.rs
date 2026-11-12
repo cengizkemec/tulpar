@@ -10,6 +10,7 @@ use communities::{BanView, Community, CommunityAccess, Invite, MemberView, Role}
 use messaging::{Attachment, Message, Reaction, ReadState};
 use notifications::{Notification, NotificationPreferences};
 use social::{BlockedUser, FriendUser, FriendshipView};
+use voice::{IceServer, VoiceParticipant};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct SelfUserDto {
@@ -1116,4 +1117,104 @@ pub struct SyncInstanceResponse {
     pub features: serde_json::Value,
     pub registration_enabled: bool,
     pub require_email_verification: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VoiceTokenRequest {
+    #[serde(default)]
+    pub password: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct IceServerDto {
+    pub urls: Vec<String>,
+    pub username: Option<String>,
+    pub credential: Option<String>,
+}
+
+impl From<IceServer> for IceServerDto {
+    fn from(value: IceServer) -> Self {
+        Self {
+            urls: value.urls,
+            username: value.username,
+            credential: value.credential,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct VoiceTokenDto {
+    pub url: String,
+    pub room: String,
+    pub token: String,
+    pub expires_at: DateTime<Utc>,
+    pub ice_servers: Vec<IceServerDto>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct VoiceParticipantDto {
+    pub user_id: Uuid,
+    pub channel_id: Uuid,
+    pub display_name: String,
+    pub joined_at: DateTime<Utc>,
+    pub self_mute: bool,
+    pub self_deaf: bool,
+    pub server_mute: bool,
+    pub server_deaf: bool,
+    pub tracks: Vec<VoiceTrackDto>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct VoiceTrackDto {
+    pub sid: String,
+    pub source: String,
+    pub kind: String,
+    pub muted: bool,
+}
+
+impl From<VoiceParticipant> for VoiceParticipantDto {
+    fn from(value: VoiceParticipant) -> Self {
+        Self {
+            user_id: value.user_id,
+            channel_id: value.channel_id,
+            display_name: value.display_name,
+            joined_at: value.joined_at,
+            self_mute: value.self_mute,
+            self_deaf: value.self_deaf,
+            server_mute: value.server_mute,
+            server_deaf: value.server_deaf,
+            tracks: value
+                .tracks
+                .into_iter()
+                .map(|track| VoiceTrackDto {
+                    sid: track.sid,
+                    source: track.source,
+                    kind: track.kind,
+                    muted: track.muted,
+                })
+                .collect(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VoicePasswordRequest {
+    #[serde(default)]
+    pub password: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VoiceModerationRequest {
+    pub enabled: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct VoiceMoveRequest {
+    pub channel_id: Uuid,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct LiveKitWebhookAck {
+    pub received: bool,
+    pub duplicate: bool,
 }

@@ -37,8 +37,12 @@ utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 users = { package = "tulpar-users", path = "../users" }
 uuid.workspace = true
+voice = { package = "tulpar-voice", path = "../voice" }
 
 [dev-dependencies]
 async-trait = "0.1"
+base64.workspace = true
+jsonwebtoken.workspace = true
+sha2.workspace = true
 tokio-tungstenite = "0.28"
 

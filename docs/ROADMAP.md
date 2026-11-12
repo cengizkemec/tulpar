@@ -1,8 +1,8 @@
 # Tulpar Roadmap
 
-**Current phase:** Phase 3 complete; Phase 4 is next.
+**Current phase:** Phase 4 — Voice infrastructure (backend implemented; client verification open).
 
-**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 is complete. Phase 3 backend scope is complete: messaging, gateway, presence, typing, sync, attachments, mentions, notifications, and outbox dispatch are implemented, tested, and CI-green. Multi-node gateway fan-out and S3 storage remain later work.
+**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 is complete. Phase 3 backend scope is complete. Phase 4 backend adds LiveKit tokens, TURN credentials, room policy, webhooks/projection, moderation, and revocation; real-audio and TURN-fallback tests await the web client. Multi-node fan-out and S3 storage remain later work.
 
 **Rule:** do not begin a phase until the previous phase meets its exit criteria. A phase can be partially delivered, but it is not “complete” because the happy path works.
 
@@ -157,30 +157,32 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ---
 
-## Phase 4 — Voice infrastructure
+## Phase 4 - Voice infrastructure
+
+**Status:** Backend implemented and tested. Real client audio and TURN fallback remain open until Phase 6.
 
 ### Tasks
 
-- Deploy LiveKit and Coturn in development and staging.
-- LiveKit token issuance with permission-based sources.
-- Room password, capacity, bans, timeouts.
-- TURN ephemeral credentials.
-- LiveKit webhooks, projection, reconciliation.
-- Server mute/deafen/move/disconnect.
-- Revocation paths.
-- Device selection, mute/deafen, PTT, VAD, per-user volume (client foundation).
-- Real audio tests on supported browsers.
-- TURN fallback tests with UDP blocked.
+- [x] Deploy LiveKit and Coturn in development and staging.
+- [x] LiveKit token issuance with permission-based sources.
+- [x] Room password, capacity, bans, timeouts.
+- [x] TURN ephemeral credentials.
+- [x] LiveKit webhooks and projection (reconciliation worker pending).
+- [x] Server mute/deafen/move/disconnect.
+- [x] Revocation paths for kick, ban, timeout, and user channel overwrite.
+- [ ] Device selection, mute/deafen, PTT, VAD, per-user volume (client foundation).
+- [ ] Real audio tests on supported browsers.
+- [ ] TURN fallback tests with UDP blocked.
 
 ### Exit criteria
 
-- Two or more real clients can hear each other through LiveKit.
-- TURN fallback works with UDP blocked.
-- Token source grants match permissions.
-- Kick/ban/permission loss removes or restricts participants.
-- Webhook signature/replay/out-of-order tests pass.
-- Redis loss does not drop active media.
-- No LiveKit/TURN secret is exposed.
+- [ ] Two or more real clients can hear each other through LiveKit.
+- [ ] TURN fallback works with UDP blocked.
+- [x] Token source grants match permissions.
+- [x] Kick/ban/permission loss removes or restricts participants.
+- [x] Webhook signature/replay/out-of-order tests pass.
+- [x] Redis loss does not drop active media (media plane is LiveKit; Redis is not on the media path).
+- [x] No LiveKit/TURN secret is exposed.
 
 ---
 

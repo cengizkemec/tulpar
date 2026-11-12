@@ -484,6 +484,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/channels/{channel_id}/voice/participants/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["disconnect_participant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/voice/participants/{user_id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move_participant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/voice/participants/{user_id}/server-deafen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["server_deafen"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/voice/participants/{user_id}/server-mute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["server_mute"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/voice/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_password"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/voice/states": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["voice_states"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/channels/{channel_id}/voice/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["issue_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/communities": {
         parameters: {
             query?: never;
@@ -1172,6 +1284,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/livekit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["livekit_webhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1446,6 +1574,11 @@ export interface components {
             server_time: string;
             status: string;
         };
+        IceServerDto: {
+            credential?: string | null;
+            urls: string[];
+            username?: string | null;
+        };
         InviteDto: {
             /** Format: uuid */
             channel_id?: string | null;
@@ -1469,6 +1602,10 @@ export interface components {
             already_member: boolean;
             /** Format: uuid */
             community_id: string;
+        };
+        LiveKitWebhookAck: {
+            duplicate: boolean;
+            received: boolean;
         };
         LivenessResponse: {
             status: string;
@@ -1850,6 +1987,47 @@ export interface components {
             api_version: string;
             name: string;
             version: string;
+        };
+        VoiceModerationRequest: {
+            enabled: boolean;
+        };
+        VoiceMoveRequest: {
+            /** Format: uuid */
+            channel_id: string;
+        };
+        VoiceParticipantDto: {
+            /** Format: uuid */
+            channel_id: string;
+            display_name: string;
+            /** Format: date-time */
+            joined_at: string;
+            self_deaf: boolean;
+            self_mute: boolean;
+            server_deaf: boolean;
+            server_mute: boolean;
+            tracks: components["schemas"]["VoiceTrackDto"][];
+            /** Format: uuid */
+            user_id: string;
+        };
+        VoicePasswordRequest: {
+            password?: string | null;
+        };
+        VoiceTokenDto: {
+            /** Format: date-time */
+            expires_at: string;
+            ice_servers: components["schemas"]["IceServerDto"][];
+            room: string;
+            token: string;
+            url: string;
+        };
+        VoiceTokenRequest: {
+            password?: string | null;
+        };
+        VoiceTrackDto: {
+            kind: string;
+            muted: boolean;
+            sid: string;
+            source: string;
         };
     };
     responses: never;
@@ -2806,6 +2984,183 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadStateDto"];
+                };
+            };
+        };
+    };
+    disconnect_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice channel identifier */
+                channel_id: string;
+                /** @description Participant identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Participant disconnected */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    move_participant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Current voice channel */
+                channel_id: string;
+                /** @description Participant identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description Participant moved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    server_deafen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice channel identifier */
+                channel_id: string;
+                /** @description Participant identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceModerationRequest"];
+            };
+        };
+        responses: {
+            /** @description Server deafen updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    server_mute: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice channel identifier */
+                channel_id: string;
+                /** @description Participant identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceModerationRequest"];
+            };
+        };
+        responses: {
+            /** @description Server mute updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoicePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Voice password updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    voice_states: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceParticipantDto"][];
+                };
+            };
+        };
+    };
+    issue_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Voice channel identifier */
+                channel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceTokenRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceTokenDto"];
                 };
             };
         };
@@ -4315,6 +4670,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    livekit_webhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/webhook+json": string;
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveKitWebhookAck"];
                 };
             };
         };

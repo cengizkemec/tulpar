@@ -33,6 +33,7 @@ pub struct AppConfig {
     pub log: LogConfig,
     pub email: EmailConfig,
     pub storage: StorageConfig,
+    pub voice: VoiceConfig,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -107,6 +108,21 @@ pub struct StorageConfig {
     pub max_upload_bytes: u64,
 }
 
+#[derive(Clone, Deserialize, Serialize)]
+pub struct VoiceConfig {
+    pub livekit_url: String,
+    pub livekit_api_url: String,
+    pub api_key: String,
+    pub api_secret: String,
+    pub token_ttl_seconds: i64,
+    pub stun_url: String,
+    pub turn_url: String,
+    pub turn_tls_url: Option<String>,
+    pub turn_secret: String,
+    pub turn_ttl_seconds: i64,
+    pub max_participants: i32,
+}
+
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -163,6 +179,19 @@ impl Default for AppConfig {
                 provider: "local".to_string(),
                 root: "data/uploads".to_string(),
                 max_upload_bytes: 25 * 1024 * 1024,
+            },
+            voice: VoiceConfig {
+                livekit_url: "ws://localhost:7880".to_string(),
+                livekit_api_url: "http://localhost:7880".to_string(),
+                api_key: String::new(),
+                api_secret: String::new(),
+                token_ttl_seconds: 600,
+                stun_url: "stun:localhost:3478".to_string(),
+                turn_url: "turn:localhost:3478".to_string(),
+                turn_tls_url: None,
+                turn_secret: String::new(),
+                turn_ttl_seconds: 600,
+                max_participants: 100,
             },
         }
     }
@@ -285,6 +314,34 @@ impl AppConfig {
         if self.storage.max_upload_bytes == 0 {
             return Err(ConfigError::Invalid(
                 "storage.max_upload_bytes must be positive".into(),
+            ));
+        }
+
+        if !(300..=900).contains(&self.voice.token_ttl_seconds) {
+            return Err(ConfigError::Invalid(
+                "voice.token_ttl_seconds must be between 300 and 900".into(),
+            ));
+        }
+        if !(300..=3600).contains(&self.voice.turn_ttl_seconds) {
+            return Err(ConfigError::Invalid(
+                "voice.turn_ttl_seconds must be between 300 and 3600".into(),
+            ));
+        }
+        if self.voice.max_participants < 1 {
+            return Err(ConfigError::Invalid(
+                "voice.max_participants must be positive".into(),
+            ));
+        }
+        let livekit_configured =
+            !self.voice.api_key.trim().is_empty() || !self.voice.api_secret.trim().is_empty();
+        if livekit_configured
+            && (self.voice.api_key.trim().is_empty()
+                || self.voice.api_secret.trim().is_empty()
+                || self.voice.livekit_url.trim().is_empty())
+        {
+            return Err(ConfigError::Invalid(
+                "voice.livekit_url, voice.api_key, and voice.api_secret must be configured together"
+                    .into(),
             ));
         }
 

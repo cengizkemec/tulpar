@@ -271,6 +271,42 @@ impl ChannelService {
         Ok(conversations)
     }
 
+    pub async fn voice_password_hash(
+        &self,
+        channel_id: Uuid,
+    ) -> Result<Option<String>, ChannelError> {
+        let hash: Option<Option<String>> = sqlx::query_scalar(
+            "SELECT voice_password_hash FROM channels WHERE id = $1 AND deleted_at IS NULL",
+        )
+        .bind(channel_id)
+        .fetch_optional(&self.pool)
+        .await?;
+        hash.ok_or(ChannelError::NotFound)
+    }
+
+    pub async fn set_voice_password(
+        &self,
+        channel_id: Uuid,
+        password_hash: Option<String>,
+    ) -> Result<Channel, ChannelError> {
+        let channel = sqlx::query_as::<_, Channel>(
+            r#"
+            UPDATE channels
+            SET voice_password_hash = $2, updated_at = now()
+            WHERE id = $1 AND kind = 'voice' AND deleted_at IS NULL
+            RETURNING id, scope, community_id, parent_id, kind, name, topic, position, nsfw,
+                      slowmode_seconds, user_limit, bitrate, last_message_at, last_message_id,
+                      archived_at, created_at, updated_at
+            "#,
+        )
+        .bind(channel_id)
+        .bind(password_hash)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(ChannelError::NotFound)?;
+        Ok(channel)
+    }
+
     pub async fn direct_other_user(
         &self,
         channel_id: Uuid,

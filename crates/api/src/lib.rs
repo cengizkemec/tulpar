@@ -199,6 +199,34 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/{channel_id}/attachments",
             post(routes::attachments::upload_attachment),
+        )
+        .route(
+            "/{channel_id}/voice/token",
+            post(routes::voice::issue_token),
+        )
+        .route(
+            "/{channel_id}/voice/states",
+            get(routes::voice::voice_states),
+        )
+        .route(
+            "/{channel_id}/voice/password",
+            put(routes::voice::set_password),
+        )
+        .route(
+            "/{channel_id}/voice/participants/{user_id}/server-mute",
+            put(routes::voice::server_mute),
+        )
+        .route(
+            "/{channel_id}/voice/participants/{user_id}/server-deafen",
+            put(routes::voice::server_deafen),
+        )
+        .route(
+            "/{channel_id}/voice/participants/{user_id}",
+            delete(routes::voice::disconnect_participant),
+        )
+        .route(
+            "/{channel_id}/voice/participants/{user_id}/move",
+            post(routes::voice::move_participant),
         );
 
     let messages = Router::new()
@@ -275,6 +303,7 @@ pub fn router(state: AppState) -> Router {
         .route("/health/ready", get(routes::health::ready))
         .route("/api/v1/version", get(routes::health::version))
         .route("/gateway", get(routes::gateway::gateway))
+        .route("/webhooks/livekit", post(routes::voice::livekit_webhook))
         .nest("/api/v1/auth", auth)
         .nest("/api/v1/users", users)
         .nest("/api/v1/communities", communities)

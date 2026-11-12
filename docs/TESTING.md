@@ -1,6 +1,6 @@
 # Tulpar Testing Strategy
 
-**Status:** Phase 3 complete for the v1 backend scope. Unit tests cover config, common helpers, password hashing, rate limiting, the permission evaluator, gateway tickets/presence/backpressure, and storage validation. PostgreSQL integration tests cover auth, account lifecycle, communities, permissions, audit logs, moderation, schema constraints, social flows, messaging, real WebSocket gateway flows, attachments, mentions, notifications, outbox dispatch/retry, and `/sync`. GitHub Actions runs Rust checks/tests and TypeScript contract checks; multi-node load, voice, frontend, and desktop suites do not exist yet.
+**Status:** Phase 4 voice backend implemented. Unit tests cover config, common helpers, password hashing, rate limiting, permissions, gateway, storage, LiveKit tokens, TURN credentials, and voice projection. Integration tests cover auth, communities, moderation, messaging, WebSocket gateway, attachments, notifications, outbox, `/sync`, and voice tokens/passwords/webhooks/moderation. GitHub Actions runs Rust checks/tests and TypeScript contract checks; real-browser audio, TURN fallback, multi-node load, frontend, and desktop suites remain open.
 
 **Rule:** a feature is not complete until it is tested at the level where it can fail. Mocked voice, mocked permissions, and happy-path-only API tests do not count as completion.
 

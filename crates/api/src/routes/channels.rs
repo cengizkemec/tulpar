@@ -352,6 +352,12 @@ pub async fn set_user_overwrite(
         .channels
         .set_overwrite(channel_id, None, Some(user_id), allow, deny)
         .await?;
+    if deny.contains(Permissions::CONNECT_VOICE) {
+        if let Ok(channel) = state.channels.get(channel_id).await {
+            super::voice::revoke_channel_user(&state, &channel, user_id, "permission_revoked")
+                .await;
+        }
+    }
     state
         .record_audit(
             Some(current.user().id),

@@ -37,14 +37,22 @@ impl ChannelAuthorization {
         Ok(())
     }
 
-    fn can(&self, permission: Permissions) -> bool {
+    pub(crate) fn can(&self, permission: Permissions) -> bool {
         self.permissions
             .as_ref()
             .is_none_or(|permissions| permissions.contains(permission))
     }
 
-    fn community_id(&self) -> Option<Uuid> {
+    pub(crate) fn community_id(&self) -> Option<Uuid> {
         self.community.as_ref().map(|access| access.community.id)
+    }
+
+    pub(crate) fn channel(&self) -> &Channel {
+        &self.channel
+    }
+
+    pub(crate) fn community(&self) -> Option<&CommunityAccess> {
+        self.community.as_ref()
     }
 }
 

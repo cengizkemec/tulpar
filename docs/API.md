@@ -1,6 +1,6 @@
 # Tulpar REST API
 
-**Status:** Phase 3 complete for the v1 backend scope. Messaging, WebSocket gateway, presence, typing, sync, attachments, mentions, notifications, and outbox dispatch are implemented. Multi-node fan-out, S3 storage, voice/video, and the developer platform are not implemented yet.
+**Status:** Phase 4 voice backend implemented. Messaging, gateway, sync, attachments, notifications, and Phase 4 voice tokens, passwords, moderation, and LiveKit webhooks are implemented. Real client audio, video/screen sharing, multi-node fan-out, S3 storage, and the developer platform remain open.
 
 **Base path:** `/api/v1`
 

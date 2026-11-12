@@ -9,3 +9,4 @@ pub mod notifications;
 pub mod social;
 pub mod sync;
 pub mod users;
+pub mod voice;

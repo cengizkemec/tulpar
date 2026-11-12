@@ -476,6 +476,13 @@ pub async fn update_member(
         .communities
         .update_member(community_id, user_id, payload.nickname, timeout)
         .await?;
+    let can_speak = state
+        .communities
+        .access(community_id, user_id)
+        .await
+        .map(|access| access.permissions.contains(Permissions::SPEAK))
+        .unwrap_or(true);
+    super::voice::set_community_speaking(&state, community_id, user_id, can_speak).await;
     state
         .record_audit(
             Some(current.user().id),
@@ -511,6 +518,7 @@ pub async fn kick_member(
     let target = state.communities.access(community_id, user_id).await?;
     require_target_below(&actor, &target)?;
     state.communities.kick(community_id, user_id).await?;
+    super::voice::revoke_community_user(&state, community_id, user_id).await;
     state
         .record_audit(
             Some(current.user().id),
@@ -569,6 +577,7 @@ pub async fn ban_member(
             expires_at,
         )
         .await?;
+    super::voice::revoke_community_user(&state, community_id, user_id).await;
     state
         .record_audit(
             Some(current.user().id),

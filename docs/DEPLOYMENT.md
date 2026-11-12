@@ -17,6 +17,8 @@ The `.env` file contains development-only values and must remain untracked. The 
 
 The API container starts as root only to create and chown the uploads volume, then drops to the `tulpar` user through `gosu`. `TULPAR__STORAGE__ROOT` and `TULPAR__STORAGE__MAX_UPLOAD_BYTES` control the local storage path and per-file limit.
 
+Voice uses `TULPAR__VOICE__LIVEKIT_URL` (client URL), `TULPAR__VOICE__LIVEKIT_API_URL` (internal admin URL), the LiveKit key/secret, and the Coturn shared secret for ephemeral TURN credentials. Coturn must run with `--use-auth-secret --static-auth-secret=<secret>`; static TURN users are not used. LiveKit webhooks are sent to `/webhooks/livekit` and verified against the API secret.
+
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 
 **Initial topology:** one VPS for the application and data services, with LiveKit/Coturn either co-located or on a separate media host.

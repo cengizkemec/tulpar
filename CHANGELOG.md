@@ -57,6 +57,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Transactional outbox events and a background dispatcher for `NOTIFICATION_CREATE` gateway delivery.
 - Docker uploads volume with a privilege-dropping entrypoint.
 
+### Added — Phase 4 voice backend
+
+- LiveKit token minting with permission-derived publish sources and server-only admin grants.
+- Coturn REST ephemeral credentials and STUN/TURN/TLS ICE server response.
+- Voice token endpoint with channel visibility, `CONNECT_VOICE`, bans, password, capacity, and timeout-to-listener policy.
+- Room password set/remove and voice participant projection.
+- Signed LiveKit webhooks with body SHA-256 verification, durable deduplication, room state, join/leave, tracks, and stale-left protection.
+- LiveKit admin integration for server mute/deafen, disconnect, move, and room deletion.
+- Kick/ban, timeout, and user-level `CONNECT_VOICE` overwrite revocation paths.
+- Voice unit and integration tests with a mock LiveKit admin API.
+
+### Planned — Phase 4 follow-ups
+
+- Real-browser audio verification and TURN fallback with UDP blocked.
+- Client device selection, mute/deafen, PTT, VAD, and per-user volume.
+- Redis-backed multi-node voice projection and LiveKit reconciliation worker.
+- Role-level bulk voice revocation.
+
 ### Planned — Phase 3 follow-ups
 
 - Multi-node Redis fan-out and shared presence/ticket state.

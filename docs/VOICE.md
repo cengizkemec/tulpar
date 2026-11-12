@@ -1,6 +1,6 @@
 # Tulpar Voice
 
-**Status:** Phase 0 design. No voice code or LiveKit deployment exists yet.
+**Status:** Phase 4 backend implemented and tested: token issuance, TURN credentials, room policy, webhooks/projection, moderation, and revocation. Real client audio and UDP-blocked TURN fallback remain open until the web client exists.
 
 **Media server:** LiveKit SFU, deployed independently from the Rust backend.
 
