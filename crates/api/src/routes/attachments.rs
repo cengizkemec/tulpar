@@ -134,7 +134,9 @@ pub async fn download_attachment(
     current: CurrentUser,
     Path((message_id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<(StatusCode, HeaderMap, Body), ApiError> {
-    let (message, _) = messages::authorize_message(&state, current.user().id, message_id).await?;
+    let (message, authorization) =
+        messages::authorize_message(&state, current.user().id, message_id).await?;
+    authorization.require(Permissions::READ_MESSAGE_HISTORY)?;
     if message.deleted_at.is_some() {
         return Err(ApiError::not_found("Attachment not found."));
     }

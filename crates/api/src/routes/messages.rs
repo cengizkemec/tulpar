@@ -472,7 +472,8 @@ pub async fn get_message(
     current: CurrentUser,
     Path(message_id): Path<Uuid>,
 ) -> Result<Json<MessageDto>, ApiError> {
-    let (message, _) = authorize_message(&state, current.user().id, message_id).await?;
+    let (message, authorization) = authorize_message(&state, current.user().id, message_id).await?;
+    authorization.require(Permissions::READ_MESSAGE_HISTORY)?;
     Ok(Json(message_dto(&state, message).await?))
 }
 
