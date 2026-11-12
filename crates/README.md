@@ -35,4 +35,4 @@ The Tulpar backend is a modular monolith. Crates are grouped by responsibility; 
 - `gateway` — WebSocket protocol and connection lifecycle.
 - `server` — binary, wiring, CLI, background workers.
 
-No crate contains application code yet. Phase 1 creates the workspace and verifies the build. See [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for dependency rules and table ownership.
+Implemented crates now include core, common, config, database, audit, realtime, users, auth, permissions, communities, channels, social, api, and server. Messaging, notifications, voice, storage, integrations, and gateway are still skeletons for their owning phases. See [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for dependency rules and table ownership.

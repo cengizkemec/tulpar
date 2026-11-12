@@ -2,6 +2,19 @@
 
 **Status:** Phase 2. A development Docker Compose stack (`deployments/development`) builds and runs PostgreSQL, Redis, LiveKit, Coturn, and the API with health checks. It was verified from a local non-OneDrive build context because Docker Desktop cannot read the current OneDrive path directly. Production deployment remains Phase 9.
 
+## 4.1 Verified development stack
+
+From the repository root:
+
+```bash
+cp deployments/development/.env.example deployments/development/.env
+docker compose --env-file deployments/development/.env \
+  -f deployments/development/docker-compose.yml up -d --build
+curl http://127.0.0.1:18080/health/ready
+```
+
+The `.env` file contains development-only values and must remain untracked. The API health endpoint reported database and Redis as `up`, and a real community creation succeeded through the Docker API. Use `down` without `-v` to preserve the PostgreSQL volume.
+
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 
 **Initial topology:** one VPS for the application and data services, with LiveKit/Coturn either co-located or on a separate media host.
