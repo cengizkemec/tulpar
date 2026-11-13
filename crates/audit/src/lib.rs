@@ -126,6 +126,24 @@ impl AuditService {
         Ok(())
     }
 
+    pub async fn list_global(&self, limit: i64, offset: i64) -> Result<Vec<AuditLog>, AuditError> {
+        let logs = sqlx::query_as::<_, AuditLog>(
+            r#"
+            SELECT a.id, a.actor_user_id, u.username::text AS actor_username, a.actor_type,
+                   a.action, a.community_id, a.target_type, a.target_id, a.metadata, a.created_at
+            FROM audit_logs a
+            LEFT JOIN users u ON u.id = a.actor_user_id
+            ORDER BY a.created_at DESC
+            LIMIT $1 OFFSET $2
+            "#,
+        )
+        .bind(limit.clamp(1, 200))
+        .bind(offset.max(0))
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(logs)
+    }
+
     pub async fn list_community(
         &self,
         community_id: Uuid,

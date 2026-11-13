@@ -160,6 +160,10 @@ try {
   await page.getByText("Profile").first().waitFor({ timeout: 10_000 });
   await page.getByTestId("nav-notifications").click();
   await page.getByText("Mark all read").waitFor({ timeout: 10_000 });
+  await page.goto(`${webUrl}/admin`);
+  await page
+    .getByText("not an instance administrator")
+    .waitFor({ timeout: 10_000 });
   await page.goto(`${webUrl}/app`);
   await page.getByText("# general").first().waitFor({ timeout: 20_000 });
 

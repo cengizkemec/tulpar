@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 import { request } from "../../lib/api";
 import type { NotificationPreferences, UserSettings } from "../../lib/types";
@@ -91,6 +92,12 @@ export function SettingsPage() {
       {saved ? (
         <p className="mt-2 text-sm text-[var(--success)]">Saved.</p>
       ) : null}
+      <Link
+        className="mt-3 inline-block rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm"
+        to="/admin"
+      >
+        Instance administration
+      </Link>
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
         <h2 className="text-sm font-semibold">Profile</h2>

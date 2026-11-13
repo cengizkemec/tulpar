@@ -262,6 +262,15 @@ pub fn router(state: AppState) -> Router {
         .route("/", get(routes::sync::sync))
         .route("/instance", get(routes::sync::sync_instance));
 
+    let admin = Router::new()
+        .route("/overview", get(routes::admin::overview))
+        .route("/users", get(routes::admin::list_users))
+        .route(
+            "/users/{user_id}",
+            axum::routing::patch(routes::admin::update_user),
+        )
+        .route("/audit-logs", get(routes::admin::audit_logs));
+
     let friends = Router::new()
         .route("/", get(routes::social::list_friends))
         .route(
@@ -313,6 +322,7 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/notifications", notifications)
         .nest("/api/v1/gateway", gateway)
         .nest("/api/v1/sync", sync)
+        .nest("/api/v1/admin", admin)
         .nest("/api/v1/friends", friends)
         .nest("/api/v1/blocks", blocks)
         .nest("/api/v1/dms", dms)

@@ -224,7 +224,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Voice/video UI integration (join/leave, mic, camera, screen share).
 - [x] In-app notification center and preferences.
 - [x] Browser notifications with permission control; click routing/desktop toasts pending.
-- [ ] Admin UI (instance and community).
+- [x] Instance admin UI (overview/users/audit); community settings UI pending.
 - [ ] Responsive layouts for desktop/tablet/mobile.
 - [x] PWA manifest and shell-only service worker (offline install verification pending).
 - [x] `en`/`tr` localization foundation.

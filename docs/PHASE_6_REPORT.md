@@ -26,6 +26,7 @@
 - In-app notification center with unread badge, mark-one, and mark-all-read; gateway events refresh the badge.
 - PWA manifest, SVG icon, and service worker that caches only the public app shell; API, gateway, health, and webhook requests are never cached.
 - Responsive sidebar behavior for narrow screens.
+- Instance administration: overview counts, user search, enable/disable, grant/revoke instance admin, and global audit log. Non-admins get a clear access-denied state.
 
 ### Media controls
 
@@ -44,7 +45,8 @@
 - Root `pnpm typecheck` now includes the web app.
 - TypeScript contract CI job runs the production web build.
 - Docker development stack now serves the built web app through nginx at `http://localhost:15173`, proxying `/api`, `/gateway`, and `/webhooks`.
-- `tests/web-e2e` logs in, loads `/sync`, sends a browser message, receives an API-created message over the gateway socket, joins a LiveKit voice channel, reaches `Connected`, enables the fake camera, starts screen sharing with the Edge desktop-capture source, leaves voice, and confirms media state resets. It can run against Vite or the Docker web container.
+- `tests/web-e2e` logs in, loads `/sync`, sends a browser message, receives an API-created message over the gateway socket, opens friends/settings/notifications, checks the admin access-denied state, joins a LiveKit voice channel, reaches `Connected`, enables the fake camera, starts screen sharing with the Edge desktop-capture source, leaves voice, and confirms media state resets. It can run against Vite or the Docker web container.
+- `admin_flow` integration test covers non-admin denial, overview/users, disable/enable, self-disable protection, session revocation, and audit output.
 
 ---
 
@@ -63,7 +65,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 
 ## 3. Known gaps
 
-1. Admin UI and community-settings UI are not implemented.
+1. Community-settings UI is not implemented; instance administration is.
 2. Browser notifications use the basic Web Notification API; desktop toast integration and notification-click routing are pending.
 3. PWA install/offline behavior has not been exercised on real devices; private data is intentionally not cached.
 4. Responsive layouts are basic and the accessibility audit is incomplete.

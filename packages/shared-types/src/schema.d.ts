@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/api/v1/admin/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["audit_logs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_users"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["update_user"];
+        trace?: never;
+    };
     "/api/v1/auth/device/approve": {
         parameters: {
             query?: never;
@@ -1310,6 +1374,53 @@ export interface components {
             expires_in: number;
             token_type: string;
         };
+        AdminAuditQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+            /** Format: int64 */
+            offset?: number | null;
+        };
+        AdminOverviewDto: {
+            /** Format: int64 */
+            active_sessions: number;
+            /** Format: int64 */
+            communities: number;
+            /** Format: int64 */
+            files: number;
+            /** Format: int64 */
+            messages: number;
+            /** Format: int64 */
+            users: number;
+            /** Format: int64 */
+            voice_channels: number;
+        };
+        AdminUpdateUserRequest: {
+            disabled?: boolean | null;
+            instance_admin?: boolean | null;
+        };
+        AdminUserDto: {
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            deleted_at?: string | null;
+            /** Format: date-time */
+            disabled_at?: string | null;
+            display_name: string;
+            email: string;
+            email_verified: boolean;
+            /** Format: uuid */
+            id: string;
+            is_bot: boolean;
+            is_instance_admin: boolean;
+            username: string;
+        };
+        AdminUsersQuery: {
+            /** Format: int64 */
+            limit?: number | null;
+            /** Format: int64 */
+            offset?: number | null;
+            query?: string | null;
+        };
         AttachmentDto: {
             content_type: string;
             /** Format: date-time */
@@ -2038,6 +2149,101 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    audit_logs: {
+        parameters: {
+            query?: {
+                /** @description Maximum records, 1-200 */
+                limit?: number;
+                /** @description Pagination offset */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogDto"][];
+                };
+            };
+        };
+    };
+    overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOverviewDto"];
+                };
+            };
+        };
+    };
+    list_users: {
+        parameters: {
+            query?: {
+                /** @description Username, display name, or email search */
+                query?: string;
+                /** @description Maximum results, 1-100 */
+                limit?: number;
+                /** @description Pagination offset */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserDto"][];
+                };
+            };
+        };
+    };
+    update_user: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User identifier */
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUpdateUserRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserDto"];
+                };
+            };
+        };
+    };
     approve_device: {
         parameters: {
             query?: never;

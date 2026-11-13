@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { AdminPage } from "../features/admin/AdminPage";
 import { bootstrapSession } from "../features/auth/session";
 import { useSession } from "../stores/session";
 import { AppShell } from "../routes/AppShell";
@@ -116,6 +117,14 @@ export function App() {
               element={
                 <Protected>
                   <AppShell />
+                </Protected>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <Protected>
+                  <AdminPage />
                 </Protected>
               }
             />

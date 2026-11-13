@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use users::{User, UserSettings};
+use users::{AdminUser, User, UserSettings};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -1217,4 +1217,71 @@ pub struct VoiceMoveRequest {
 pub struct LiveKitWebhookAck {
     pub received: bool,
     pub duplicate: bool,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminOverviewDto {
+    pub users: i64,
+    pub communities: i64,
+    pub messages: i64,
+    pub active_sessions: i64,
+    pub files: i64,
+    pub voice_channels: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AdminUserDto {
+    pub id: Uuid,
+    pub username: String,
+    pub display_name: String,
+    pub email: String,
+    pub email_verified: bool,
+    pub is_bot: bool,
+    pub disabled_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub is_instance_admin: bool,
+}
+
+impl From<AdminUser> for AdminUserDto {
+    fn from(value: AdminUser) -> Self {
+        Self {
+            id: value.id,
+            username: value.username,
+            display_name: value.display_name,
+            email: value.email,
+            email_verified: value.email_verified_at.is_some(),
+            is_bot: value.is_bot,
+            disabled_at: value.disabled_at,
+            deleted_at: value.deleted_at,
+            created_at: value.created_at,
+            is_instance_admin: value.is_instance_admin,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AdminUsersQuery {
+    #[serde(default)]
+    pub query: Option<String>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+    #[serde(default)]
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AdminUpdateUserRequest {
+    #[serde(default)]
+    pub disabled: Option<bool>,
+    #[serde(default)]
+    pub instance_admin: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AdminAuditQuery {
+    #[serde(default)]
+    pub limit: Option<i64>,
+    #[serde(default)]
+    pub offset: Option<i64>,
 }

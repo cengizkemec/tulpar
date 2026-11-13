@@ -95,6 +95,20 @@ impl UserRecord {
 
 /// User settings returned to the client.
 #[derive(Debug, Clone, Serialize, FromRow)]
+pub struct AdminUser {
+    pub id: Uuid,
+    pub username: String,
+    pub display_name: String,
+    pub email: String,
+    pub email_verified_at: Option<DateTime<Utc>>,
+    pub is_bot: bool,
+    pub disabled_at: Option<DateTime<Utc>>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub is_instance_admin: bool,
+}
+
+#[derive(Debug, Clone, Serialize, FromRow)]
 pub struct UserSettings {
     pub theme: String,
     pub accent_color: String,
@@ -426,6 +440,90 @@ impl UserService {
                 .fetch_one(&self.pool)
                 .await?;
         Ok(exists)
+    }
+
+    pub async fn admin_list(
+        &self,
+        query: Option<&str>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<AdminUser>, UserError> {
+        let pattern = query
+            .map(|value| format!("%{}%", value.trim().replace(['%', '_'], "")))
+            .unwrap_or_else(|| "%".to_string());
+        let users = sqlx::query_as::<_, AdminUser>(
+            r#"
+            SELECT u.id, u.username::text AS username, u.display_name,
+                   u.email::text AS email, u.email_verified_at, u.is_bot,
+                   u.disabled_at, u.deleted_at, u.created_at,
+                   EXISTS(SELECT 1 FROM instance_admins a WHERE a.user_id = u.id) AS is_instance_admin
+            FROM users u
+            WHERE u.username::text ILIKE $1
+               OR u.display_name ILIKE $1
+               OR u.email::text ILIKE $1
+            ORDER BY u.created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+        )
+        .bind(pattern)
+        .bind(limit.clamp(1, 100))
+        .bind(offset.max(0))
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(users)
+    }
+
+    pub async fn set_disabled(&self, user_id: Uuid, disabled: bool) -> Result<(), UserError> {
+        let result = if disabled {
+            sqlx::query(
+                "UPDATE users SET disabled_at = now(), updated_at = now() WHERE id = $1 AND deleted_at IS NULL",
+            )
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?
+        } else {
+            sqlx::query(
+                "UPDATE users SET disabled_at = NULL, updated_at = now() WHERE id = $1 AND deleted_at IS NULL",
+            )
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?
+        };
+        if result.rows_affected() == 0 {
+            return Err(UserError::NotFound);
+        }
+        if disabled {
+            sqlx::query(
+                "UPDATE sessions SET revoked_at = now(), revoked_reason = 'admin_disabled' WHERE user_id = $1 AND revoked_at IS NULL",
+            )
+            .bind(user_id)
+            .execute(&self.pool)
+            .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn set_instance_admin(
+        &self,
+        user_id: Uuid,
+        admin: bool,
+        granted_by: Uuid,
+    ) -> Result<(), UserError> {
+        if admin {
+            sqlx::query(
+                "INSERT INTO instance_admins (user_id, granted_by) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING",
+            )
+            .bind(user_id)
+            .bind(granted_by)
+            .execute(&self.pool)
+            .await?;
+        } else {
+            sqlx::query("DELETE FROM instance_admins WHERE user_id = $1")
+                .bind(user_id)
+                .execute(&self.pool)
+                .await?;
+        }
+        Ok(())
     }
 
     /// Anonymize a deleted account inside a transaction.
