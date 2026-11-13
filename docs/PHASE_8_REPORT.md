@@ -23,6 +23,10 @@
 - `POST /api/v1/embed/authorize` — authenticated member starts the popup authorization flow.
 - `POST /api/v1/embed/token` — public token or one-time code exchange.
 - `GET /api/v1/embed/community` — widget data using a short-lived embed JWT.
+- `POST /api/v1/users/me/api-keys` — create a scoped API key; the plaintext `tk_...` value is returned once.
+- `GET /api/v1/users/me/api-keys` — list keys without plaintext.
+- `DELETE /api/v1/users/me/api-keys/{key_id}` — revoke a key.
+- API keys support `read` and `write` scopes. `read` allows GET/HEAD on non-sensitive routes; `write` additionally allows posting messages. Auth/session, admin, export, audit, API-key-management, and embed-app-management routes are blocked for API keys.
 
 ### Token and origin rules
 
@@ -51,17 +55,18 @@
 
 ## 2. Known gaps
 
-1. API keys, bot accounts, and scoped bot tokens are not implemented.
+1. Bot accounts/dedicated bot profiles are not implemented; API keys are owned by normal user accounts.
 2. Outgoing webhooks with signatures, retries, and SSRF protection are not implemented.
 3. The Rust SDK is not implemented.
 4. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
+5. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
 
 ---
 
 ## 3. Next steps
 
-1. Add the authenticated widget popup and SDK `authenticated` option.
-2. Add API keys/bot accounts with scoped, hashed tokens.
-3. Add outgoing webhooks with HMAC signatures, retries, and SSRF checks.
-4. Add public channel message previews behind the existing flag.
+1. Add bot account creation/management and per-bot permissions.
+2. Add outgoing webhooks with HMAC signatures, retries, and SSRF checks.
+3. Add the Rust SDK and publish versioned SDK packages.
+4. Expand API key scopes for moderation/channel management with an explicit policy.
 5. Add the Rust SDK and publish versioned SDK packages.

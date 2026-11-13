@@ -16,6 +16,15 @@ import type { NotificationPreferences, UserSettings } from "../../lib/types";
 import { usePwa } from "../../stores/pwa";
 import { useSession } from "../../stores/session";
 
+interface ApiKey {
+  id: string;
+  name: string;
+  scopes: string[];
+  created_at: string;
+  last_used_at?: string | null;
+  revoked_at?: string | null;
+}
+
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
   const installPrompt = usePwa((state) => state.prompt);
@@ -44,6 +53,10 @@ export function SettingsPage() {
   );
   const [desktopMessage, setDesktopMessage] = useState<string | null>(null);
   const [desktopError, setDesktopError] = useState<string | null>(null);
+  const [apiKeyName, setApiKeyName] = useState("");
+  const [apiKeyScopes, setApiKeyScopes] = useState<string[]>(["read"]);
+  const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
   const settingsQuery = useQuery({
     queryKey: ["user-settings"],
@@ -55,6 +68,10 @@ export function SettingsPage() {
       request<NotificationPreferences>(
         "/api/v1/users/me/notification-preferences",
       ),
+  });
+  const apiKeys = useQuery({
+    queryKey: ["api-keys"],
+    queryFn: () => request<ApiKey[]>("/api/v1/users/me/api-keys"),
   });
 
   useEffect(() => {
@@ -114,6 +131,47 @@ export function SettingsPage() {
       setSaved(true);
     },
   });
+
+  const createApiKey = useMutation({
+    mutationFn: () =>
+      request<{ api_key: string; key: ApiKey }>(
+        "/api/v1/users/me/api-keys",
+        {
+          method: "POST",
+          body: { name: apiKeyName, scopes: apiKeyScopes },
+        },
+      ),
+    onSuccess: async (data) => {
+      setCreatedApiKey(data.api_key);
+      setApiKeyName("");
+      setApiKeyError(null);
+      await queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (cause) =>
+      setApiKeyError(
+        cause instanceof Error ? cause.message : t("apiKeyCreateFailed"),
+      ),
+  });
+
+  const revokeApiKey = useMutation({
+    mutationFn: (id: string) =>
+      request(`/api/v1/users/me/api-keys/${id}`, { method: "DELETE" }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: (cause) =>
+      setApiKeyError(
+        cause instanceof Error ? cause.message : t("apiKeyRevokeFailed"),
+      ),
+  });
+
+  const toggleApiKeyScope = (scope: string) => {
+    setApiKeyScopes((current) =>
+      current.includes(scope)
+        ? current.filter((value) => value !== scope)
+        : [...current, scope],
+    );
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -238,6 +296,104 @@ export function SettingsPage() {
           ) : null}
         </section>
       ) : null}
+
+      <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+        <h2 className="text-sm font-semibold">{t("apiKeys")}</h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">{t("apiKeysHint")}</p>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <label className="text-sm">
+            <span className="mb-1 block text-[var(--muted)]">
+              {t("apiKeyName")}
+            </span>
+            <input
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+              value={apiKeyName}
+              onChange={(event) => setApiKeyName(event.target.value)}
+            />
+          </label>
+          <div className="text-sm">
+            <span className="mb-1 block text-[var(--muted)]">
+              {t("apiKeyScopes")}
+            </span>
+            <div className="flex flex-wrap gap-3">
+              {["read", "write"].map((scope) => (
+                <label key={scope} className="flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={apiKeyScopes.includes(scope)}
+                    onChange={() => toggleApiKeyScope(scope)}
+                  />
+                  {t(`apiKeyScope_${scope}`)}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button
+          className="mt-3 rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+          disabled={
+            createApiKey.isPending ||
+            !apiKeyName.trim() ||
+            !apiKeyScopes.length
+          }
+          onClick={() => createApiKey.mutate()}
+        >
+          {t("apiKeyCreate")}
+        </button>
+        {createdApiKey ? (
+          <div className="mt-3 rounded-lg bg-[var(--surface)] px-3 py-2">
+            <p className="text-xs text-[var(--muted)]">
+              {t("apiKeyCreatedHint")}
+            </p>
+            <div className="mt-1 flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate text-xs">
+                {createdApiKey}
+              </code>
+              <button
+                className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
+                onClick={() => void navigator.clipboard.writeText(createdApiKey)}
+              >
+                {t("copy")}
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {apiKeyError ? (
+          <p className="mt-2 text-sm text-red-300">{apiKeyError}</p>
+        ) : null}
+        <div className="mt-4 space-y-2">
+          {(apiKeys.data ?? []).map((key) => (
+            <div
+              key={key.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--surface)] px-3 py-2 text-sm"
+            >
+              <div>
+                <p className="font-medium">{key.name}</p>
+                <p className="text-xs text-[var(--muted)]">
+                  {key.scopes.join(", ")}
+                  {key.last_used_at
+                    ? ` · ${t("apiKeyLastUsed")} ${new Date(
+                        key.last_used_at,
+                      ).toLocaleString()}`
+                    : ""}
+                </p>
+              </div>
+              {key.revoked_at ? (
+                <span className="text-xs text-[var(--muted)]">
+                  {t("apiKeyRevoked")}
+                </span>
+              ) : (
+                <button
+                  className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-200"
+                  onClick={() => revokeApiKey.mutate(key.id)}
+                >
+                  {t("apiKeyRevoke")}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
         <h2 className="text-sm font-semibold">{t("profile")}</h2>

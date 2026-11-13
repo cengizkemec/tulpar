@@ -118,6 +118,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - `/embed/v1/tulpar-embed.js` loader and `@tulpar/embed-sdk` TypeScript wrapper.
 - Embed demo site and community-settings embed management UI.
 - Embed integration tests for public/member flows, origins, widgets, code reuse, revocation, and private communities.
+- Scoped API keys with hashed `tk_...` tokens, read/write scopes, revocation, rate limits, and settings UI.
 
 ### Added — Phase 9 production hardening
 

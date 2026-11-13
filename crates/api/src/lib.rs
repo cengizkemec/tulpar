@@ -83,6 +83,14 @@ pub fn router(state: AppState) -> Router {
             get(routes::notifications::get_preferences)
                 .put(routes::notifications::update_preferences),
         )
+        .route(
+            "/me/api-keys",
+            get(routes::api_keys::list_keys).post(routes::api_keys::create_key),
+        )
+        .route(
+            "/me/api-keys/{key_id}",
+            delete(routes::api_keys::revoke_key),
+        )
         .route("/{user_id}", get(routes::users::get_user));
 
     let communities = Router::new()
@@ -319,6 +327,7 @@ pub fn router(state: AppState) -> Router {
         .body_limit_bytes
         .max(state.config.storage.max_upload_bytes as usize + 64 * 1024);
     let timeout = Duration::from_secs(state.config.server.request_timeout_seconds);
+    let api_key_state = state.clone();
 
     Router::new()
         .route("/health/live", get(routes::health::live))
@@ -341,6 +350,10 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/dms", dms)
         .nest("/api/v1/embed", embed)
         .nest("/api/v1/embed-apps", embed_apps)
+        .layer(middleware::from_fn_with_state(
+            api_key_state,
+            extract::api_key_auth,
+        ))
         .with_state(state)
         .merge(SwaggerUi::new("/docs").url("/api/v1/openapi.json", openapi::document()))
         .layer(CompressionLayer::new())

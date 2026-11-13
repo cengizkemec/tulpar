@@ -1383,3 +1383,25 @@ pub struct EmbedMessageDto {
     pub content: String,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ApiKeyDto {
+    pub id: Uuid,
+    pub name: String,
+    pub scopes: Vec<String>,
+    pub created_at: DateTime<Utc>,
+    pub last_used_at: Option<DateTime<Utc>>,
+    pub revoked_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateApiKeyRequest {
+    pub name: String,
+    pub scopes: Vec<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CreateApiKeyResponse {
+    pub api_key: String,
+    pub key: ApiKeyDto,
+}

@@ -3,33 +3,63 @@ use std::{net::IpAddr, time::Duration};
 use auth::{AuthError, AuthenticatedUser};
 use axum::{
     body::Bytes,
-    extract::{FromRequest, FromRequestParts, Request},
+    extract::{FromRequest, FromRequestParts, Request, State},
     http::{
         header::{AUTHORIZATION, COOKIE, ORIGIN, SET_COOKIE, USER_AGENT},
         request::Parts,
-        HeaderMap, HeaderValue,
+        HeaderMap, HeaderValue, Method,
     },
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
+use chrono::Utc;
+use common::token_hash;
 use config::AppConfig;
 use serde::de::DeserializeOwned;
 use utoipa::ToSchema;
 
 use crate::{error::ApiError, state::AppState};
 
-/// Authenticated user extracted from a Bearer access token.
-pub struct CurrentUser(pub AuthenticatedUser);
+/// Context attached to requests authenticated with a scoped API key.
+#[derive(Debug, Clone)]
+pub struct ApiKeyContext {
+    pub key_id: uuid::Uuid,
+    pub user_id: uuid::Uuid,
+    pub scopes: Vec<String>,
+}
+
+type ApiKeyRow = (
+    uuid::Uuid,
+    uuid::Uuid,
+    Vec<String>,
+    Option<chrono::DateTime<Utc>>,
+);
+
+/// Authenticated user extracted from a Bearer access token or API key.
+pub struct CurrentUser {
+    authenticated: AuthenticatedUser,
+    api_key: Option<ApiKeyContext>,
+}
 
 impl CurrentUser {
     pub fn user(&self) -> &users::User {
-        &self.0.user
+        &self.authenticated.user
     }
 
     pub fn session_id(&self) -> uuid::Uuid {
-        self.0.session_id
+        self.authenticated.session_id
     }
 
     pub fn auth_time(&self) -> chrono::DateTime<chrono::Utc> {
-        self.0.auth_time
+        self.authenticated.auth_time
+    }
+
+    pub fn is_api_key(&self) -> bool {
+        self.api_key.is_some()
+    }
+
+    pub fn api_key(&self) -> Option<&ApiKeyContext> {
+        self.api_key.as_ref()
     }
 }
 
@@ -40,6 +70,31 @@ impl FromRequestParts<AppState> for CurrentUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
+        if let Some(api_key) = parts.extensions.get::<ApiKeyContext>() {
+            let record = state
+                .users
+                .get_record(api_key.user_id)
+                .await
+                .map_err(|error| {
+                    tracing::debug!(%error, "API key user lookup failed");
+                    ApiError::unauthorized("invalid_api_key", "The API key is invalid.")
+                })?;
+            if !record.is_active() {
+                return Err(ApiError::unauthorized(
+                    "invalid_api_key",
+                    "The API key owner is not active.",
+                ));
+            }
+            return Ok(Self {
+                authenticated: AuthenticatedUser {
+                    session_id: uuid::Uuid::nil(),
+                    auth_time: Utc::now(),
+                    user: record.public(),
+                },
+                api_key: Some(api_key.clone()),
+            });
+        }
+
         let header = parts
             .headers
             .get(AUTHORIZATION)
@@ -64,8 +119,94 @@ impl FromRequestParts<AppState> for CurrentUser {
                 other => other.into(),
             })?;
 
-        Ok(Self(authenticated))
+        Ok(Self {
+            authenticated,
+            api_key: None,
+        })
     }
+}
+
+fn api_key_allows(method: &Method, path: &str, scopes: &[String]) -> bool {
+    let can_read = scopes
+        .iter()
+        .any(|scope| scope == "read" || scope == "write");
+    let can_write = scopes.iter().any(|scope| scope == "write");
+    if method == Method::GET || method == Method::HEAD {
+        return can_read
+            && !path.starts_with("/api/v1/auth")
+            && !path.starts_with("/api/v1/admin")
+            && !path.contains("/audit-logs")
+            && !path.ends_with("/export")
+            && !path.contains("/api-keys");
+    }
+    if can_write && method == Method::POST {
+        let mut segments = path.trim_start_matches('/').split('/');
+        return matches!(segments.next(), Some("api"))
+            && matches!(segments.next(), Some("v1"))
+            && matches!(segments.next(), Some("channels"))
+            && segments.next().is_some()
+            && matches!(segments.next(), Some("messages"))
+            && segments.next().is_none();
+    }
+    false
+}
+
+/// Authenticate `tk_...` API keys and restrict them to read-only routes plus message sends.
+pub async fn api_key_auth(
+    State(state): State<AppState>,
+    mut request: Request,
+    next: Next,
+) -> Response {
+    let Some(header) = request
+        .headers()
+        .get(AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+    else {
+        return next.run(request).await;
+    };
+    let Some(token) = header.strip_prefix("Bearer ") else {
+        return next.run(request).await;
+    };
+    if !token.starts_with("tk_") {
+        return next.run(request).await;
+    }
+
+    let hash = token_hash(token);
+    let row: Option<ApiKeyRow> =
+        sqlx::query_as("SELECT id, user_id, scopes, revoked_at FROM api_keys WHERE key_hash = $1")
+            .bind(hash.to_vec())
+            .fetch_optional(&state.db)
+            .await
+            .unwrap_or(None);
+    let Some((key_id, user_id, scopes, revoked_at)) = row else {
+        return ApiError::unauthorized("invalid_api_key", "The API key is invalid.")
+            .into_response();
+    };
+    if revoked_at.is_some() {
+        return ApiError::unauthorized("revoked_api_key", "The API key has been revoked.")
+            .into_response();
+    }
+    if !api_key_allows(request.method(), request.uri().path(), &scopes) {
+        return ApiError::forbidden(
+            "api_key_scope",
+            "This API key is not allowed to perform this action.",
+        )
+        .into_response();
+    }
+
+    request.extensions_mut().insert(ApiKeyContext {
+        key_id,
+        user_id,
+        scopes,
+    });
+    let pool = state.db.clone();
+    tokio::spawn(async move {
+        let _ = sqlx::query("UPDATE api_keys SET last_used_at = now() WHERE id = $1")
+            .bind(key_id)
+            .execute(&pool)
+            .await;
+    });
+    next.run(request).await
 }
 
 /// Optional JSON body. Missing or empty bodies are accepted; invalid JSON is a validation error.
