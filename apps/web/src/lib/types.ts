@@ -8,6 +8,7 @@ export type Channel = Schemas["ChannelDto"];
 export type Role = Schemas["RoleDto"];
 export type Message = Schemas["MessageDto"];
 export type SyncResponse = Schemas["SyncResponse"];
+export type SyncInstance = Schemas["SyncInstanceResponse"];
 export type UserSettings = Schemas["UserSettingsDto"];
 export type NotificationPreferences = Schemas["NotificationPreferencesDto"];
 export type Notification = Schemas["NotificationDto"];

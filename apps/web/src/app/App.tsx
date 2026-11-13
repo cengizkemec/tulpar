@@ -4,8 +4,10 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AdminPage } from "../features/admin/AdminPage";
 import { bootstrapSession } from "../features/auth/session";
+import { useInstances } from "../stores/instances";
 import { useSession } from "../stores/session";
 import { AppShell } from "../routes/AppShell";
+import { ConnectPage } from "../routes/ConnectPage";
 import { LoginPage } from "../routes/LoginPage";
 import { RegisterPage } from "../routes/RegisterPage";
 
@@ -42,11 +44,17 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
 
 function Bootstrap({ children }: { children: React.ReactNode }) {
   const bootstrapped = useSession((state) => state.bootstrapped);
+  const currentUrl = useInstances((state) => state.currentUrl);
+  const setCurrent = useInstances((state) => state.setCurrent);
   useEffect(() => {
+    if (!currentUrl) {
+      setCurrent(window.location.origin, window.location.host);
+      return;
+    }
     if (!bootstrapped) {
       void bootstrapSession();
     }
-  }, [bootstrapped]);
+  }, [bootstrapped, currentUrl, setCurrent]);
   return children;
 }
 
@@ -56,6 +64,7 @@ export function App() {
       <BrowserRouter>
         <Bootstrap>
           <Routes>
+            <Route path="/connect" element={<ConnectPage />} />
             <Route
               path="/login"
               element={

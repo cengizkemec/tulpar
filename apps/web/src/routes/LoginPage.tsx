@@ -3,10 +3,13 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 
 import { signIn } from "../features/auth/session";
+import { useInstances } from "../stores/instances";
 
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const serverName = useInstances((state) => state.currentName);
+  const serverUrl = useInstances((state) => state.currentUrl);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,12 @@ export function LoginPage() {
       >
         <h1 className="text-2xl font-semibold">{t("loginTitle")}</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">{t("loginSubtitle")}</p>
+        <p className="mt-2 text-xs text-[var(--muted)]">
+          {serverName || serverUrl}{" "}
+          <Link className="text-[var(--accent)] hover:underline" to="/connect">
+            change server
+          </Link>
+        </p>
         <label className="mt-6 block text-sm">
           <span className="mb-1 block text-[var(--muted)]">{t("email")}</span>
           <input

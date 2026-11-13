@@ -99,12 +99,16 @@ export function AppShell() {
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--accent)] font-bold">
             T
           </span>
-          <div className="min-w-0">
+          <button
+            className="min-w-0 text-left"
+            title="Change server"
+            onClick={() => navigate("/connect")}
+          >
             <p className="truncate text-sm font-semibold">{t("appName")}</p>
             <p className="truncate text-xs text-[var(--muted)]">
-              {sync.data?.instance?.name ?? ""}
+              {sync.data?.instance?.name ?? "Change server"}
             </p>
-          </div>
+          </button>
         </div>
 
         <div className="border-b border-[var(--border)] px-2 py-3">

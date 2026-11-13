@@ -221,6 +221,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 ### Tasks
 
 - [x] Authenticated SPA shell and core routes (login/register/app/channel/DM).
+- [x] Server-address connection screen with saved instance registry.
 - [x] Communities, channels, messaging, DMs, friends, and personal settings UI.
 - [x] Voice/video UI integration (join/leave, mic, camera, screen share).
 - [x] In-app notification center and preferences.

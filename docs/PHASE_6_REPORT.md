@@ -27,6 +27,7 @@
 - PWA manifest, SVG icon, and service worker that caches only the public app shell; API, gateway, health, and webhook requests are never cached.
 - Responsive sidebar behavior for narrow screens.
 - Instance administration: overview counts, user search, enable/disable, grant/revoke instance admin, and global audit log. Non-admins get a clear access-denied state.
+- TeamSpeak-style server connection screen: enter an IP/domain, probe `/sync/instance`, save multiple servers in localStorage, and switch instances. Login shows the active server.
 
 ### Media controls
 
@@ -77,6 +78,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 6. Video layouts cover grid, focus, pin, and fullscreen; multi-monitor/screen-share quality presets are incomplete.
 7. Browser matrix, capability detection, and desktop WebView tests are not recorded.
 8. Web e2e and voice e2e require a local Docker media stack and are not in CI.
+9. Cross-origin instance switching works for API calls, but refresh cookies may require HTTPS, `SameSite=None; Secure`, and matching CORS origins for arbitrary domains.
 
 ---
 

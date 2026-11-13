@@ -88,6 +88,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Voice connection now succeeds without microphone permission; mic errors are non-fatal.
 - Browser notification permission control and gateway-driven notifications.
 - Instance administration API and UI: overview metrics, user search, enable/disable, grant/revoke admin, and global audit log.
+- TeamSpeak-style server-address connection screen with `/sync/instance` probing and a saved instance registry.
+- Push-to-talk and voice connection-quality indicator; voice now connects even if microphone permission is denied.
 - Headless Edge web smoke test covering login, friends/settings routes, message send, gateway delivery, voice connection, camera publishing, screen sharing, and leave cleanup.
 - Docker nginx web container at `http://localhost:15173` proxying API, gateway, health, and webhooks; trusted-proxy IP handling for rate limits and audits.
 

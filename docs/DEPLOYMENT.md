@@ -19,7 +19,9 @@ The API container starts as root only to create and chown the uploads volume, th
 
 Voice uses `TULPAR__VOICE__LIVEKIT_URL` (client URL), `TULPAR__VOICE__LIVEKIT_API_URL` (internal admin URL), the LiveKit key/secret, and the Coturn shared secret for ephemeral TURN credentials. Coturn must run with `--use-auth-secret --static-auth-secret=<secret>`; static TURN users are not used. LiveKit webhooks are sent to `/webhooks/livekit` and verified against the API secret.
 
-The development web container serves the built SPA through nginx at `http://localhost:15173` and proxies `/api`, `/gateway`, `/health`, and `/webhooks` to the API. The API public URL is the web origin so cookie Origin checks and gateway ticket URLs stay consistent. Because requests arrive through nginx, the development API sets `TULPAR__SERVER__TRUST_PROXY=true` so `X-Forwarded-For` is used for rate limiting and audit IPs. Do not enable proxy trust when the API is directly internet-facing without a trusted reverse proxy.
+The development web container serves the built SPA through nginx at `http://localhost:15173` and proxies `/api`, `/gateway`, `/health`, and `/webhooks` to the API. The API public URL is the web origin so cookie Origin checks and gateway ticket URLs stay consistent.
+
+The web client can connect to any instance address (`server.tulpar.com` or `IP:port`) from `/connect`. That instance must allow the web origin in its CORS settings. For cross-site instances, refresh cookies require HTTPS and a `SameSite=None; Secure` policy; same-origin deployments are unaffected. Because requests arrive through nginx, the development API sets `TULPAR__SERVER__TRUST_PROXY=true` so `X-Forwarded-For` is used for rate limiting and audit IPs. Do not enable proxy trust when the API is directly internet-facing without a trusted reverse proxy.
 
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 

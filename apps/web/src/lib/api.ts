@@ -1,7 +1,11 @@
+﻿import { useInstances } from "../stores/instances";
 import { useSession } from "../stores/session";
 import type { LoginResponse, Schemas, SelfUser } from "./types";
 
-const baseUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+function baseUrl(): string {
+  const current = useInstances.getState().currentUrl;
+  return (current || import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+}
 
 export class ApiError extends Error {
   status: number;
@@ -48,7 +52,7 @@ async function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
+        const response = await fetch(`${baseUrl()}/api/v1/auth/refresh`, {
           method: "POST",
           credentials: "include",
         });
@@ -83,7 +87,7 @@ async function rawRequest<T>(
       headers.set("authorization", `Bearer ${token}`);
     }
   }
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetch(`${baseUrl()}${path}`, {
     ...options,
     headers,
     credentials: "include",
@@ -147,3 +151,4 @@ export async function logout(): Promise<void> {
     useSession.getState().clear();
   }
 }
+

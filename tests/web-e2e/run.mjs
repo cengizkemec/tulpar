@@ -147,7 +147,10 @@ try {
     }
   });
 
-  await page.goto(`${webUrl}/login`);
+  await page.goto(`${webUrl}/connect`);
+  await page.getByTestId("connect-address").fill(webUrl);
+  await page.getByTestId("connect-submit").click();
+  await page.waitForURL("**/login", { timeout: 20_000 });
   await page.getByTestId("login-email").fill(setupData.credentials.email);
   await page.getByTestId("login-password").fill(setupData.credentials.password);
   await page.getByTestId("login-submit").click();
