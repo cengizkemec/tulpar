@@ -91,6 +91,99 @@ impl RedisStore {
             .await?;
         Ok(value)
     }
+
+    pub async fn hset(&self, key: &str, field: &str, value: &str) -> Result<(), RealtimeError> {
+        let mut connection = self.connection().await?;
+        redis::cmd("HSET")
+            .arg(key)
+            .arg(field)
+            .arg(value)
+            .query_async::<()>(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn hget(&self, key: &str, field: &str) -> Result<Option<String>, RealtimeError> {
+        let mut connection = self.connection().await?;
+        Ok(redis::cmd("HGET")
+            .arg(key)
+            .arg(field)
+            .query_async(&mut connection)
+            .await?)
+    }
+
+    pub async fn hgetall(&self, key: &str) -> Result<HashMap<String, String>, RealtimeError> {
+        let mut connection = self.connection().await?;
+        Ok(redis::cmd("HGETALL")
+            .arg(key)
+            .query_async(&mut connection)
+            .await?)
+    }
+
+    pub async fn hdel(&self, key: &str, field: &str) -> Result<(), RealtimeError> {
+        let mut connection = self.connection().await?;
+        redis::cmd("HDEL")
+            .arg(key)
+            .arg(field)
+            .query_async::<()>(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn hexists(&self, key: &str, field: &str) -> Result<bool, RealtimeError> {
+        let mut connection = self.connection().await?;
+        Ok(redis::cmd("HEXISTS")
+            .arg(key)
+            .arg(field)
+            .query_async(&mut connection)
+            .await?)
+    }
+
+    pub async fn hlen(&self, key: &str) -> Result<i64, RealtimeError> {
+        let mut connection = self.connection().await?;
+        Ok(redis::cmd("HLEN")
+            .arg(key)
+            .query_async(&mut connection)
+            .await?)
+    }
+
+    pub async fn expire(&self, key: &str, ttl: Duration) -> Result<(), RealtimeError> {
+        let mut connection = self.connection().await?;
+        redis::cmd("EXPIRE")
+            .arg(key)
+            .arg(ttl.as_secs())
+            .query_async::<()>(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn sadd(&self, key: &str, member: &str) -> Result<(), RealtimeError> {
+        let mut connection = self.connection().await?;
+        redis::cmd("SADD")
+            .arg(key)
+            .arg(member)
+            .query_async::<()>(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn srem(&self, key: &str, member: &str) -> Result<(), RealtimeError> {
+        let mut connection = self.connection().await?;
+        redis::cmd("SREM")
+            .arg(key)
+            .arg(member)
+            .query_async::<()>(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn smembers(&self, key: &str) -> Result<Vec<String>, RealtimeError> {
+        let mut connection = self.connection().await?;
+        Ok(redis::cmd("SMEMBERS")
+            .arg(key)
+            .query_async(&mut connection)
+            .await?)
+    }
 }
 
 /// Rate-limit decision returned to callers.

@@ -3220,6 +3220,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tulpar-core",
+ "tulpar-realtime",
  "uuid",
 ]
 

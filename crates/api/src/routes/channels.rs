@@ -255,6 +255,7 @@ pub async fn set_role_overwrite(
         .channels
         .set_overwrite(channel_id, Some(role_id), None, allow, deny)
         .await?;
+    super::voice::reconcile_community_voice(&state, access.community.id).await;
     state
         .record_audit(
             Some(current.user().id),
@@ -295,6 +296,7 @@ pub async fn delete_role_overwrite(
         .channels
         .delete_overwrite(channel_id, Some(role_id), None)
         .await?;
+    super::voice::reconcile_community_voice(&state, access.community.id).await;
     state
         .record_audit(
             Some(current.user().id),

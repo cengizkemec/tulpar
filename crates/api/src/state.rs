@@ -74,7 +74,7 @@ impl AppState {
             tickets,
             storage,
             passwords,
-            voice: VoiceProjection::new(),
+            voice: VoiceProjection::with_redis(redis.clone()),
             livekit_admin,
             auth,
             db,

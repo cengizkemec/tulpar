@@ -13,6 +13,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::{DateTime, Utc};
 use hmac::{Hmac, Mac};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use realtime::RedisStore;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha1::Sha1;
@@ -303,7 +304,7 @@ fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
     difference == 0
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VoiceTrack {
     pub sid: String,
     pub source: String,
@@ -311,7 +312,7 @@ pub struct VoiceTrack {
     pub muted: bool,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VoiceParticipant {
     pub user_id: Uuid,
     pub channel_id: Uuid,
@@ -327,11 +328,29 @@ pub struct VoiceParticipant {
 #[derive(Clone, Default)]
 pub struct VoiceProjection {
     rooms: Arc<Mutex<HashMap<Uuid, HashMap<Uuid, VoiceParticipant>>>>,
+    redis: Option<RedisStore>,
 }
+
+const VOICE_TTL_SECS: u64 = 3600;
 
 impl VoiceProjection {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn with_redis(redis: Option<RedisStore>) -> Self {
+        Self {
+            rooms: Arc::new(Mutex::new(HashMap::new())),
+            redis,
+        }
+    }
+
+    fn room_key(channel_id: Uuid) -> String {
+        format!("voice:room:{channel_id}")
+    }
+
+    fn user_key(user_id: Uuid) -> String {
+        format!("voice:user:{user_id}")
     }
 
     pub async fn join(
@@ -342,27 +361,68 @@ impl VoiceProjection {
         joined_at: DateTime<Utc>,
         tracks: Vec<VoiceTrack>,
     ) {
+        let participant = VoiceParticipant {
+            user_id,
+            channel_id,
+            display_name,
+            joined_at,
+            self_mute: false,
+            self_deaf: false,
+            server_mute: false,
+            server_deaf: false,
+            tracks,
+        };
+        if let Some(redis) = &self.redis {
+            if let Ok(serialized) = serde_json::to_string(&participant) {
+                let room_key = Self::room_key(channel_id);
+                if redis
+                    .hset(&room_key, &user_id.to_string(), &serialized)
+                    .await
+                    .is_ok()
+                {
+                    let _ = redis
+                        .sadd(&Self::user_key(user_id), &channel_id.to_string())
+                        .await;
+                    let _ = redis
+                        .expire(&room_key, std::time::Duration::from_secs(VOICE_TTL_SECS))
+                        .await;
+                    let _ = redis
+                        .expire(
+                            &Self::user_key(user_id),
+                            std::time::Duration::from_secs(VOICE_TTL_SECS),
+                        )
+                        .await;
+                    return;
+                }
+            }
+        }
         let mut rooms = self.rooms.lock().await;
-        let participants = rooms.entry(channel_id).or_default();
-        let entry = participants
-            .entry(user_id)
-            .or_insert_with(|| VoiceParticipant {
-                user_id,
-                channel_id,
-                display_name: display_name.clone(),
-                joined_at,
-                self_mute: false,
-                self_deaf: false,
-                server_mute: false,
-                server_deaf: false,
-                tracks: Vec::new(),
-            });
-        entry.display_name = display_name;
-        entry.joined_at = joined_at;
-        entry.tracks = tracks;
+        rooms
+            .entry(channel_id)
+            .or_default()
+            .insert(user_id, participant);
     }
 
     pub async fn leave(&self, channel_id: Uuid, user_id: Uuid) -> Option<VoiceParticipant> {
+        if let Some(redis) = &self.redis {
+            if let Ok(Some(serialized)) = redis
+                .hget(&Self::room_key(channel_id), &user_id.to_string())
+                .await
+            {
+                let _ = redis
+                    .hdel(&Self::room_key(channel_id), &user_id.to_string())
+                    .await;
+                let _ = redis
+                    .srem(&Self::user_key(user_id), &channel_id.to_string())
+                    .await;
+                if redis.hlen(&Self::room_key(channel_id)).await.unwrap_or(1) == 0 {
+                    let _ = redis.delete(&Self::room_key(channel_id)).await;
+                }
+                if let Ok(participant) = serde_json::from_str(&serialized) {
+                    return Some(participant);
+                }
+            }
+        }
         let mut rooms = self.rooms.lock().await;
         let removed = rooms
             .get_mut(&channel_id)
@@ -377,6 +437,19 @@ impl VoiceProjection {
     }
 
     pub async fn remove_user(&self, user_id: Uuid) {
+        if let Some(redis) = &self.redis {
+            let user_key = Self::user_key(user_id);
+            if let Ok(channels) = redis.smembers(&user_key).await {
+                for channel_id in channels {
+                    if let Ok(channel_id) = channel_id.parse::<Uuid>() {
+                        let _ = redis
+                            .hdel(&Self::room_key(channel_id), &user_id.to_string())
+                            .await;
+                    }
+                }
+            }
+            let _ = redis.delete(&user_key).await;
+        }
         let mut rooms = self.rooms.lock().await;
         for participants in rooms.values_mut() {
             participants.remove(&user_id);
@@ -385,6 +458,26 @@ impl VoiceProjection {
     }
 
     pub async fn clear_channel(&self, channel_id: Uuid) -> Vec<VoiceParticipant> {
+        if let Some(redis) = &self.redis {
+            if let Ok(entries) = redis.hgetall(&Self::room_key(channel_id)).await {
+                let participants = entries
+                    .values()
+                    .filter_map(|value| serde_json::from_str::<VoiceParticipant>(value).ok())
+                    .collect::<Vec<_>>();
+                for participant in &participants {
+                    let _ = redis
+                        .srem(
+                            &Self::user_key(participant.user_id),
+                            &channel_id.to_string(),
+                        )
+                        .await;
+                }
+                let _ = redis.delete(&Self::room_key(channel_id)).await;
+                if !participants.is_empty() {
+                    return participants;
+                }
+            }
+        }
         let mut rooms = self.rooms.lock().await;
         rooms
             .remove(&channel_id)
@@ -393,6 +486,14 @@ impl VoiceProjection {
     }
 
     pub async fn participants(&self, channel_id: Uuid) -> Vec<VoiceParticipant> {
+        if let Some(redis) = &self.redis {
+            if let Ok(entries) = redis.hgetall(&Self::room_key(channel_id)).await {
+                return entries
+                    .values()
+                    .filter_map(|value| serde_json::from_str(value).ok())
+                    .collect();
+            }
+        }
         let rooms = self.rooms.lock().await;
         rooms
             .get(&channel_id)
@@ -401,6 +502,14 @@ impl VoiceProjection {
     }
 
     pub async fn participant(&self, channel_id: Uuid, user_id: Uuid) -> Option<VoiceParticipant> {
+        if let Some(redis) = &self.redis {
+            if let Ok(Some(value)) = redis
+                .hget(&Self::room_key(channel_id), &user_id.to_string())
+                .await
+            {
+                return serde_json::from_str(&value).ok();
+            }
+        }
         let rooms = self.rooms.lock().await;
         rooms
             .get(&channel_id)
@@ -409,41 +518,78 @@ impl VoiceProjection {
     }
 
     pub async fn count(&self, channel_id: Uuid) -> usize {
+        if let Some(redis) = &self.redis {
+            if let Ok(count) = redis.hlen(&Self::room_key(channel_id)).await {
+                return count.max(0) as usize;
+            }
+        }
         let rooms = self.rooms.lock().await;
         rooms.get(&channel_id).map(HashMap::len).unwrap_or_default()
     }
 
     pub async fn contains(&self, channel_id: Uuid, user_id: Uuid) -> bool {
+        if let Some(redis) = &self.redis {
+            if let Ok(exists) = redis
+                .hexists(&Self::room_key(channel_id), &user_id.to_string())
+                .await
+            {
+                return exists;
+            }
+        }
         let rooms = self.rooms.lock().await;
         rooms
             .get(&channel_id)
             .is_some_and(|participants| participants.contains_key(&user_id))
     }
 
-    pub async fn set_server_mute(&self, channel_id: Uuid, user_id: Uuid, muted: bool) -> bool {
+    async fn update_participant<F>(&self, channel_id: Uuid, user_id: Uuid, update: F) -> bool
+    where
+        F: Fn(&mut VoiceParticipant),
+    {
+        if let Some(redis) = &self.redis {
+            if let Ok(Some(value)) = redis
+                .hget(&Self::room_key(channel_id), &user_id.to_string())
+                .await
+            {
+                if let Ok(mut participant) = serde_json::from_str::<VoiceParticipant>(&value) {
+                    update(&mut participant);
+                    if let Ok(serialized) = serde_json::to_string(&participant) {
+                        let _ = redis
+                            .hset(
+                                &Self::room_key(channel_id),
+                                &user_id.to_string(),
+                                &serialized,
+                            )
+                            .await;
+                        return true;
+                    }
+                }
+            }
+        }
         let mut rooms = self.rooms.lock().await;
         if let Some(participant) = rooms
             .get_mut(&channel_id)
             .and_then(|participants| participants.get_mut(&user_id))
         {
-            participant.server_mute = muted;
+            update(participant);
             true
         } else {
             false
         }
     }
 
+    pub async fn set_server_mute(&self, channel_id: Uuid, user_id: Uuid, muted: bool) -> bool {
+        self.update_participant(channel_id, user_id, |participant| {
+            participant.server_mute = muted;
+        })
+        .await
+    }
+
     pub async fn set_server_deaf(&self, channel_id: Uuid, user_id: Uuid, deafened: bool) -> bool {
-        let mut rooms = self.rooms.lock().await;
-        if let Some(participant) = rooms
-            .get_mut(&channel_id)
-            .and_then(|participants| participants.get_mut(&user_id))
-        {
+        self.update_participant(channel_id, user_id, |participant| {
             participant.server_deaf = deafened;
-            true
-        } else {
-            false
-        }
+        })
+        .await
     }
 
     pub async fn update_tracks(
@@ -452,17 +598,18 @@ impl VoiceProjection {
         user_id: Uuid,
         tracks: Vec<VoiceTrack>,
     ) -> bool {
-        let mut rooms = self.rooms.lock().await;
-        if let Some(participant) = rooms
-            .get_mut(&channel_id)
-            .and_then(|participants| participants.get_mut(&user_id))
-        {
-            participant.tracks = tracks;
-            true
-        } else {
-            false
-        }
+        self.update_participant(channel_id, user_id, |participant| {
+            participant.tracks = tracks.clone();
+        })
+        .await
     }
+}
+#[derive(Debug, Clone)]
+pub struct AdminParticipant {
+    pub identity: Uuid,
+    pub name: String,
+    pub joined_at: Option<DateTime<Utc>>,
+    pub tracks: Vec<VoiceTrack>,
 }
 
 pub struct LiveKitAdmin {
@@ -603,6 +750,93 @@ impl LiveKitAdmin {
         let room = room_name(channel_id);
         self.call("DeleteRoom", &json!({ "room": room }), &room)
             .await
+    }
+
+    pub async fn list_participants(
+        &self,
+        channel_id: Uuid,
+    ) -> Result<Vec<AdminParticipant>, VoiceError> {
+        let room = room_name(channel_id);
+        let token = self.admin_token(&room)?;
+        let response = self
+            .client
+            .post(format!(
+                "{}/twirp/livekit.RoomService/ListParticipants",
+                self.base_url
+            ))
+            .bearer_auth(token)
+            .json(&json!({ "room": room }))
+            .send()
+            .await
+            .map_err(|error| VoiceError::Backend(error.to_string()))?;
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_default();
+            return Err(VoiceError::Backend(format!("{status}: {body}")));
+        }
+        let body: Value = response
+            .json()
+            .await
+            .map_err(|error| VoiceError::Backend(error.to_string()))?;
+        let participants = body
+            .get("participants")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        let mut result = Vec::with_capacity(participants.len());
+        for participant in participants {
+            let Ok(identity) = participant
+                .get("identity")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .parse::<Uuid>()
+            else {
+                continue;
+            };
+            let name = participant
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string();
+            let joined_at = participant
+                .get("joinedAt")
+                .and_then(Value::as_i64)
+                .filter(|value| *value > 0)
+                .and_then(|value| DateTime::from_timestamp(value, 0));
+            let tracks = participant
+                .get("tracks")
+                .and_then(Value::as_array)
+                .map(|tracks| {
+                    tracks
+                        .iter()
+                        .filter_map(|track| {
+                            Some(VoiceTrack {
+                                sid: track.get("sid")?.as_str()?.to_string(),
+                                source: track
+                                    .get("source")
+                                    .and_then(Value::as_str)
+                                    .unwrap_or_default()
+                                    .to_string(),
+                                kind: track
+                                    .get("type")
+                                    .and_then(Value::as_str)
+                                    .or_else(|| track.get("kind").and_then(Value::as_str))
+                                    .unwrap_or_default()
+                                    .to_string(),
+                                muted: track.get("muted").and_then(Value::as_bool).unwrap_or(false),
+                            })
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            result.push(AdminParticipant {
+                identity,
+                name,
+                joined_at,
+                tracks,
+            });
+        }
+        Ok(result)
     }
 }
 

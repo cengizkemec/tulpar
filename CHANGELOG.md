@@ -67,6 +67,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - LiveKit admin integration for server mute/deafen, disconnect, move, and room deletion.
 - Kick/ban, timeout, and user-level `CONNECT_VOICE` overwrite revocation paths.
 - Voice unit and integration tests with a mock LiveKit admin API.
+- Redis-backed voice projection with process-local fallback.
+- LiveKit participant reconciliation worker and role/overwrite bulk revocation.
 
 ### Planned — Phase 4 follow-ups
 

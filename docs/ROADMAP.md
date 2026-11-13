@@ -167,9 +167,9 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] LiveKit token issuance with permission-based sources.
 - [x] Room password, capacity, bans, timeouts.
 - [x] TURN ephemeral credentials.
-- [x] LiveKit webhooks and projection (reconciliation worker pending).
+- [x] LiveKit webhooks, Redis-backed projection, and reconciliation worker.
 - [x] Server mute/deafen/move/disconnect.
-- [x] Revocation paths for kick, ban, timeout, and user channel overwrite.
+- [x] Revocation paths for kick, ban, timeout, user/role channel overwrite, and role changes.
 - [ ] Device selection, mute/deafen, PTT, VAD, per-user volume (client foundation).
 - [ ] Real audio tests on supported browsers.
 - [ ] TURN fallback tests with UDP blocked.

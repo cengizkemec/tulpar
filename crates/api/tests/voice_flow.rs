@@ -19,14 +19,21 @@ use tulpar_api::{router, AppState};
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
-struct Recorded(Arc<Mutex<Vec<(String, Value)>>>);
+struct Recorded {
+    calls: Arc<Mutex<Vec<(String, Value)>>>,
+    participants: Arc<Mutex<Vec<Value>>>,
+}
 
 async fn mock_livekit(
     State(recorded): State<Recorded>,
     Path(method): Path<String>,
     Json(body): Json<Value>,
 ) -> Json<Value> {
-    recorded.0.lock().await.push((method, body));
+    recorded.calls.lock().await.push((method.clone(), body));
+    if method == "ListParticipants" {
+        let participants = recorded.participants.lock().await.clone();
+        return Json(json!({ "participants": participants }));
+    }
     Json(json!({}))
 }
 
@@ -526,7 +533,7 @@ async fn voice_tokens_passwords_webhooks_and_moderation(pool: PgPool) {
         app.clone().oneshot(deafen).await.unwrap().status(),
         StatusCode::NO_CONTENT
     );
-    let calls = recorded.0.lock().await.clone();
+    let calls = recorded.calls.lock().await.clone();
     assert!(calls
         .iter()
         .any(|(method, body)| method == "MutePublishedTrack" && body["track_sid"] == "TR_mic"));
@@ -534,6 +541,86 @@ async fn voice_tokens_passwords_webhooks_and_moderation(pool: PgPool) {
         .iter()
         .any(|(method, body)| method == "UpdateParticipant"
             && body["permission"]["canSubscribe"] == false));
+
+    // Reconciliation removes projection entries that LiveKit no longer reports.
+    *recorded.participants.lock().await = vec![json!({
+        "identity": member_id,
+        "name": "voicemember",
+        "joinedAt": joined_at,
+        "tracks": [{
+            "sid": "TR_mic",
+            "source": "microphone",
+            "type": "audio",
+            "muted": false
+        }]
+    })];
+    let ghost = Uuid::now_v7();
+    state
+        .voice
+        .join(
+            channel_id,
+            ghost,
+            "Ghost".to_string(),
+            chrono::Utc::now(),
+            Vec::new(),
+        )
+        .await;
+    let reconciled = tulpar_api::workers::reconcile_voice_once(&state).await;
+    assert_eq!(reconciled, 1);
+    assert!(
+        state
+            .voice
+            .contains(channel_id, member_id.parse().unwrap())
+            .await
+    );
+    assert!(!state.voice.contains(channel_id, ghost).await);
+
+    // Denying CONNECT_VOICE on the default role removes existing participants.
+    let default_role_id = community["roles"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|role| role["is_default"] == true)
+        .unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let role_deny = with_auth(
+        Request::builder()
+            .method("PUT")
+            .uri(format!(
+                "/api/v1/channels/{voice_channel_id}/permissions/roles/{default_role_id}"
+            ))
+            .header(header::CONTENT_TYPE, "application/json"),
+        &owner_token,
+    )
+    .body(Body::from(
+        json!({ "allow": [], "deny": ["CONNECT_VOICE"] }).to_string(),
+    ))
+    .unwrap();
+    assert_eq!(
+        app.clone().oneshot(role_deny).await.unwrap().status(),
+        StatusCode::OK
+    );
+    assert_eq!(state.voice.count(channel_id).await, 0);
+
+    // Rejoin through a fresh webhook for the kick revocation test.
+    let rejoin_body = json!({
+        "id": "event-join-2",
+        "event": "participant_joined",
+        "createdAt": joined_at + 1,
+        "room": { "sid": "room-1", "name": format!("tulpar_channel_{voice_channel_id}") },
+        "participant": {
+            "identity": member_id,
+            "name": "voicemember",
+            "joinedAt": joined_at + 1,
+            "state": "ACTIVE",
+            "tracks": []
+        }
+    });
+    let response = webhook(&app, "voice-secret-voice-secret-voice-secret", rejoin_body).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(state.voice.count(channel_id).await, 1);
 
     // Kick revokes the participant and closes the voice session.
     let kick = with_auth(
@@ -549,7 +636,7 @@ async fn voice_tokens_passwords_webhooks_and_moderation(pool: PgPool) {
         StatusCode::NO_CONTENT
     );
     assert_eq!(state.voice.count(channel_id).await, 0);
-    let calls = recorded.0.lock().await.clone();
+    let calls = recorded.calls.lock().await.clone();
     assert!(calls
         .iter()
         .any(|(method, body)| { method == "RemoveParticipant" && body["identity"] == member_id }));

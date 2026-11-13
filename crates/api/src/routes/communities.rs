@@ -904,6 +904,7 @@ pub async fn update_role(
             payload.mentionable,
         )
         .await?;
+    super::voice::reconcile_community_voice(&state, community_id).await;
     state
         .record_audit(
             Some(current.user().id),
@@ -950,6 +951,7 @@ pub async fn delete_role(
         ));
     }
     state.communities.delete_role(role_id).await?;
+    super::voice::reconcile_community_voice(&state, community_id).await;
     state
         .record_audit(
             Some(current.user().id),
@@ -1007,6 +1009,7 @@ pub async fn assign_role(
         .communities
         .assign_role(community_id, user_id, role_id, current.user().id)
         .await?;
+    super::voice::reconcile_community_voice(&state, community_id).await;
     state
         .record_audit(
             Some(current.user().id),
@@ -1056,6 +1059,7 @@ pub async fn remove_role(
         .communities
         .remove_role(community_id, user_id, role_id)
         .await?;
+    super::voice::reconcile_community_voice(&state, community_id).await;
     state
         .record_audit(
             Some(current.user().id),

@@ -155,6 +155,22 @@ impl ChannelService {
         .ok_or(ChannelError::NotFound)
     }
 
+    pub async fn list_voice_channels(&self) -> Result<Vec<Channel>, ChannelError> {
+        let channels = sqlx::query_as::<_, Channel>(
+            r#"
+            SELECT id, scope, community_id, parent_id, kind, name, topic, position, nsfw,
+                   slowmode_seconds, user_limit, bitrate, last_message_at, last_message_id,
+                   archived_at, created_at, updated_at
+            FROM channels
+            WHERE kind = 'voice' AND deleted_at IS NULL
+            ORDER BY community_id, position
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(channels)
+    }
+
     pub async fn list_for_community(
         &self,
         community_id: Uuid,

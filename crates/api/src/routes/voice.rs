@@ -756,6 +756,28 @@ pub async fn livekit_webhook(
     }))
 }
 
+/// Re-check every voice participant against current role/overwrite permissions.
+pub(crate) async fn reconcile_community_voice(state: &AppState, community_id: Uuid) {
+    let Ok(channels) = state.channels.list_for_community(community_id).await else {
+        return;
+    };
+    for channel in channels
+        .into_iter()
+        .filter(|channel| channel.kind == "voice")
+    {
+        for participant in state.voice.participants(channel.id).await {
+            let allowed = messages::authorize_channel(state, participant.user_id, channel.id)
+                .await
+                .map(|authorization| authorization.can(Permissions::CONNECT_VOICE))
+                .unwrap_or(false);
+            if !allowed {
+                revoke_channel_user(state, &channel, participant.user_id, "permission_revoked")
+                    .await;
+            }
+        }
+    }
+}
+
 /// Best-effort removal of a user from every voice channel in a community.
 pub(crate) async fn revoke_community_user(state: &AppState, community_id: Uuid, user_id: Uuid) {
     let channels = match state.channels.list_for_community(community_id).await {
