@@ -1332,6 +1332,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/me/bots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_bots"];
+        put?: never;
+        post: operations["create_bot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me/bots/{bot_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_bot"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/me/communities": {
         parameters: {
             query?: never;
@@ -1637,6 +1669,14 @@ export interface components {
             id: string;
             username: string;
         };
+        BotDto: {
+            /** Format: date-time */
+            created_at: string;
+            display_name: string;
+            /** Format: uuid */
+            id: string;
+            username: string;
+        };
         ChangePasswordRequest: {
             current_password: string;
             new_password: string;
@@ -1718,12 +1758,18 @@ export interface components {
             query?: string | null;
         };
         CreateApiKeyRequest: {
+            /** Format: uuid */
+            bot_id?: string | null;
             name: string;
             scopes: string[];
         };
         CreateApiKeyResponse: {
             api_key: string;
             key: components["schemas"]["ApiKeyDto"];
+        };
+        CreateBotRequest: {
+            display_name: string;
+            username: string;
         };
         CreateChannelRequest: {
             kind: string;
@@ -5167,6 +5213,69 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description API key revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_bots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotDto"][];
+                };
+            };
+        };
+    };
+    create_bot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBotRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BotDto"];
+                };
+            };
+        };
+    };
+    delete_bot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Bot user identifier */
+                bot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bot disabled */
             204: {
                 headers: {
                     [name: string]: unknown;

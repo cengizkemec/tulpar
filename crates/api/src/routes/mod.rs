@@ -2,6 +2,7 @@ pub mod admin;
 pub mod api_keys;
 pub mod attachments;
 pub mod auth;
+pub mod bots;
 pub mod channels;
 pub mod communities;
 pub mod embed;

@@ -26,6 +26,10 @@
 - `POST /api/v1/users/me/api-keys` — create a scoped API key; the plaintext `tk_...` value is returned once.
 - `GET /api/v1/users/me/api-keys` — list keys without plaintext.
 - `DELETE /api/v1/users/me/api-keys/{key_id}` — revoke a key.
+- `POST /api/v1/users/me/bots` — create a bot account owned by the current user.
+- `GET /api/v1/users/me/bots` — list owned bots.
+- `DELETE /api/v1/users/me/bots/{bot_id}` — disable a bot and revoke its API keys.
+- `POST /api/v1/users/me/api-keys` accepts an optional `bot_id` so the owner can issue a scoped bot token.
 - API keys support `read` and `write` scopes. `read` allows GET/HEAD on non-sensitive routes; `write` additionally allows posting messages. Auth/session, admin, export, audit, API-key-management, and embed-app-management routes are blocked for API keys.
 - `GET /api/v1/communities/{community_id}/webhooks` — list outgoing webhooks.
 - `POST /api/v1/communities/{community_id}/webhooks` — create a webhook; the signing secret is returned once.
@@ -54,6 +58,7 @@
 
 - `crates/api/tests/embed_flow.rs` covers public token issuance, community data, bad origins, disabled widgets, member authorization, code reuse rejection, revocation, private-community rejection, and message previews.
 - `crates/api/tests/api_keys_flow.rs` covers scoped read/write keys, blocked key-management routes, message sends, and revocation.
+- `crates/api/tests/bots_flow.rs` covers bot creation, owner listing, scoped bot tokens, and bot deletion revoking tokens.
 - `crates/api/tests/webhooks_flow.rs` covers webhook creation, one-time secret return, signed delivery, deletion, and private-address rejection.
 - `cargo test -p tulpar-api --test <name> --no-run` passes locally; database-backed tests run in CI with PostgreSQL.
 
@@ -61,15 +66,15 @@
 
 ## 2. Known gaps
 
-1. Bot accounts/dedicated bot profiles are not implemented; API keys are owned by normal user accounts.
-2. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo and Rust README.
-3. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
+1. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo and Rust README.
+2. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
+3. Bot accounts are owner-managed and cannot log in with a password; they use scoped API keys only.
 
 ---
 
 ## 3. Next steps
 
-1. Add bot account creation/management and per-bot permissions.
-2. Expand API key scopes for moderation/channel management with an explicit policy.
-3. Add more webhook event types and a delivery dashboard.
-4. Add richer typed SDK models and WebSocket/gateway support.
+1. Expand API key scopes for moderation/channel management with an explicit policy.
+2. Add more webhook event types and a delivery dashboard.
+3. Add richer typed SDK models and WebSocket/gateway support.
+4. Add developer-facing examples for bot account and webhook management.

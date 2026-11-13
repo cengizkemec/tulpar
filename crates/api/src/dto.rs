@@ -1398,6 +1398,8 @@ pub struct ApiKeyDto {
 pub struct CreateApiKeyRequest {
     pub name: String,
     pub scopes: Vec<String>,
+    #[serde(default)]
+    pub bot_id: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -1427,4 +1429,18 @@ pub struct CreateWebhookRequest {
 pub struct CreateWebhookResponse {
     pub webhook: WebhookDto,
     pub secret: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct BotDto {
+    pub id: Uuid,
+    pub username: String,
+    pub display_name: String,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateBotRequest {
+    pub username: String,
+    pub display_name: String,
 }

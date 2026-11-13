@@ -123,6 +123,23 @@ pub async fn create_key(
         ));
     }
     let scopes = normalize_scopes(&payload.scopes)?;
+    let target_user_id = if let Some(bot_id) = payload.bot_id {
+        let bot: Option<(Uuid,)> = sqlx::query_as(
+            "SELECT id FROM users
+             WHERE id = $1 AND bot_owner_id = $2 AND is_bot AND deleted_at IS NULL",
+        )
+        .bind(bot_id)
+        .bind(current.user().id)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|error| {
+            tracing::error!(%error, "failed to load bot for API key");
+            ApiError::dependency_unavailable("Bot accounts are temporarily unavailable.")
+        })?;
+        bot.ok_or_else(|| ApiError::not_found("Bot not found."))?.0
+    } else {
+        current.user().id
+    };
     let plaintext = format!("tk_{}", random_token(32));
     let hash = token_hash(&plaintext);
     let id = Uuid::now_v7();
@@ -132,7 +149,7 @@ pub async fn create_key(
          RETURNING id, name, scopes, created_at, last_used_at, revoked_at",
     )
     .bind(id)
-    .bind(current.user().id)
+    .bind(target_user_id)
     .bind(name)
     .bind(hash.to_vec())
     .bind(&scopes)

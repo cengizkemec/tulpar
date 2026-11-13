@@ -92,6 +92,11 @@ pub fn router(state: AppState) -> Router {
             "/me/api-keys/{key_id}",
             delete(routes::api_keys::revoke_key),
         )
+        .route(
+            "/me/bots",
+            get(routes::bots::list_bots).post(routes::bots::create_bot),
+        )
+        .route("/me/bots/{bot_id}", delete(routes::bots::delete_bot))
         .route("/{user_id}", get(routes::users::get_user));
 
     let communities = Router::new()
