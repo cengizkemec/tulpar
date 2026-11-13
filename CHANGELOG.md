@@ -105,6 +105,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Global push-to-talk shortcut registration and `ptt` down/up events.
 - Deep links (`tulpar://add-instance`), single-instance forwarding, autostart, and window-state persistence.
 - Desktop capability reporting and CSP/CORS support for WebView2 origins.
+- Local diagnostics export and a crash log written to the app data directory.
 - `tests/web-e2e/desktop.mjs` Windows smoke test covering device approval, keychain refresh, PTT, capabilities, and deep links.
 
 ### Added — Phase 8 embed platform

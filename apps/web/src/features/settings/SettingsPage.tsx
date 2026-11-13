@@ -8,6 +8,7 @@ import {
   desktopAutostartGet,
   desktopAutostartSet,
   desktopCapabilities,
+  desktopExportDiagnostics,
   desktopRegisterPtt,
   isDesktop,
   type DesktopCapabilities,
@@ -53,6 +54,7 @@ export function SettingsPage() {
   );
   const [desktopMessage, setDesktopMessage] = useState<string | null>(null);
   const [desktopError, setDesktopError] = useState<string | null>(null);
+  const [diagnosticsPath, setDiagnosticsPath] = useState<string | null>(null);
   const [apiKeyName, setApiKeyName] = useState("");
   const [apiKeyScopes, setApiKeyScopes] = useState<string[]>(["read"]);
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
@@ -281,6 +283,29 @@ export function SettingsPage() {
             />
             {t("desktopAutostart")}
           </label>
+          <div className="mt-3">
+            <button
+              className="rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm"
+              onClick={async () => {
+                try {
+                  const path = await desktopExportDiagnostics();
+                  setDiagnosticsPath(path);
+                  setDesktopError(null);
+                } catch (cause) {
+                  setDesktopError(
+                    cause instanceof Error ? cause.message : t("errorGeneric"),
+                  );
+                }
+              }}
+            >
+              {t("desktopDiagnostics")}
+            </button>
+            {diagnosticsPath ? (
+              <p className="mt-2 break-all text-xs text-[var(--muted)]">
+                {diagnosticsPath}
+              </p>
+            ) : null}
+          </div>
           {capabilities ? (
             <p className="mt-3 text-xs text-[var(--muted)]">
               {t("desktopKeychain")}:{" "}

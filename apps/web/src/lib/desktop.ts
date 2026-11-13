@@ -104,6 +104,10 @@ export function desktopAutostartSet(enabled: boolean): Promise<void> {
   return invoke("desktop_autostart_set", { enabled });
 }
 
+export function desktopExportDiagnostics(): Promise<string> {
+  return invoke("desktop_export_diagnostics");
+}
+
 export async function onPtt(
   handler: (pressed: boolean) => void,
 ): Promise<() => void> {

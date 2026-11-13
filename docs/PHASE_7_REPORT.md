@@ -91,7 +91,7 @@ Additional manual checks:
 1. Linux packaging and WebKitGTK/Secret Service verification are pending.
 2. Windows 10 and Ubuntu 24.04 install matrices are not recorded.
 3. Code signing, updater signing keys, release channels, and signed manifests are not configured.
-4. Diagnostics export and opt-in crash reporting are not implemented.
+4. Local diagnostics export and a crash log are implemented; opt-in crash upload/reporting is not.
 5. Notification-click routing to a specific channel/message is not implemented.
 6. The updater UI is not exposed until a signed release feed exists.
 7. Screen capture and device behavior are verified through the WebView only on Windows.

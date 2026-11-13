@@ -258,7 +258,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Deep links.
 - [x] Autostart.
 - [ ] Auto-update with signed manifests (plugin configured; signing keys/endpoints pending).
-- [ ] Diagnostics and opt-in crash reporting.
+- [x] Local diagnostics export and crash log (opt-in upload pending).
 - [ ] Windows and Linux builds (Windows debug build verified; Linux build pending).
 - [ ] Code signing and release pipeline.
 - [ ] Manual platform matrix (Windows 11 verified; Windows 10/Ubuntu pending).

@@ -511,6 +511,50 @@ fn desktop_take_deep_links(state: State<'_, DesktopState>) -> Vec<String> {
 }
 
 #[tauri::command]
+fn desktop_export_diagnostics(app: AppHandle) -> Result<String, CommandError> {
+    let directory = app.path().app_data_dir().map_err(|error| {
+        CommandError::new(
+            "diagnostics_failed",
+            format!("The app data directory is unavailable: {error}"),
+        )
+    })?;
+    std::fs::create_dir_all(&directory).map_err(|error| {
+        CommandError::new(
+            "diagnostics_failed",
+            format!("The diagnostics directory could not be created: {error}"),
+        )
+    })?;
+    let path = directory.join("diagnostics.txt");
+    let capabilities = desktop_capabilities();
+    let content = format!(
+        "Tulpar diagnostics\n\
+         version: {}\n\
+         platform: {}\n\
+         architecture: {}\n\
+         keychain: {}\n\
+         global_shortcut: {}\n\
+         tray: {}\n\
+         executable: {:?}\n\
+         generated_at: {}\n",
+        env!("CARGO_PKG_VERSION"),
+        capabilities.platform,
+        std::env::consts::ARCH,
+        capabilities.keychain,
+        capabilities.global_shortcut,
+        capabilities.tray,
+        std::env::current_exe().ok(),
+        chrono::Utc::now().to_rfc3339(),
+    );
+    std::fs::write(&path, content).map_err(|error| {
+        CommandError::new(
+            "diagnostics_failed",
+            format!("Diagnostics could not be written: {error}"),
+        )
+    })?;
+    Ok(path.display().to_string())
+}
+
+#[tauri::command]
 fn desktop_show_window(app: AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -616,11 +660,31 @@ pub fn run() {
             desktop_set_unread,
             desktop_show_window,
             desktop_take_deep_links,
+            desktop_export_diagnostics,
             desktop_autostart_get,
             desktop_autostart_set,
         ])
         .setup(|app| {
             setup_tray(app)?;
+            let panic_handle = app.handle().clone();
+            std::panic::set_hook(Box::new(move |info| {
+                if let Ok(directory) = panic_handle.path().app_data_dir() {
+                    let _ = std::fs::create_dir_all(&directory);
+                    if let Ok(mut file) = std::fs::OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(directory.join("crash.log"))
+                    {
+                        use std::io::Write;
+                        let _ = writeln!(
+                            file,
+                            "{} panic: {info}",
+                            chrono::Utc::now().to_rfc3339()
+                        );
+                    }
+                }
+                eprintln!("{info}");
+            }));
             let initial_links: Vec<String> = std::env::args()
                 .filter(|argument| argument.starts_with("tulpar://"))
                 .collect();
