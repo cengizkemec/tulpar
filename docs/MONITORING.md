@@ -55,16 +55,24 @@ pg_restore --list postgres.dump >/dev/null
 Run a full restore drill quarterly and before major upgrades. See
 [BACKUP.md](BACKUP.md).
 
-## 5. Metrics follow-up
+## 5. Metrics
 
-The API does not expose a Prometheus metrics endpoint yet. Planned metrics:
+The API exposes a minimal Prometheus endpoint at `/metrics` on the internal API
+listener. It reports process liveness and table/queue gauges:
 
-- HTTP request rate, latency, and status classes;
-- gateway connections, reconnects, and lag disconnects;
-- voice room/participant counts;
-- outbox backlog and worker failures;
-- database pool saturation;
-- Redis errors and rate-limit rejections;
-- backup success timestamp and size.
+- `tulpar_up`
+- `tulpar_users`
+- `tulpar_communities`
+- `tulpar_messages`
+- `tulpar_outbox_pending`
+- `tulpar_webhook_pending`
 
-Until then, use container health, logs, and host-level metrics.
+Enable the optional Prometheus service:
+
+```bash
+docker compose --env-file deployments/production/.env --profile monitoring up -d prometheus
+```
+
+Prometheus listens on `127.0.0.1:9090` and scrapes `api:8080/metrics` over the internal
+network. Do not expose `/metrics` publicly. Dashboards, alert rules, request latency
+histograms, and gateway/voice metrics are still follow-ups.

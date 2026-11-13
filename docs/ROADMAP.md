@@ -314,7 +314,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] TLS/Caddy hardening, security headers, firewall guidance, secrets template.
 - [x] Backup/restore scripts (real restore drill pending).
 - [ ] Upgrade rehearsal from the previous release.
-- [ ] Monitoring dashboards/alerts and log aggregation.
+- [x] Prometheus metrics endpoint and optional scrape profile (dashboards/alerts pending).
 - [ ] Load tests and performance fixes.
 - [x] Dependency/secret scans in CI (`cargo audit`, gitleaks).
 - [ ] External security review if feasible.

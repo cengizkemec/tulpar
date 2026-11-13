@@ -8,6 +8,7 @@ pub mod embed;
 pub mod gateway;
 pub mod health;
 pub mod messages;
+pub mod metrics;
 pub mod notifications;
 pub mod social;
 pub mod sync;

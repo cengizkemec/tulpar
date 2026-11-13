@@ -25,6 +25,12 @@
 - `scripts/restore.sh` verifies checksums, restores the database with `pg_restore --clean --if-exists`, and replaces the uploads volume.
 - `docs/BACKUP.md` documents retention and verification.
 
+### Monitoring baseline
+
+- The API exposes `/metrics` with liveness and table/queue gauges.
+- An optional `monitoring` Compose profile runs Prometheus on `127.0.0.1:9090` and scrapes the internal API endpoint.
+- Health checks, JSON logs, and backup verification remain the primary operational signals.
+
 ### CI and security posture
 
 - CI already runs `cargo audit` and gitleaks.
@@ -47,7 +53,7 @@
 
 1. Clean Ubuntu 24.04 installation and firewall verification are not recorded.
 2. The backup/restore drill on a clean host is pending.
-3. No Prometheus/Grafana dashboards, alert rules, or log aggregation are included.
+3. Prometheus scraping exists, but Grafana dashboards, alert rules, request-latency histograms, and log aggregation are not included.
 4. Load tests, soak tests, and multi-node gateway fan-out are not implemented.
 5. Coturn TLS on 5349 is not configured.
 6. Image signing, checksums, and a release workflow are not implemented.
@@ -60,6 +66,6 @@
 
 1. Install on a clean Ubuntu 24.04 host and record the firewall/TLS/health checks.
 2. Run a full backup → destroy → restore drill.
-3. Add Prometheus metrics, dashboards, and alert rules.
+3. Add Grafana dashboards and alert rules on top of the existing Prometheus scrape.
 4. Add k6/WebSocket load tests and fix bottlenecks.
 5. Configure Coturn TLS, image signing, and signed desktop releases.

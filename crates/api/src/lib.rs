@@ -338,6 +338,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health/live", get(routes::health::live))
         .route("/health/ready", get(routes::health::ready))
+        .route("/metrics", get(routes::metrics::metrics))
         .route("/api/v1/version", get(routes::health::version))
         .route("/gateway", get(routes::gateway::gateway))
         .route("/webhooks/livekit", post(routes::voice::livekit_webhook))

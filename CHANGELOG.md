@@ -121,6 +121,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Scoped API keys with hashed `tk_...` tokens, read/write scopes, revocation, rate limits, and settings UI.
 - Outgoing webhooks with HMAC-SHA256 signatures, queued retries with exponential backoff, redirect blocking, and SSRF checks at create and delivery time.
 - Minimal Rust SDK for login, sync, message sending, and embed token/community calls.
+- Minimal Prometheus `/metrics` endpoint and optional production scrape profile.
 
 ### Added — Phase 9 production hardening
 

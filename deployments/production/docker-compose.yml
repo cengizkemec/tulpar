@@ -125,6 +125,18 @@ services:
     networks:
       - internal
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: ["monitoring"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+    networks:
+      - internal
+
   caddy:
     image: caddy:2.8-alpine
     depends_on:
@@ -152,6 +164,7 @@ volumes:
   uploads:
   caddy_data:
   caddy_config:
+  prometheusdata:
 
 networks:
   internal:
