@@ -35,6 +35,8 @@
 - Screen-share enable/disable.
 - Voice participant tiles from the server projection.
 - Gateway-driven voice state updates with polling fallback.
+- Camera/screen video tiles attached to LiveKit tracks, grid layout, and per-tile fullscreen.
+- Remote audio elements attached and cleaned up with subscriptions/disconnects.
 
 ### CI and verification
 
@@ -65,7 +67,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 3. PWA install/offline behavior has not been exercised on real devices; private data is intentionally not cached.
 4. Responsive layouts are basic and the accessibility audit is incomplete.
 5. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.
-6. Camera/screen video tiles and layout modes (grid/focus/pin/fullscreen) are incomplete.
+6. Focus/pin layout modes are incomplete; grid and fullscreen are implemented.
 7. Browser matrix, capability detection, and desktop WebView tests are not recorded.
 8. Web e2e and voice e2e require a local Docker media stack and are not in CI.
 

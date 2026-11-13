@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Room } from "livekit-client";
+import type { Room, Track as LiveKitTrack } from "livekit-client";
 
 import { request } from "../../lib/api";
 import type { Channel, VoiceParticipant, VoiceToken } from "../../lib/types";
@@ -9,16 +9,27 @@ import { useVoiceStore } from "../../stores/voice";
 
 const EMPTY_PARTICIPANTS: VoiceParticipant[] = [];
 
+interface RemoteMedia {
+  camera?: LiveKitTrack;
+  screen?: LiveKitTrack;
+}
+
 export function VoicePanel({ channel }: { channel: Channel }) {
   const { t } = useTranslation();
   const channelId = channel.id ?? "";
   const roomRef = useRef<Room | null>(null);
+  const audioElements = useRef(new Map<string, HTMLMediaElement>());
   const [connected, setConnected] = useState(false);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mic, setMic] = useState(false);
   const [camera, setCamera] = useState(false);
   const [screen, setScreen] = useState(false);
+  const [localCamera, setLocalCamera] = useState<LiveKitTrack>();
+  const [localScreen, setLocalScreen] = useState<LiveKitTrack>();
+  const [remoteMedia, setRemoteMedia] = useState<Record<string, RemoteMedia>>(
+    {},
+  );
   const participants =
     useVoiceStore((state) => state.participants[channelId]) ??
     EMPTY_PARTICIPANTS;
@@ -40,10 +51,24 @@ export function VoicePanel({ channel }: { channel: Channel }) {
     }
   }, [channelId, setParticipants, states.data]);
 
+  const clearMedia = () => {
+    for (const element of audioElements.current.values()) {
+      element.remove();
+    }
+    audioElements.current.clear();
+    setLocalCamera(undefined);
+    setLocalScreen(undefined);
+    setRemoteMedia({});
+  };
+
   useEffect(() => {
     return () => {
       roomRef.current?.disconnect();
       roomRef.current = null;
+      for (const element of audioElements.current.values()) {
+        element.remove();
+      }
+      audioElements.current.clear();
     };
   }, [channelId]);
 
@@ -61,11 +86,72 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         dynacast: true,
       });
       roomRef.current = room;
+      room.on(
+        livekit.RoomEvent.TrackSubscribed,
+        (track, _publication, participant) => {
+          if (track.kind === livekit.Track.Kind.Audio) {
+            const element = track.attach();
+            element.style.display = "none";
+            document.body.appendChild(element);
+            audioElements.current.set(
+              track.sid ?? `${participant.identity}-audio`,
+              element,
+            );
+          }
+          if (track.kind === livekit.Track.Kind.Video) {
+            const isScreen = track.source === livekit.Track.Source.ScreenShare;
+            setRemoteMedia((current) => ({
+              ...current,
+              [participant.identity]: {
+                ...current[participant.identity],
+                ...(isScreen
+                  ? { screen: track }
+                  : { camera: track }),
+              },
+            }));
+          }
+        },
+      );
+      room.on(
+        livekit.RoomEvent.TrackUnsubscribed,
+        (track, _publication, participant) => {
+          if (track.kind === livekit.Track.Kind.Audio) {
+            const key = track.sid ?? `${participant.identity}-audio`;
+            audioElements.current.get(key)?.remove();
+            audioElements.current.delete(key);
+          }
+          if (track.kind === livekit.Track.Kind.Video) {
+            setRemoteMedia((current) => {
+              const existing = current[participant.identity];
+              if (!existing) {
+                return current;
+              }
+              return {
+                ...current,
+                [participant.identity]: {
+                  ...existing,
+                  ...(track.source === livekit.Track.Source.ScreenShare
+                    ? { screen: undefined }
+                    : { camera: undefined }),
+                },
+              };
+            });
+          }
+        },
+      );
+      room.on(livekit.RoomEvent.ParticipantDisconnected, (participant) => {
+        setRemoteMedia((current) => {
+          const next = { ...current };
+          delete next[participant.identity];
+          return next;
+        });
+      });
       room.on(livekit.RoomEvent.Disconnected, () => {
         setConnected(false);
         setMic(false);
         setCamera(false);
         setScreen(false);
+        clearMedia();
       });
       await room.connect(voice.url, voice.token);
       await room.startAudio().catch(() => undefined);
@@ -76,6 +162,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
       roomRef.current?.disconnect();
       roomRef.current = null;
+      clearMedia();
     } finally {
       setJoining(false);
     }
@@ -88,6 +175,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
     setMic(false);
     setCamera(false);
     setScreen(false);
+    clearMedia();
   }
 
   async function toggleMic() {
@@ -103,6 +191,13 @@ export function VoicePanel({ channel }: { channel: Channel }) {
     try {
       await roomRef.current.localParticipant.setCameraEnabled(next);
       setCamera(next);
+      setLocalCamera(
+        next
+          ? roomRef.current.localParticipant.getTrackPublication(
+              (await import("livekit-client")).Track.Source.Camera,
+            )?.videoTrack
+          : undefined,
+      );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
     }
@@ -114,10 +209,30 @@ export function VoicePanel({ channel }: { channel: Channel }) {
     try {
       await roomRef.current.localParticipant.setScreenShareEnabled(next);
       setScreen(next);
+      setLocalScreen(
+        next
+          ? roomRef.current.localParticipant.getTrackPublication(
+              (await import("livekit-client")).Track.Source.ScreenShare,
+            )?.videoTrack
+          : undefined,
+      );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
     }
   }
+
+  const videoTiles = [
+    ...(localCamera ? [{ id: "local-camera", label: "You", track: localCamera, local: true, screen: false }] : []),
+    ...(localScreen ? [{ id: "local-screen", label: "Your screen", track: localScreen, local: true, screen: true }] : []),
+    ...Object.entries(remoteMedia).flatMap(([identity, media]) => [
+      ...(media.camera
+        ? [{ id: `${identity}-camera`, label: identity.slice(0, 8), track: media.camera, local: false, screen: false }]
+        : []),
+      ...(media.screen
+        ? [{ id: `${identity}-screen`, label: `${identity.slice(0, 8)}'s screen`, track: media.screen, local: false, screen: true }]
+        : []),
+    ]),
+  ];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col p-5">
@@ -192,6 +307,20 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         </p>
       ) : null}
 
+      {videoTiles.length ? (
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {videoTiles.map((tile) => (
+            <VideoTile
+              key={tile.id}
+              label={tile.label}
+              track={tile.track}
+              local={tile.local}
+              screen={tile.screen}
+            />
+          ))}
+        </div>
+      ) : null}
+
       <h2 className="mt-6 text-sm font-semibold">{t("voiceParticipants")}</h2>
       <div className="mt-3 grid flex-1 auto-rows-min grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3 xl:grid-cols-4">
         {participants.length === 0 ? (
@@ -223,6 +352,56 @@ export function VoicePanel({ channel }: { channel: Channel }) {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function VideoTile({
+  label,
+  track,
+  local,
+  screen,
+}: {
+  label: string;
+  track: LiveKitTrack;
+  local: boolean;
+  screen: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const element = videoRef.current;
+    if (!element) {
+      return;
+    }
+    track.attach(element);
+    return () => {
+      track.detach(element);
+    };
+  }, [track]);
+
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-xl border border-[var(--border)] bg-black ${
+        screen ? "md:col-span-2" : ""
+      }`}
+    >
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={local}
+        className="aspect-video h-full w-full object-contain"
+      />
+      <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
+        {label}
+      </span>
+      <button
+        className="absolute right-2 top-2 hidden rounded bg-black/60 px-2 py-1 text-xs text-white group-hover:block"
+        onClick={() => void videoRef.current?.requestFullscreen()}
+      >
+        Fullscreen
+      </button>
     </div>
   );
 }

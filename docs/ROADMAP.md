@@ -197,7 +197,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Screen/window sharing and optional audio (browser picker).
 - [ ] Resolution/fps/bitrate controls.
 - [ ] Simulcast/adaptation and network indicators (LiveKit defaults only).
-- [ ] Layouts: grid, focus, pin, fullscreen.
+- [x] Video tiles, grid layout, and fullscreen; focus/pin layouts pending.
 - [ ] Capability detection and fallback UI.
 - [ ] Test matrix across browsers and desktop WebViews (Edge verified).
 - [ ] Document platform limitations with measured results.

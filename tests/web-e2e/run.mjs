@@ -186,10 +186,12 @@ try {
   await page
     .locator('[data-testid="voice-camera"][data-active="true"]')
     .waitFor({ timeout: 15_000 });
+  await page.locator("video").first().waitFor({ state: "visible" });
   await page.getByTestId("voice-screen").click();
   await page
     .locator('[data-testid="voice-screen"][data-active="true"]')
     .waitFor({ timeout: 15_000 });
+  await page.locator("video").nth(1).waitFor({ state: "visible" });
   await page.getByText("Leave voice").click();
   await page.getByTestId("voice-join").waitFor({ timeout: 15_000 });
   await page
