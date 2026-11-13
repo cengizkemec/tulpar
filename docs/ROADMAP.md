@@ -247,7 +247,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 7 — Tulpar Desktop
 
-**Status:** Windows implementation complete and smoke-tested: Tauri 2 shell, shared SPA, device authorization, OS keychain, refresh, tray/close-to-tray, native notifications, global PTT, deep links, autostart, single instance, and window-state persistence. Linux packaging, signed release builds, updater endpoints, and diagnostics/crash reporting remain release-engineering follow-ups.
+**Status:** Windows implementation complete and smoke-tested; Linux compilation passes in CI. Linux packaging, signed releases, updater endpoints, opt-in crash upload, and the full platform matrix remain release follow-ups. Local diagnostics export and a crash log are implemented.
 
 ### Tasks
 
@@ -306,7 +306,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 9 — Production hardening
 
-**Status:** Production deployment artifacts are in place: a single-host Compose stack, Caddy TLS/security headers, production environment template, backup/restore scripts, a Prometheus metrics endpoint/scrape profile, and deployment/backup/monitoring documentation. Clean-host installation, restore drills, Grafana dashboards/alerts, load tests, release signing, and external security review remain pending.
+**Status:** Production deployment artifacts, runbooks, Prometheus/Grafana monitoring with alert rules, a Linux desktop compile check in CI, and HTTP/k6 load harnesses are in place. Clean-host installation, a real restore drill, Alertmanager routing, WebSocket/media load tests, release signing, and external security review remain pending.
 
 ### Tasks
 

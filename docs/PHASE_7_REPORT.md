@@ -1,6 +1,6 @@
 # Phase 7 Report — Tulpar Desktop
 
-**Status:** Windows foundation complete and smoke-tested. Linux packaging, signed releases, updater endpoints, opt-in crash upload, and the full platform matrix remain release follow-ups. Local diagnostics export and a crash log are implemented.
+**Status:** Windows foundation complete and smoke-tested; Linux compilation passes in CI. Linux packaging, signed releases, updater endpoints, opt-in crash upload, and the full platform matrix remain release follow-ups. Local diagnostics export and a crash log are implemented.
 
 **Date:** 2026-11-13
 

@@ -1,6 +1,6 @@
 # Phase 9 Report — Production hardening
 
-**Status:** Production deployment artifacts, runbooks, a Prometheus/Grafana monitoring profile, alert rules, and HTTP/k6 load harnesses are implemented. Clean-host installation, restore drills, Alertmanager routing, WebSocket/media load tests, release signing, and external security review remain pending.
+**Status:** Production deployment artifacts, runbooks, a Prometheus/Grafana monitoring profile with alert rules, a Linux desktop compile check in CI, and HTTP/k6 load harnesses are implemented. Clean-host installation, restore drills, Alertmanager routing, WebSocket/media load tests, release signing, and external security review remain pending.
 
 **Date:** 2026-11-13
 
