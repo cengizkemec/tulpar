@@ -193,11 +193,11 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 ### Tasks
 
 - [x] Camera publishing and mute controls (web foundation).
-- [ ] Device selection.
+- [x] Device selection for microphone and camera.
 - [x] Screen/window sharing and optional audio (browser picker).
 - [ ] Resolution/fps/bitrate controls.
 - [ ] Simulcast/adaptation and network indicators (LiveKit defaults only).
-- [x] Video tiles, grid/focus layouts, and fullscreen; pin layout pending.
+- [x] Video tiles, grid/focus/pin layouts, and fullscreen.
 - [ ] Capability detection and fallback UI.
 - [ ] Test matrix across browsers and desktop WebViews (Edge verified).
 - [ ] Document platform limitations with measured results.

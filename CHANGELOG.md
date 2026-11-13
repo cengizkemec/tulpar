@@ -82,7 +82,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Personal settings UI: profile, status, privacy, read receipts, and notification preferences.
 - In-app notification center with unread badge and read controls.
 - PWA manifest, icon, and shell-only service worker; private API/gateway responses are never cached.
-- Camera/screen video tiles with LiveKit track attachment, grid/focus layouts, and fullscreen; remote audio cleanup on leave/unsubscribe.
+- Camera/screen video tiles with LiveKit track attachment, grid/focus/pin layouts, and fullscreen; remote audio cleanup on leave/unsubscribe.
+- Microphone and camera device selection with live device switching.
 - Browser notification permission control and gateway-driven notifications.
 - Instance administration API and UI: overview metrics, user search, enable/disable, grant/revoke admin, and global audit log.
 - Headless Edge web smoke test covering login, friends/settings routes, message send, gateway delivery, voice connection, camera publishing, screen sharing, and leave cleanup.

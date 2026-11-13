@@ -31,6 +31,10 @@ export function VoicePanel({ channel }: { channel: Channel }) {
     {},
   );
   const [focusedTile, setFocusedTile] = useState<string | null>(null);
+  const [pinnedTile, setPinnedTile] = useState<string | null>(null);
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [micDevice, setMicDevice] = useState("");
+  const [cameraDevice, setCameraDevice] = useState("");
   const participants =
     useVoiceStore((state) => state.participants[channelId]) ??
     EMPTY_PARTICIPANTS;
@@ -72,6 +76,26 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       audioElements.current.clear();
     };
   }, [channelId]);
+
+  async function refreshDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      return;
+    }
+    const all = await navigator.mediaDevices.enumerateDevices();
+    setDevices(all);
+  }
+
+  async function selectDevice(kind: MediaDeviceKind, deviceId: string) {
+    if (!roomRef.current) {
+      return;
+    }
+    await roomRef.current.switchActiveDevice(kind, deviceId);
+    if (kind === "audioinput") {
+      setMicDevice(deviceId);
+    } else {
+      setCameraDevice(deviceId);
+    }
+  }
 
   async function join() {
     setJoining(true);
@@ -159,6 +183,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       await room.localParticipant.setMicrophoneEnabled(true);
       setMic(true);
       setConnected(true);
+      await refreshDevices();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
       roomRef.current?.disconnect();
@@ -199,6 +224,9 @@ export function VoicePanel({ channel }: { channel: Channel }) {
             )?.videoTrack
           : undefined,
       );
+      if (next) {
+        await refreshDevices();
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
     }
@@ -302,6 +330,49 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         </span>
       </div>
 
+      {connected ? (
+        <div className="mt-3 flex flex-wrap gap-3 text-xs text-[var(--muted)]">
+          <label className="flex items-center gap-2">
+            Microphone
+            <select
+              className="max-w-52 rounded border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1"
+              value={micDevice}
+              onChange={(event) =>
+                void selectDevice("audioinput", event.target.value)
+              }
+            >
+              <option value="">Default</option>
+              {devices
+                .filter((device) => device.kind === "audioinput")
+                .map((device) => (
+                  <option key={device.deviceId} value={device.deviceId}>
+                    {device.label || "Microphone"}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2">
+            Camera
+            <select
+              className="max-w-52 rounded border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1"
+              value={cameraDevice}
+              onChange={(event) =>
+                void selectDevice("videoinput", event.target.value)
+              }
+            >
+              <option value="">Default</option>
+              {devices
+                .filter((device) => device.kind === "videoinput")
+                .map((device) => (
+                  <option key={device.deviceId} value={device.deviceId}>
+                    {device.label || "Camera"}
+                  </option>
+                ))}
+            </select>
+          </label>
+        </div>
+      ) : null}
+
       {error ? (
         <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-300">
           {error}
@@ -339,7 +410,11 @@ export function VoicePanel({ channel }: { channel: Channel }) {
                   track={tile.track}
                   local={tile.local}
                   screen={tile.screen}
+                  pinned={pinnedTile === tile.id}
                   onFocus={() => setFocusedTile(tile.id)}
+                  onPin={() =>
+                    setPinnedTile(pinnedTile === tile.id ? null : tile.id)
+                  }
                 />
               ))}
           </div>
@@ -386,13 +461,17 @@ function VideoTile({
   track,
   local,
   screen,
+  pinned,
   onFocus,
+  onPin,
 }: {
   label: string;
   track: LiveKitTrack;
   local: boolean;
   screen: boolean;
+  pinned: boolean;
   onFocus: () => void;
+  onPin: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -409,9 +488,11 @@ function VideoTile({
 
   return (
     <div
-      className={`group relative cursor-pointer overflow-hidden rounded-xl border border-[var(--border)] bg-black ${
-        screen ? "md:col-span-2" : ""
-      }`}
+      className={`group relative cursor-pointer overflow-hidden rounded-xl border bg-black ${
+        pinned
+          ? "border-[var(--accent)] md:col-span-2 xl:col-span-3"
+          : "border-[var(--border)]"
+      } ${screen ? "md:col-span-2" : ""}`}
       onClick={onFocus}
     >
       <video
@@ -424,15 +505,26 @@ function VideoTile({
       <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
         {label}
       </span>
-      <button
-        className="absolute right-2 top-2 hidden rounded bg-black/60 px-2 py-1 text-xs text-white group-hover:block"
-        onClick={(event) => {
-          event.stopPropagation();
-          void videoRef.current?.requestFullscreen();
-        }}
-      >
-        Fullscreen
-      </button>
+      <div className="absolute right-2 top-2 hidden gap-1 group-hover:flex">
+        <button
+          className="rounded bg-black/60 px-2 py-1 text-xs text-white"
+          onClick={(event) => {
+            event.stopPropagation();
+            onPin();
+          }}
+        >
+          {pinned ? "Unpin" : "Pin"}
+        </button>
+        <button
+          className="rounded bg-black/60 px-2 py-1 text-xs text-white"
+          onClick={(event) => {
+            event.stopPropagation();
+            void videoRef.current?.requestFullscreen();
+          }}
+        >
+          Fullscreen
+        </button>
+      </div>
     </div>
   );
 }

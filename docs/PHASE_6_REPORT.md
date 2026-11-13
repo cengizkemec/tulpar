@@ -36,7 +36,8 @@
 - Screen-share enable/disable.
 - Voice participant tiles from the server projection.
 - Gateway-driven voice state updates with polling fallback.
-- Camera/screen video tiles attached to LiveKit tracks, grid/focus layouts, and per-tile fullscreen.
+- Camera/screen video tiles attached to LiveKit tracks, grid/focus/pin layouts, and per-tile fullscreen.
+- Microphone and camera device selection through `enumerateDevices` and `switchActiveDevice`.
 - Remote audio elements attached and cleaned up with subscriptions/disconnects.
 - Browser notification permission control; gateway notification events show a browser notification when granted.
 
@@ -71,8 +72,8 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 2. Browser notifications use the basic Web Notification API; desktop toast integration and notification-click routing are pending.
 3. PWA install/offline behavior has not been exercised on real devices; private data is intentionally not cached.
 4. Responsive layouts are basic and the accessibility audit is incomplete.
-5. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.
-6. Pin layout is incomplete; grid, focus, and fullscreen are implemented.
+5. PTT/VAD, per-user volume, and resolution/fps/bitrate controls are incomplete.
+6. Video layouts cover grid, focus, pin, and fullscreen; multi-monitor/screen-share quality presets are incomplete.
 7. Browser matrix, capability detection, and desktop WebView tests are not recorded.
 8. Web e2e and voice e2e require a local Docker media stack and are not in CI.
 
