@@ -6,9 +6,11 @@ Tulpar combines Discord-like communities and real-time social features with Team
 
 Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastructure. A community owner can run a Tulpar instance on their own server and retain full control of users, messages, files, voice infrastructure, and configuration.
 
-> **Project status: Phase 5/6 in progress — Web client and media controls.**
+> **Project status: v0.1.0 public preview.**
 >
-> The backend covers auth, communities, permissions, moderation, social features, messaging, the WebSocket gateway, sync, attachments, notifications, and voice infrastructure. `apps/web` now provides login/register, `/sync`, community/channel/DM navigation, text messaging, live gateway updates, and LiveKit voice/video/screen controls. Edge tests verify two-client audio, forced TURN relay, and the browser core flow. Desktop, PWA, admin/friends/settings UI, and the full media matrix remain open. There is no production-ready release. See the phase reports in [docs](docs/PHASE_4_REPORT.md).
+> Tulpar now includes the Rust backend, the full web client, a Windows Tauri desktop preview, secure embed widgets, scoped API keys, owner-managed bots, signed outgoing webhooks, TypeScript and Rust SDKs, and a production Docker/Caddy stack with backups and monitoring. The source is publicly readable for evaluation.
+>
+> **License:** No license has been selected yet. The repository is public for evaluation only; do not redistribute or deploy commercially until a license is added. See [CHANGELOG.md](CHANGELOG.md), [docs/ROADMAP.md](docs/ROADMAP.md), and the [Releases](https://github.com/cengizkemec/tulpar/releases) page.
 
 ---
 
@@ -16,11 +18,11 @@ Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastruct
 
 | Product | Purpose | Status |
 |---|---|---|
-| **Tulpar Server** | Self-hosted Rust backend: auth, users, communities, messaging, gateway, permissions, voice authorization, files, administration, APIs | Backend through Phase 3 |
-| **Tulpar Web** | Full browser client and PWA | Foundation implemented, Phase 6 |
-| **Tulpar Desktop** | Tauri 2 desktop client for Windows 10/11 and Linux | Planned, Phase 7 |
-| **Tulpar Embed** | Secure iframe widgets and SDK for third-party websites | Planned, Phase 8 |
-| **Tulpar Developer Platform** | REST API, WebSocket events, webhooks, API keys, bots, TypeScript and Rust SDKs | Planned, Phase 8 |
+| **Tulpar Server** | Self-hosted Rust backend: auth, users, communities, messaging, gateway, permissions, voice authorization, files, administration, APIs | Implemented through Phase 9; production Compose stack provided |
+| **Tulpar Web** | Full browser client and PWA | Implemented (Phase 6) |
+| **Tulpar Desktop** | Tauri 2 desktop client for Windows 10/11 and Linux | Windows preview implemented and smoke-tested; Linux compile check passes; signed installers pending |
+| **Tulpar Embed** | Secure iframe widgets and SDK for third-party websites | Implemented (Phase 8) |
+| **Tulpar Developer Platform** | REST API, WebSocket events, webhooks, API keys, bots, TypeScript and Rust SDKs | Implemented; richer scopes and SDK models pending |
 
 ## Core principles
 
