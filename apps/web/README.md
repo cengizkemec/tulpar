@@ -8,7 +8,7 @@ React 19 + TypeScript + Vite client foundation for Tulpar.
 - `/sync`-driven community/channel/DM navigation.
 - Text message history and sending.
 - WebSocket gateway live updates.
-- LiveKit voice join/leave, microphone/camera selection, screen share, video tiles, pin/focus/grid layouts, and fullscreen.
+- LiveKit voice join/leave, microphone/camera selection, push-to-talk, connection quality, screen share, video tiles, pin/focus/grid layouts, and fullscreen.
 - Friends/search/requests/blocking/DM UI.
 - Profile, privacy, and notification settings UI.
 - In-app notification center with unread badge.

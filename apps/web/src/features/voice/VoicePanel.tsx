@@ -35,6 +35,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [micDevice, setMicDevice] = useState("");
   const [cameraDevice, setCameraDevice] = useState("");
+  const [quality, setQuality] = useState("unknown");
   const participants =
     useVoiceStore((state) => state.participants[channelId]) ??
     EMPTY_PARTICIPANTS;
@@ -176,8 +177,17 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         setMic(false);
         setCamera(false);
         setScreen(false);
+        setQuality("unknown");
         clearMedia();
       });
+      room.on(
+        livekit.RoomEvent.ConnectionQualityChanged,
+        (nextQuality, participant) => {
+          if (participant.isLocal) {
+            setQuality(String(nextQuality));
+          }
+        },
+      );
       await room.connect(voice.url, voice.token);
       setConnected(true);
       void refreshDevices();
@@ -293,6 +303,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         <button
           data-testid="voice-mic"
           data-active={mic}
+          aria-pressed={mic}
           className={`rounded-lg px-3 py-2 text-sm ${
             mic
               ? "bg-[var(--accent)] text-white"
@@ -302,6 +313,27 @@ export function VoicePanel({ channel }: { channel: Channel }) {
           disabled={!connected}
         >
           🎙 {t("microphone")}
+        </button>
+        <button
+          data-testid="voice-ptt"
+          className="rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm text-slate-300 active:bg-[var(--accent)] active:text-white"
+          disabled={!connected}
+          onPointerDown={async () => {
+            await roomRef.current?.localParticipant.setMicrophoneEnabled(true);
+            setMic(true);
+          }}
+          onPointerUp={async () => {
+            await roomRef.current?.localParticipant.setMicrophoneEnabled(false);
+            setMic(false);
+          }}
+          onPointerLeave={async () => {
+            if (mic) {
+              await roomRef.current?.localParticipant.setMicrophoneEnabled(false);
+              setMic(false);
+            }
+          }}
+        >
+          🎤 {t("pushToTalk")}
         </button>
         <button
           data-testid="voice-camera"
@@ -333,7 +365,9 @@ export function VoicePanel({ channel }: { channel: Channel }) {
           data-testid="voice-status"
           className="ml-auto text-xs text-[var(--muted)]"
         >
-          {connected ? t("connected") : ""}
+          {connected
+            ? `${t("connected")}${quality !== "unknown" ? ` · ${quality}` : ""}`
+            : ""}
         </span>
       </div>
 

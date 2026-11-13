@@ -170,7 +170,8 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] LiveKit webhooks, Redis-backed projection, and reconciliation worker.
 - [x] Server mute/deafen/move/disconnect.
 - [x] Revocation paths for kick, ban, timeout, user/role channel overwrite, and role changes.
-- [ ] Device selection, mute/deafen, PTT, VAD, per-user volume (client foundation, Phase 6).
+- [x] Device selection, mute/deafen, and push-to-talk (client foundation).
+- [ ] VAD preference and per-user volume.
 - [x] Real audio tests on supported browsers (Edge two-client harness with fake devices).
 - [x] TURN relay-only tests (`iceTransportPolicy=relay` through Coturn).
 
