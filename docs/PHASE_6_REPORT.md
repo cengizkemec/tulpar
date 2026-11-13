@@ -47,12 +47,14 @@
 - Docker development stack now serves the built web app through nginx at `http://localhost:15173`, proxying `/api`, `/gateway`, and `/webhooks`.
 - `tests/web-e2e` logs in, loads `/sync`, sends a browser message, receives an API-created message over the gateway socket, opens friends/settings/notifications, checks the admin access-denied state, joins a LiveKit voice channel, reaches `Connected`, enables the fake camera, starts screen sharing with the Edge desktop-capture source, leaves voice, and confirms media state resets. It can run against Vite or the Docker web container.
 - `admin_flow` integration test covers non-admin denial, overview/users, disable/enable, self-disable protection, session revocation, and audit output.
+- The admin panel was exercised in Edge: overview loaded, a user was disabled/re-enabled, and the `admin.user_update` audit entry appeared.
 
 ---
 
 ## 2. Verification
 
 ```text
+cargo test --workspace             -> 43 tests pass
 pnpm --filter @tulpar/web typecheck -> pass
 pnpm --filter @tulpar/web build     -> pass (LiveKit split into a lazy chunk)
 node tests/web-e2e/run.mjs          -> login/text/gateway/voice/camera/screen/leave pass
@@ -70,7 +72,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 3. PWA install/offline behavior has not been exercised on real devices; private data is intentionally not cached.
 4. Responsive layouts are basic and the accessibility audit is incomplete.
 5. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.
-6. Focus/pin layout modes are incomplete; grid and fullscreen are implemented.
+6. Pin layout is incomplete; grid, focus, and fullscreen are implemented.
 7. Browser matrix, capability detection, and desktop WebView tests are not recorded.
 8. Web e2e and voice e2e require a local Docker media stack and are not in CI.
 
