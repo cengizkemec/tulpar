@@ -12,6 +12,7 @@ React 19 + TypeScript + Vite client foundation for Tulpar.
 - Friends/search/requests/blocking/DM UI.
 - Profile, privacy, and notification settings UI.
 - In-app notification center with unread badge.
+- PWA manifest and shell-only service worker.
 - English/Turkish localization foundation.
 
 ## Commands

@@ -226,7 +226,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [ ] Browser/desktop notifications.
 - [ ] Admin UI (instance and community).
 - [ ] Responsive layouts for desktop/tablet/mobile.
-- [ ] PWA manifest, service worker, offline shell.
+- [x] PWA manifest and shell-only service worker (offline install verification pending).
 - [x] `en`/`tr` localization foundation.
 - [ ] Accessibility pass.
 - [x] Performance budgets and code splitting (LiveKit lazy chunk).

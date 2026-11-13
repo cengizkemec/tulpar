@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -28,6 +28,7 @@ export function AppShell() {
         ? "notifications"
         : "channel";
   const user = useSession((state) => state.user);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   useGateway(queryClient);
 
   const sync = useQuery({
@@ -82,7 +83,18 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--surface)] text-slate-100">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-2)]">
+      {sidebarOpen ? (
+        <button
+          aria-label="Close navigation"
+          className="fixed inset-0 z-10 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
+      <aside
+        className={`${
+          sidebarOpen ? "flex" : "hidden"
+        } fixed inset-y-0 left-0 z-20 w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-2)] md:static md:flex`}
+      >
         <div className="flex items-center gap-2 border-b border-[var(--border)] px-4 py-4">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--accent)] font-bold">
             T
@@ -242,6 +254,13 @@ export function AppShell() {
         ) : selectedChannel ? (
           <>
             <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
+              <button
+                aria-label="Open navigation"
+                className="mr-2 rounded-lg px-2 py-1 text-lg md:hidden"
+                onClick={() => setSidebarOpen(true)}
+              >
+                ☰
+              </button>
               <div>
                 <h1 className="text-base font-semibold">
                   {selectedChannel.kind === "direct"
