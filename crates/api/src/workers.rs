@@ -43,6 +43,11 @@ pub async fn dispatch_outbox_once(state: &AppState) -> Result<usize, EventError>
     Ok(processed)
 }
 
+/// Deliver pending outgoing webhook events.
+pub async fn dispatch_webhooks_once(state: &AppState) -> usize {
+    state.webhooks.dispatch_once(50).await
+}
+
 /// Rebuild voice projection from LiveKit's authoritative participant list.
 pub async fn reconcile_voice_once(state: &AppState) -> usize {
     let Some(admin) = state.livekit_admin.as_deref() else {

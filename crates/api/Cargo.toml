@@ -21,13 +21,17 @@ config = { package = "tulpar-config", path = "../config" }
 futures-util.workspace = true
 tulpar_core = { package = "tulpar-core", path = "../core" }
 http.workspace = true
+hmac.workspace = true
+hex.workspace = true
 jsonwebtoken.workspace = true
 permissions = { package = "tulpar-permissions", path = "../permissions" }
 realtime = { package = "tulpar-realtime", path = "../realtime" }
+reqwest.workspace = true
 serde.workspace = true
 social = { package = "tulpar-social", path = "../social" }
 storage = { package = "tulpar-storage", path = "../storage" }
 serde_json.workspace = true
+sha2.workspace = true
 sqlx.workspace = true
 thiserror.workspace = true
 tokio.workspace = true

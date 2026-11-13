@@ -128,6 +128,16 @@ async fn serve() -> Result<()> {
             }
         }
     });
+    let webhook_state = state.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+            let delivered = api::workers::dispatch_webhooks_once(&webhook_state).await;
+            if delivered > 0 {
+                tracing::debug!(delivered, "webhook deliveries dispatched");
+            }
+        }
+    });
     let app = router(state);
     let listener = tokio::net::TcpListener::bind(&config.server.bind)
         .await

@@ -397,6 +397,16 @@ pub async fn send_message(
     let dto = message_dto(&state, message).await?;
     if created {
         publish_message_event(&state, &authorization, "MESSAGE_CREATE", &dto);
+        if let Some(community) = &authorization.community {
+            let payload = serde_json::to_value(&dto).unwrap_or_default();
+            if let Err(error) = state
+                .webhooks
+                .enqueue_message(community.community.id, payload)
+                .await
+            {
+                tracing::warn!(%error, "webhook enqueue failed");
+            }
+        }
     }
     Ok(Json(dto))
 }

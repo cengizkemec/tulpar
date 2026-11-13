@@ -17,6 +17,8 @@ use users::UserService;
 use uuid::Uuid;
 use voice::{LiveKitAdmin, VoiceProjection};
 
+use crate::webhooks::WebhookService;
+
 /// Shared API state.
 #[derive(Clone)]
 pub struct AppState {
@@ -39,6 +41,7 @@ pub struct AppState {
     pub passwords: PasswordService,
     pub voice: VoiceProjection,
     pub livekit_admin: Option<Arc<LiveKitAdmin>>,
+    pub webhooks: WebhookService,
 }
 
 impl AppState {
@@ -60,6 +63,7 @@ impl AppState {
         )
         .ok()
         .map(Arc::new);
+        let webhooks = WebhookService::new(db.clone(), config.instance.environment != "production");
         Ok(Self {
             config,
             users: UserService::new(db.clone()),
@@ -76,6 +80,7 @@ impl AppState {
             passwords,
             voice: VoiceProjection::with_redis(redis.clone()),
             livekit_admin,
+            webhooks,
             auth,
             db,
             redis,

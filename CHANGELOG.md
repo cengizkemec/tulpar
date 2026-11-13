@@ -119,6 +119,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Embed demo site and community-settings embed management UI.
 - Embed integration tests for public/member flows, origins, widgets, code reuse, revocation, and private communities.
 - Scoped API keys with hashed `tk_...` tokens, read/write scopes, revocation, rate limits, and settings UI.
+- Outgoing webhooks with HMAC-SHA256 signatures, queued retries with exponential backoff, redirect blocking, and SSRF checks at create and delivery time.
 
 ### Added — Phase 9 production hardening
 

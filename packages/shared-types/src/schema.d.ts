@@ -932,6 +932,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/communities/{community_id}/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_webhooks"];
+        put?: never;
+        post: operations["create_webhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dms": {
         parameters: {
             query?: never;
@@ -1412,6 +1428,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/webhooks/{webhook_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_webhook"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gateway": {
         parameters: {
             query?: never;
@@ -1737,6 +1769,14 @@ export interface components {
             permissions?: string[];
             /** Format: int32 */
             position?: number | null;
+        };
+        CreateWebhookRequest: {
+            events: string[];
+            url: string;
+        };
+        CreateWebhookResponse: {
+            secret: string;
+            webhook: components["schemas"]["WebhookDto"];
         };
         DeleteAccountRequest: {
             confirmation: string;
@@ -2356,6 +2396,18 @@ export interface components {
             muted: boolean;
             sid: string;
             source: string;
+        };
+        WebhookDto: {
+            active: boolean;
+            /** Format: date-time */
+            created_at: string;
+            events: string[];
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            last_delivery_at?: string | null;
+            last_error?: string | null;
+            url: string;
         };
     };
     responses: never;
@@ -4277,6 +4329,54 @@ export interface operations {
             };
         };
     };
+    list_webhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDto"][];
+                };
+            };
+        };
+    };
+    create_webhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWebhookRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateWebhookResponse"];
+                };
+            };
+        };
+    };
     list_dms: {
         parameters: {
             query?: never;
@@ -5253,6 +5353,27 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VersionResponse"];
                 };
+            };
+        };
+    };
+    delete_webhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Webhook identifier */
+                webhook_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Webhook deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

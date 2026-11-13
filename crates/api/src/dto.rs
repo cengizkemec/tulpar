@@ -1405,3 +1405,26 @@ pub struct CreateApiKeyResponse {
     pub api_key: String,
     pub key: ApiKeyDto,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct WebhookDto {
+    pub id: Uuid,
+    pub url: String,
+    pub events: Vec<String>,
+    pub active: bool,
+    pub created_at: DateTime<Utc>,
+    pub last_delivery_at: Option<DateTime<Utc>>,
+    pub last_error: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateWebhookRequest {
+    pub url: String,
+    pub events: Vec<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct CreateWebhookResponse {
+    pub webhook: WebhookDto,
+    pub secret: String,
+}

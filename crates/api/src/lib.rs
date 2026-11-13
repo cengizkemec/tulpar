@@ -8,6 +8,7 @@ pub mod extract;
 pub mod openapi;
 pub mod routes;
 pub mod state;
+pub mod webhooks;
 pub mod workers;
 
 use std::time::Duration;
@@ -162,6 +163,10 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/{community_id}/embed-apps",
             get(routes::embed::list_apps).post(routes::embed::create_app),
+        )
+        .route(
+            "/{community_id}/webhooks",
+            get(routes::webhooks::list_webhooks).post(routes::webhooks::create_webhook),
         );
 
     let invites = Router::new().route(
@@ -319,6 +324,7 @@ pub fn router(state: AppState) -> Router {
         "/{app_id}",
         axum::routing::patch(routes::embed::update_app).delete(routes::embed::revoke_app),
     );
+    let webhooks = Router::new().route("/{webhook_id}", delete(routes::webhooks::delete_webhook));
 
     let cors = cors_layer(&state);
     let body_limit = state
@@ -350,6 +356,7 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/dms", dms)
         .nest("/api/v1/embed", embed)
         .nest("/api/v1/embed-apps", embed_apps)
+        .nest("/api/v1/webhooks", webhooks)
         .layer(middleware::from_fn_with_state(
             api_key_state,
             extract::api_key_auth,

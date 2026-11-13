@@ -25,6 +25,16 @@ interface EmbedApp {
   revoked_at?: string | null;
 }
 
+interface Webhook {
+  id: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  created_at: string;
+  last_delivery_at?: string | null;
+  last_error?: string | null;
+}
+
 export function CommunitySettingsPage() {
   const { t } = useTranslation();
   const { communityId = "" } = useParams();
@@ -44,6 +54,9 @@ export function CommunitySettingsPage() {
   const [embedAuth, setEmbedAuth] = useState(false);
   const [embedPreview, setEmbedPreview] = useState(false);
   const [embedChannel, setEmbedChannel] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState<string | null>(null);
+  const [webhookError, setWebhookError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
 
@@ -109,6 +122,12 @@ export function CommunitySettingsPage() {
       request<EmbedApp[]>(`/api/v1/communities/${communityId}/embed-apps`),
     enabled: can("MANAGE_COMMUNITY"),
   });
+  const webhooks = useQuery({
+    queryKey: ["community-webhooks", communityId],
+    queryFn: () =>
+      request<Webhook[]>(`/api/v1/communities/${communityId}/webhooks`),
+    enabled: can("MANAGE_COMMUNITY"),
+  });
 
   const invalidate = async () => {
     await Promise.all([
@@ -127,6 +146,9 @@ export function CommunitySettingsPage() {
       }),
       queryClient.invalidateQueries({
         queryKey: ["community-embed-apps", communityId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["community-webhooks", communityId],
       }),
       queryClient.invalidateQueries({ queryKey: ["sync"] }),
     ]);
@@ -232,6 +254,37 @@ export function CommunitySettingsPage() {
     onSuccess: invalidate,
     onError: (cause) =>
       setError(cause instanceof Error ? cause.message : t("embedRevokeFailed")),
+  });
+
+  const createWebhook = useMutation({
+    mutationFn: () =>
+      request<{ webhook: Webhook; secret: string }>(
+        `/api/v1/communities/${communityId}/webhooks`,
+        {
+          method: "POST",
+          body: { url: webhookUrl, events: ["message.created"] },
+        },
+      ),
+    onSuccess: async (data) => {
+      setWebhookSecret(data.secret);
+      setWebhookUrl("");
+      setWebhookError(null);
+      await invalidate();
+    },
+    onError: (cause) =>
+      setWebhookError(
+        cause instanceof Error ? cause.message : t("webhookCreateFailed"),
+      ),
+  });
+
+  const deleteWebhook = useMutation({
+    mutationFn: (id: string) =>
+      request(`/api/v1/webhooks/${id}`, { method: "DELETE" }),
+    onSuccess: invalidate,
+    onError: (cause) =>
+      setWebhookError(
+        cause instanceof Error ? cause.message : t("webhookDeleteFailed"),
+      ),
   });
 
   const toggleEmbedWidget = (widget: string) => {
@@ -517,6 +570,92 @@ export function CommunitySettingsPage() {
               ))}
               {!embedApps.isLoading && !embedApps.data?.length ? (
                 <p className="text-sm text-[var(--muted)]">{t("embedNoApps")}</p>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {can("MANAGE_COMMUNITY") ? (
+          <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+            <h2 className="text-sm font-semibold">{t("webhooks")}</h2>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              {t("webhooksHint")}
+            </p>
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <label className="min-w-64 flex-1 text-sm">
+                <span className="mb-1 block text-[var(--muted)]">
+                  {t("webhookUrl")}
+                </span>
+                <input
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+                  value={webhookUrl}
+                  onChange={(event) => setWebhookUrl(event.target.value)}
+                  placeholder="https://example.com/tulpar-webhook"
+                />
+              </label>
+              <button
+                className="rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                disabled={createWebhook.isPending || !webhookUrl.trim()}
+                onClick={() => createWebhook.mutate()}
+              >
+                {t("webhookCreate")}
+              </button>
+            </div>
+            {webhookSecret ? (
+              <div className="mt-3 rounded-lg bg-[var(--surface)] px-3 py-2">
+                <p className="text-xs text-[var(--muted)]">
+                  {t("webhookSecretHint")}
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate text-xs">
+                    {webhookSecret}
+                  </code>
+                  <button
+                    className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
+                    onClick={() =>
+                      void navigator.clipboard.writeText(webhookSecret)
+                    }
+                  >
+                    {t("copy")}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            {webhookError ? (
+              <p className="mt-2 text-sm text-red-300">{webhookError}</p>
+            ) : null}
+            <div className="mt-4 space-y-2">
+              {(webhooks.data ?? []).map((hook) => (
+                <div
+                  key={hook.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--surface)] px-3 py-2 text-sm"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{hook.url}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {hook.events.join(", ")}
+                      {hook.last_delivery_at
+                        ? ` · ${t("webhookLastDelivery")} ${new Date(
+                            hook.last_delivery_at,
+                          ).toLocaleString()}`
+                        : ""}
+                    </p>
+                    {hook.last_error ? (
+                      <p className="text-xs text-red-300">{hook.last_error}</p>
+                    ) : null}
+                  </div>
+                  <button
+                    className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-200"
+                    onClick={() => deleteWebhook.mutate(hook.id)}
+                  >
+                    {t("webhookDelete")}
+                  </button>
+                </div>
+              ))}
+              {!webhooks.isLoading && !webhooks.data?.length ? (
+                <p className="text-sm text-[var(--muted)]">
+                  {t("webhookNoHooks")}
+                </p>
               ) : null}
             </div>
           </section>

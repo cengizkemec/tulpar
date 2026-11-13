@@ -27,6 +27,10 @@
 - `GET /api/v1/users/me/api-keys` — list keys without plaintext.
 - `DELETE /api/v1/users/me/api-keys/{key_id}` — revoke a key.
 - API keys support `read` and `write` scopes. `read` allows GET/HEAD on non-sensitive routes; `write` additionally allows posting messages. Auth/session, admin, export, audit, API-key-management, and embed-app-management routes are blocked for API keys.
+- `GET /api/v1/communities/{community_id}/webhooks` — list outgoing webhooks.
+- `POST /api/v1/communities/{community_id}/webhooks` — create a webhook; the signing secret is returned once.
+- `DELETE /api/v1/webhooks/{webhook_id}` — delete a webhook.
+- Webhook deliveries are queued in `webhook_deliveries`, signed with HMAC-SHA256, retried with exponential backoff, and revalidated against SSRF rules at delivery time.
 
 ### Token and origin rules
 
@@ -48,25 +52,25 @@
 
 ### Tests
 
-- `crates/api/tests/embed_flow.rs` covers public token issuance, community data, bad origins, disabled widgets, member authorization, code reuse rejection, revocation, and private-community rejection.
-- `cargo test -p tulpar-api --test embed_flow --no-run` passes locally; the database-backed test runs in CI with PostgreSQL.
+- `crates/api/tests/embed_flow.rs` covers public token issuance, community data, bad origins, disabled widgets, member authorization, code reuse rejection, revocation, private-community rejection, and message previews.
+- `crates/api/tests/api_keys_flow.rs` covers scoped read/write keys, blocked key-management routes, message sends, and revocation.
+- `crates/api/tests/webhooks_flow.rs` covers webhook creation, one-time secret return, signed delivery, deletion, and private-address rejection.
+- `cargo test -p tulpar-api --test <name> --no-run` passes locally; database-backed tests run in CI with PostgreSQL.
 
 ---
 
 ## 2. Known gaps
 
 1. Bot accounts/dedicated bot profiles are not implemented; API keys are owned by normal user accounts.
-2. Outgoing webhooks with signatures, retries, and SSRF protection are not implemented.
-3. The Rust SDK is not implemented.
-4. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
-5. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
+2. The Rust SDK is not implemented.
+3. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
+4. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
 
 ---
 
 ## 3. Next steps
 
 1. Add bot account creation/management and per-bot permissions.
-2. Add outgoing webhooks with HMAC signatures, retries, and SSRF checks.
-3. Add the Rust SDK and publish versioned SDK packages.
-4. Expand API key scopes for moderation/channel management with an explicit policy.
-5. Add the Rust SDK and publish versioned SDK packages.
+2. Add the Rust SDK and publish versioned SDK packages.
+3. Expand API key scopes for moderation/channel management with an explicit policy.
+4. Add more webhook event types and a delivery dashboard.

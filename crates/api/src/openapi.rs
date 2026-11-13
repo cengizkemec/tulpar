@@ -125,6 +125,9 @@ use crate::{dto, error, routes};
         routes::embed::authorize,
         routes::embed::token,
         routes::embed::community,
+        routes::webhooks::list_webhooks,
+        routes::webhooks::create_webhook,
+        routes::webhooks::delete_webhook,
         routes::social::list_friends,
         routes::social::list_requests,
         routes::social::send_request,
@@ -240,6 +243,9 @@ use crate::{dto, error, routes};
         dto::ApiKeyDto,
         dto::CreateApiKeyRequest,
         dto::CreateApiKeyResponse,
+        dto::WebhookDto,
+        dto::CreateWebhookRequest,
+        dto::CreateWebhookResponse,
         dto::ReactionDto,
         dto::ReadStateDto,
         dto::SendMessageRequest,
@@ -268,6 +274,7 @@ use crate::{dto, error, routes};
         (name = "admin", description = "Instance administration and audit"),
         (name = "social", description = "Friends, blocks, and direct conversations"),
         (name = "embed", description = "Embed applications, widgets, and scoped tokens"),
+        (name = "webhooks", description = "Outgoing webhook subscriptions and deliveries"),
         (name = "health", description = "Liveness, readiness, and version")
     )
 )]
