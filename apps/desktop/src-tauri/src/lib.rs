@@ -676,11 +676,7 @@ pub fn run() {
                         .open(directory.join("crash.log"))
                     {
                         use std::io::Write;
-                        let _ = writeln!(
-                            file,
-                            "{} panic: {info}",
-                            chrono::Utc::now().to_rfc3339()
-                        );
+                        let _ = writeln!(file, "{} panic: {info}", chrono::Utc::now().to_rfc3339());
                     }
                 }
                 eprintln!("{info}");
