@@ -21,6 +21,7 @@ config = { package = "tulpar-config", path = "../config" }
 futures-util.workspace = true
 tulpar_core = { package = "tulpar-core", path = "../core" }
 http.workspace = true
+jsonwebtoken.workspace = true
 permissions = { package = "tulpar-permissions", path = "../permissions" }
 realtime = { package = "tulpar-realtime", path = "../realtime" }
 serde.workspace = true
@@ -37,6 +38,7 @@ utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 users = { package = "tulpar-users", path = "../users" }
 uuid.workspace = true
+url = "2.5"
 voice = { package = "tulpar-voice", path = "../voice" }
 
 [dev-dependencies]

@@ -1,6 +1,6 @@
 # Tulpar Deployment
 
-**Status:** Phase 2. A development Docker Compose stack (`deployments/development`) builds and runs PostgreSQL, Redis, LiveKit, Coturn, and the API with health checks. It was verified from a local non-OneDrive build context because Docker Desktop cannot read the current OneDrive path directly. Production deployment remains Phase 9.
+**Status:** Phase 9 production artifacts are implemented: a single-host Compose stack (`deployments/production`) with Caddy TLS/security headers, a production environment template, backup/restore scripts, and installation/update/firewall documentation. Clean-host installation, restore drills, monitoring dashboards, load tests, release signing, and external security review remain pending. The development stack remains the reference for local verification.
 
 ## 4.1 Verified development stack
 

@@ -1,6 +1,6 @@
 # Tulpar Embed SDK
 
-**Status:** Phase 0 design. Not implemented.
+**Status:** Embed MVP implemented. Public community widgets, one-time authenticated member authorization, embed app management, the hosted widget page, the SDK loader, and a TypeScript wrapper are in place. API keys/bot accounts, outgoing webhooks, message previews, and the Rust SDK remain follow-ups.
 
 Tulpar Embed lets a third-party website show a small, secure, read-only view of a Tulpar community: a community card, online member count, public channel preview, voice channel preview, and join/login links. Authenticated member widgets are supported through a scoped popup authorization flow.
 

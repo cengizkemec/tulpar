@@ -3,6 +3,7 @@ pub mod attachments;
 pub mod auth;
 pub mod channels;
 pub mod communities;
+pub mod embed;
 pub mod gateway;
 pub mod health;
 pub mod messages;

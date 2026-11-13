@@ -2955,6 +2955,7 @@ dependencies = [
  "tulpar-storage",
  "tulpar-users",
  "tulpar-voice",
+ "url",
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",

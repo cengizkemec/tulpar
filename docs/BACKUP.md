@@ -1,6 +1,6 @@
 # Tulpar Backup and Restore
 
-**Status:** Phase 0 policy and procedure design. Scripts are delivered in Phase 9 and must be tested on a clean host.
+**Status:** Phase 9 scripts and documentation are implemented. A clean-host restore drill is still required before a production release.
 
 **Rule:** an untested backup is not a backup. Every restore procedure in this document must be exercised before a production release and periodically afterward.
 
@@ -124,6 +124,20 @@ Requirements:
 - Run `SELECT count(*)` on key tables and a few application smoke queries.
 - Start a Tulpar instance against the restored database in a sandbox and verify login, channel load, and message read.
 - Record the duration and any errors.
+
+### 5.4 Delivered scripts
+
+```bash
+# PostgreSQL custom dump + uploads volume archive + SHA-256 checksums + retention
+sudo TULPAR_BACKUP_DIR=/var/backups/tulpar scripts/backup.sh
+
+# Verify checksums, restore the database, and replace the uploads volume
+sudo scripts/restore.sh --yes /var/backups/tulpar/<timestamp>
+```
+
+The scripts use the production Compose file and `.env` by default; override with
+`TULPAR_COMPOSE_FILE`, `TULPAR_ENV_FILE`, `TULPAR_UPLOADS_VOLUME`,
+`TULPAR_BACKUP_DIR`, and `TULPAR_BACKUP_RETENTION_DAYS`.
 
 ---
 

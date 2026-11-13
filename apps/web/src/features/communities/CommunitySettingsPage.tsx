@@ -15,6 +15,16 @@ import type {
 } from "../../lib/types";
 import { useSession } from "../../stores/session";
 
+interface EmbedApp {
+  id: string;
+  name: string;
+  public_key: string;
+  allowed_origins: string[];
+  widgets: string[];
+  allow_authenticated: boolean;
+  revoked_at?: string | null;
+}
+
 export function CommunitySettingsPage() {
   const { t } = useTranslation();
   const { communityId = "" } = useParams();
@@ -25,6 +35,13 @@ export function CommunitySettingsPage() {
   const [visibility, setVisibility] = useState("private");
   const [maxUses, setMaxUses] = useState("0");
   const [expiresHours, setExpiresHours] = useState("24");
+  const [embedName, setEmbedName] = useState("");
+  const [embedOrigins, setEmbedOrigins] = useState("http://localhost:8090");
+  const [embedWidgets, setEmbedWidgets] = useState<string[]>([
+    "community",
+    "join",
+  ]);
+  const [embedAuth, setEmbedAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
 
@@ -84,6 +101,12 @@ export function CommunitySettingsPage() {
       ),
     enabled: can("VIEW_AUDIT_LOG"),
   });
+  const embedApps = useQuery({
+    queryKey: ["community-embed-apps", communityId],
+    queryFn: () =>
+      request<EmbedApp[]>(`/api/v1/communities/${communityId}/embed-apps`),
+    enabled: can("MANAGE_COMMUNITY"),
+  });
 
   const invalidate = async () => {
     await Promise.all([
@@ -99,6 +122,9 @@ export function CommunitySettingsPage() {
       }),
       queryClient.invalidateQueries({
         queryKey: ["community-audit", communityId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["community-embed-apps", communityId],
       }),
       queryClient.invalidateQueries({ queryKey: ["sync"] }),
     ]);
@@ -171,6 +197,45 @@ export function CommunitySettingsPage() {
       }),
     onSuccess: invalidate,
   });
+
+  const createEmbed = useMutation({
+    mutationFn: () =>
+      request<EmbedApp>(`/api/v1/communities/${communityId}/embed-apps`, {
+        method: "POST",
+        body: {
+          name: embedName,
+          allowed_origins: embedOrigins
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean),
+          widgets: embedWidgets,
+          allow_authenticated: embedAuth,
+        },
+      }),
+    onSuccess: async () => {
+      setEmbedName("");
+      setError(null);
+      await invalidate();
+    },
+    onError: (cause) =>
+      setError(cause instanceof Error ? cause.message : t("embedCreateFailed")),
+  });
+
+  const revokeEmbed = useMutation({
+    mutationFn: (id: string) =>
+      request(`/api/v1/embed-apps/${id}`, { method: "DELETE" }),
+    onSuccess: invalidate,
+    onError: (cause) =>
+      setError(cause instanceof Error ? cause.message : t("embedRevokeFailed")),
+  });
+
+  const toggleEmbedWidget = (widget: string) => {
+    setEmbedWidgets((current) =>
+      current.includes(widget)
+        ? current.filter((value) => value !== widget)
+        : [...current, widget],
+    );
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
@@ -313,6 +378,111 @@ export function CommunitySettingsPage() {
             ))}
           </div>
         </section>
+
+        {can("MANAGE_COMMUNITY") ? (
+          <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+            <h2 className="text-sm font-semibold">{t("embeds")}</h2>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <label className="text-sm">
+                <span className="mb-1 block text-[var(--muted)]">
+                  {t("embedName")}
+                </span>
+                <input
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+                  value={embedName}
+                  onChange={(event) => setEmbedName(event.target.value)}
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-[var(--muted)]">
+                  {t("embedOrigins")}
+                </span>
+                <input
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+                  value={embedOrigins}
+                  onChange={(event) => setEmbedOrigins(event.target.value)}
+                />
+              </label>
+              <div className="text-sm md:col-span-2">
+                <span className="mb-1 block text-[var(--muted)]">
+                  {t("embedWidgets")}
+                </span>
+                <div className="flex flex-wrap gap-3">
+                  {["community", "join", "members", "voice_preview"].map(
+                    (widget) => (
+                      <label
+                        key={widget}
+                        className="flex items-center gap-1.5"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={embedWidgets.includes(widget)}
+                          onChange={() => toggleEmbedWidget(widget)}
+                        />
+                        {t(`embedWidget_${widget}`)}
+                      </label>
+                    ),
+                  )}
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm md:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={embedAuth}
+                  onChange={(event) => setEmbedAuth(event.target.checked)}
+                />
+                {t("embedAllowAuth")}
+              </label>
+            </div>
+            <button
+              className="mt-3 rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              disabled={
+                createEmbed.isPending ||
+                !embedName.trim() ||
+                !embedWidgets.length
+              }
+              onClick={() => createEmbed.mutate()}
+            >
+              {t("embedCreate")}
+            </button>
+            <div className="mt-4 space-y-2">
+              {(embedApps.data ?? []).map((app) => (
+                <div
+                  key={app.id}
+                  className="rounded-lg bg-[var(--surface)] px-3 py-2 text-sm"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-medium">{app.name}</p>
+                      <code className="text-xs text-[var(--muted)]">
+                        {app.public_key}
+                      </code>
+                    </div>
+                    {app.revoked_at ? (
+                      <span className="text-xs text-[var(--muted)]">
+                        {t("embedRevoked")}
+                      </span>
+                    ) : (
+                      <button
+                        className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-200"
+                        onClick={() => revokeEmbed.mutate(app.id)}
+                      >
+                        {t("embedRevoke")}
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--muted)]">
+                    {app.allowed_origins.join(", ")} ·{" "}
+                    {app.widgets.join(", ")}
+                  </p>
+                </div>
+              ))}
+              {!embedApps.isLoading && !embedApps.data?.length ? (
+                <p className="text-sm text-[var(--muted)]">{t("embedNoApps")}</p>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         {can("MANAGE_INVITES") ? (
           <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">

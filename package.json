@@ -5,7 +5,8 @@
   "packageManager": "pnpm@10.34.9",
   "scripts": {
     "generate:types": "pnpm --filter @tulpar/shared-types generate",
-    "typecheck": "pnpm --filter @tulpar/shared-types typecheck && pnpm --filter @tulpar/web typecheck",
-    "build:web": "pnpm --filter @tulpar/web build"
+    "typecheck": "pnpm --filter @tulpar/shared-types typecheck && pnpm --filter @tulpar/web typecheck && pnpm --filter @tulpar/embed-sdk typecheck",
+    "build:web": "pnpm --filter @tulpar/web build",
+    "build:embed-sdk": "pnpm --filter @tulpar/embed-sdk build"
   }
 }

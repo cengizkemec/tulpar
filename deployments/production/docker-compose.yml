@@ -1,0 +1,158 @@
+name: tulpar
+
+services:
+  postgres:
+    image: postgres@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
+    environment:
+      POSTGRES_USER: tulpar
+      POSTGRES_PASSWORD: ${TULPAR_POSTGRES_PASSWORD:?set TULPAR_POSTGRES_PASSWORD}
+      POSTGRES_DB: tulpar
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tulpar -d tulpar"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - internal
+
+  redis:
+    image: redis@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - internal
+
+  livekit:
+    image: livekit/livekit-server@sha256:25cd902de7cacbd5f1f779f6a6ac1eae20ba8f56b0935934ce6b0ab80d1e3d20
+    command: ["--config", "/etc/livekit.yaml"]
+    environment:
+      LIVEKIT_KEYS: "${TULPAR_LIVEKIT_API_KEY:?set TULPAR_LIVEKIT_API_KEY}: ${TULPAR_LIVEKIT_SECRET:?set TULPAR_LIVEKIT_SECRET}"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    ports:
+      - "7881:7881"
+      - "50000-50100:50000-50100/udp"
+    restart: unless-stopped
+    networks:
+      - internal
+      - edge
+
+  coturn:
+    image: coturn/coturn@sha256:71c3c990283385567f11794ee692e3a47b66fd9b0bb39e42afbe776e331dd888
+    command:
+      - "--listening-port=3478"
+      - "--fingerprint"
+      - "--use-auth-secret"
+      - "--static-auth-secret=${TULPAR_TURN_PASSWORD:?set TULPAR_TURN_PASSWORD}"
+      - "--realm=${TULPAR_DOMAIN:?set TULPAR_DOMAIN}"
+      - "--min-port=51000"
+      - "--max-port=51100"
+      - "--no-cli"
+      - "--no-multicast-peers"
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "51000-51100:51000-51100/udp"
+    restart: unless-stopped
+    networks:
+      - edge
+
+  api:
+    build:
+      context: ../..
+      dockerfile: deployments/development/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TULPAR__INSTANCE__NAME: ${TULPAR_INSTANCE_NAME:-Tulpar}
+      TULPAR__INSTANCE__PUBLIC_URL: https://${TULPAR_DOMAIN:?set TULPAR_DOMAIN}
+      TULPAR__INSTANCE__ENVIRONMENT: production
+      TULPAR__CORS__ALLOWED_ORIGINS: ${TULPAR_CORS_ALLOWED_ORIGINS:?set TULPAR_CORS_ALLOWED_ORIGINS}
+      TULPAR__SERVER__TRUST_PROXY: "true"
+      TULPAR__SERVER__BIND: 0.0.0.0:8080
+      TULPAR__DATABASE__URL: postgres://tulpar:${TULPAR_POSTGRES_PASSWORD}@postgres:5432/tulpar
+      TULPAR__REDIS__URL: redis://redis:6379
+      TULPAR__AUTH__JWT_SECRET: ${TULPAR_JWT_SECRET:?set TULPAR_JWT_SECRET}
+      TULPAR__AUTH__COOKIE_SECURE: "true"
+      TULPAR__AUTH__REQUIRE_EMAIL_VERIFICATION: "true"
+      TULPAR__EMAIL__DRIVER: smtp
+      TULPAR__EMAIL__SMTP_URL: ${TULPAR_SMTP_URL:?set TULPAR_SMTP_URL}
+      TULPAR__EMAIL__FROM: ${TULPAR_EMAIL_FROM:?set TULPAR_EMAIL_FROM}
+      TULPAR__LOG__LEVEL: ${TULPAR_LOG_LEVEL:-info}
+      TULPAR__LOG__FORMAT: json
+      TULPAR__STORAGE__ROOT: /home/tulpar/uploads
+      TULPAR__STORAGE__MAX_UPLOAD_BYTES: ${TULPAR_MAX_UPLOAD_BYTES:-26214400}
+      TULPAR__VOICE__LIVEKIT_URL: wss://livekit.${TULPAR_DOMAIN}
+      TULPAR__VOICE__LIVEKIT_API_URL: http://livekit:7880
+      TULPAR__VOICE__API_KEY: ${TULPAR_LIVEKIT_API_KEY}
+      TULPAR__VOICE__API_SECRET: ${TULPAR_LIVEKIT_SECRET}
+      TULPAR__VOICE__TURN_SECRET: ${TULPAR_TURN_PASSWORD}
+      TULPAR__VOICE__STUN_URL: stun:${TULPAR_DOMAIN}:3478
+      TULPAR__VOICE__TURN_URL: turn:${TULPAR_DOMAIN}:3478
+    volumes:
+      - uploads:/home/tulpar/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deployments/development/web.Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2.8-alpine
+    depends_on:
+      - web
+      - livekit
+    environment:
+      TULPAR_DOMAIN: ${TULPAR_DOMAIN:?set TULPAR_DOMAIN}
+      TULPAR_ACME_EMAIL: ${TULPAR_ACME_EMAIL:?set TULPAR_ACME_EMAIL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    networks:
+      - edge
+      - internal
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:
+  edge:

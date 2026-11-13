@@ -277,46 +277,50 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 8 — Embed and developer platform
 
+**Status:** Embed MVP complete: app management, origin allowlisting, public and authenticated token flows, iframe widget, postMessage loader, TypeScript wrapper, demo site, and embed tests. API keys/bots, outgoing webhooks, message previews, the authenticated popup UX, and the Rust SDK remain follow-ups.
+
 ### Tasks
 
-- Embed apps, origins, scoped tokens, iframe widgets.
-- Public and authenticated widget flows.
-- postMessage protocol and SDK.
-- Embed demo site.
-- REST API stabilization and versioning.
-- WebSocket documentation and event schemas.
-- Webhooks with signatures/retries/SSRF protection.
-- API keys, bot accounts, bot tokens, scopes.
-- TypeScript SDK and Rust SDK.
-- Developer documentation and examples.
-- The API security matrix and embed tests.
+- [x] Embed apps, origins, scoped tokens, iframe widgets.
+- [x] Public widget flow and authenticated token API (popup UX pending).
+- [x] postMessage protocol and SDK loader.
+- [x] Embed demo site.
+- [x] REST API v1/OpenAPI contract.
+- [x] WebSocket documentation and event schemas.
+- [ ] Webhooks with signatures/retries/SSRF protection.
+- [ ] API keys, bot accounts, bot tokens, scopes.
+- [x] TypeScript SDK (Rust SDK pending).
+- [x] Developer examples for the embed loader.
+- [x] Embed security tests (public/member/origin/widget/revocation).
 
 ### Exit criteria
 
-- A third-party demo site mounts public and authenticated widgets.
-- Origin, audience, postMessage, and clickjacking tests pass.
-- Webhook signatures/retries/SSRF tests pass.
-- API keys and bot tokens are hashed, scoped, revocable, and rate limited.
-- SDKs compile and pass contract tests.
-- API/WS docs match the implementation.
+- [ ] A third-party demo site mounts public widgets (authenticated widget popup UX pending).
+- [ ] Origin, audience, postMessage, and clickjacking tests pass (origin/audience covered; postMessage/clickjacking pending).
+- [ ] Webhook signatures/retries/SSRF tests pass.
+- [ ] API keys and bot tokens are hashed, scoped, revocable, and rate limited.
+- [ ] SDKs compile and pass contract tests (TypeScript SDK builds; Rust SDK pending).
+- [x] API/WS docs match the implemented v1 surface.
 
 ---
 
 ## Phase 9 — Production hardening
 
+**Status:** Production deployment artifacts are in place: a single-host Compose stack, Caddy TLS/security headers, production environment template, backup/restore scripts, and deployment/backup documentation. Clean-host installation, restore drills, monitoring dashboards, load tests, release signing, and external security review remain pending.
+
 ### Tasks
 
-- Production Docker Compose and installation scripts for Ubuntu 24.04.
-- TLS/Caddy hardening, security headers, firewall, secrets.
-- Backup/restore scripts and a real restore drill.
-- Upgrade rehearsal from the previous release.
-- Monitoring dashboards/alerts and log aggregation.
-- Load tests and performance fixes.
-- Security review and dependency/container scans.
-- External security review if feasible.
-- Documentation: installation, upgrade, troubleshooting, runbooks.
-- Release workflow, checksums, image signing, desktop release signing.
-- Disaster recovery and incident response runbooks.
+- [x] Production Docker Compose and Caddy stack for Ubuntu 24.04 (clean-host install pending).
+- [x] TLS/Caddy hardening, security headers, firewall guidance, secrets template.
+- [x] Backup/restore scripts (real restore drill pending).
+- [ ] Upgrade rehearsal from the previous release.
+- [ ] Monitoring dashboards/alerts and log aggregation.
+- [ ] Load tests and performance fixes.
+- [x] Dependency/secret scans in CI (`cargo audit`, gitleaks).
+- [ ] External security review if feasible.
+- [x] Installation, upgrade, troubleshooting, and backup documentation (runbook drill pending).
+- [ ] Release workflow, checksums, image signing, desktop release signing.
+- [ ] Disaster recovery and incident response runbooks.
 
 ### Exit criteria
 

@@ -13,6 +13,7 @@ import { type InstallPromptEvent, usePwa } from "../stores/pwa";
 import { useSession } from "../stores/session";
 import { AppShell } from "../routes/AppShell";
 import { DevicePage } from "../routes/DevicePage";
+import { EmbedWidgetPage } from "../routes/EmbedWidgetPage";
 import { LoginPage } from "../routes/LoginPage";
 import { RegisterPage } from "../routes/RegisterPage";
 
@@ -161,6 +162,10 @@ export function App() {
             <Route
               path="/device"
               element={<DevicePage />}
+            />
+            <Route
+              path="/embed/widget"
+              element={<EmbedWidgetPage />}
             />
             <Route
               path="/connect"

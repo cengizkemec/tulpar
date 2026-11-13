@@ -1,6 +1,6 @@
 # Tulpar Web Client
 
-**Status:** Phase 6 complete for the web scope: React/Vite build, login/register, session refresh, `/sync`, community/channel/DM navigation, text messaging, gateway live updates, LiveKit voice/video/screen controls, friends UI, personal settings, an in-app notification center, instance administration (overview/users/audit), community settings, full English/Turkish localization, PWA install/offline shell, a cache-only-public-assets service worker, and an accessibility pass. The web client always connects to its own origin; multi-server address entry is desktop-only. A tablet/mobile visual matrix and bulk role editing remain open.
+**Status:** Phase 6 complete for the web scope and Phase 8 embed MVP implemented: React/Vite build, login/register, session refresh, `/sync`, community/channel/DM navigation, text messaging, gateway live updates, LiveKit voice/video/screen controls, friends UI, personal settings, an in-app notification center, instance administration (overview/users/audit), community settings, full English/Turkish localization, PWA install/offline shell, a cache-only-public-assets service worker, an accessibility pass, a device approval page, and hosted embed widgets. The web client always connects to its own origin; multi-server address entry is desktop-only. A tablet/mobile visual matrix, bulk role editing, and authenticated embed popup UX remain open.
 
 **Stack:** React 19, TypeScript, Vite, Zustand, TanStack Query, Tailwind CSS, LiveKit JavaScript SDK, i18next.
 

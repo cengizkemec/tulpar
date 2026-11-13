@@ -279,8 +279,7 @@ impl AppConfig {
         for origin in &self.cors.allowed_origins {
             let parsed = Url::parse(origin)
                 .map_err(|_| ConfigError::Invalid(format!("invalid CORS origin: {origin}")))?;
-            if !matches!(parsed.scheme(), "http" | "https" | "tauri")
-                || parsed.host_str().is_none()
+            if !matches!(parsed.scheme(), "http" | "https" | "tauri") || parsed.host_str().is_none()
             {
                 return Err(ConfigError::Invalid(format!(
                     "invalid CORS origin: {origin}"

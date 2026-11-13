@@ -107,6 +107,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Desktop capability reporting and CSP/CORS support for WebView2 origins.
 - `tests/web-e2e/desktop.mjs` Windows smoke test covering device approval, keychain refresh, PTT, capabilities, and deep links.
 
+### Added — Phase 8 embed platform
+
+- Embed applications with exact origin allowlists, widget flags, public keys, and token-version revocation.
+- Public embed tokens and one-time authenticated member authorization codes.
+- `/api/v1/embed/*` token, community, and authorization endpoints.
+- Hosted `/embed/widget` iframe page with postMessage resize/ready events.
+- `/embed/v1/tulpar-embed.js` loader and `@tulpar/embed-sdk` TypeScript wrapper.
+- Embed demo site and community-settings embed management UI.
+- Embed integration tests for public/member flows, origins, widgets, code reuse, revocation, and private communities.
+
+### Added — Phase 9 production hardening
+
+- Production Compose stack with PostgreSQL, Redis, LiveKit, Coturn, API, web, and Caddy.
+- Caddy TLS, HTTP/3, HSTS, and security headers.
+- Production environment template and deployment/firewall/update documentation.
+- Backup and restore scripts with checksums and retention.
+- Windows desktop shell check in CI.
+
 ### Planned — Phase 4 follow-ups
 
 - Real-browser audio verification and TURN fallback with UDP blocked.

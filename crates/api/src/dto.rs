@@ -1285,3 +1285,87 @@ pub struct AdminAuditQuery {
     #[serde(default)]
     pub offset: Option<i64>,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct EmbedAppDto {
+    pub id: Uuid,
+    pub community_id: Uuid,
+    pub name: String,
+    pub public_key: String,
+    pub allowed_origins: Vec<String>,
+    pub widgets: Vec<String>,
+    pub allow_authenticated: bool,
+    pub allow_message_preview: bool,
+    pub token_version: i32,
+    pub created_at: DateTime<Utc>,
+    pub revoked_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateEmbedAppRequest {
+    pub name: String,
+    pub allowed_origins: Vec<String>,
+    pub widgets: Vec<String>,
+    #[serde(default)]
+    pub allow_authenticated: bool,
+    #[serde(default)]
+    pub allow_message_preview: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UpdateEmbedAppRequest {
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub allowed_origins: Option<Vec<String>>,
+    #[serde(default)]
+    pub widgets: Option<Vec<String>>,
+    #[serde(default)]
+    pub allow_authenticated: Option<bool>,
+    #[serde(default)]
+    pub allow_message_preview: Option<bool>,
+    #[serde(default)]
+    pub revoked: Option<bool>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct EmbedAuthorizeRequest {
+    pub public_key: String,
+    pub origin: String,
+    pub widget: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct EmbedAuthorizeResponse {
+    pub code: String,
+    pub expires_in: i64,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct EmbedTokenRequest {
+    pub public_key: String,
+    pub origin: String,
+    pub widget: String,
+    #[serde(default)]
+    pub code: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct EmbedTokenResponse {
+    pub token: String,
+    pub expires_in: i64,
+    pub widget: String,
+    pub community_id: Uuid,
+    pub authenticated: bool,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct EmbedCommunityDto {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub member_count: i64,
+    pub voice_channel_count: i64,
+    pub public_url: String,
+    pub authenticated: bool,
+}

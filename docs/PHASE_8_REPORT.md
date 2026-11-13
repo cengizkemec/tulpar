@@ -1,0 +1,67 @@
+# Phase 8 Report — Embed and developer platform
+
+**Status:** Embed MVP implemented. Public community widgets, one-time authenticated member authorization, the embed app management API/UI, the hosted widget page, the SDK loader, a typed TypeScript wrapper, and a demo host page are in place. API keys/bot accounts, outgoing webhooks, message previews, and the Rust SDK remain follow-ups.
+
+**Date:** 2026-11-13
+
+---
+
+## 1. Implemented
+
+### Data model
+
+- Migration `0006_embeds.sql` adds `embed_apps` and `embed_authorization_codes`.
+- Embed apps are scoped to a community, have exact allowed origins, enabled widgets, an authentication flag, a public `emb_...` key, and a token version for revocation.
+- Authorization codes are SHA-256 hashed, single-use, origin-bound, and expire after 60 seconds.
+
+### API
+
+- `POST /api/v1/communities/{community_id}/embed-apps` — create an embed app (`MANAGE_COMMUNITY`).
+- `GET /api/v1/communities/{community_id}/embed-apps` — list apps (`MANAGE_COMMUNITY`).
+- `PATCH /api/v1/embed-apps/{app_id}` — update origins/widgets/flags/revocation.
+- `DELETE /api/v1/embed-apps/{app_id}` — revoke and bump the token version.
+- `POST /api/v1/embed/authorize` — authenticated member starts the popup authorization flow.
+- `POST /api/v1/embed/token` — public token or one-time code exchange.
+- `GET /api/v1/embed/community` — widget data using a short-lived embed JWT.
+
+### Token and origin rules
+
+- Embed JWTs use the instance JWT secret, issuer, `embed` audience, app/community/origin/widget claims, and a 15-minute lifetime.
+- Public tokens are only issued for public communities.
+- Authenticated tokens require community membership at issue time and re-check membership on every widget request.
+- Origins must be exact `http(s)` origins without paths or credentials; plain HTTP is limited to localhost.
+- Revocation and origin/widget changes bump `token_version`, invalidating existing tokens.
+
+### Frontend and SDK
+
+- `/embed/widget` renders a minimal community card, posts `tulpar:ready`/`tulpar:resize` messages, and never exposes the token to the host page.
+- `/embed/v1/tulpar-embed.js` is the hosted loader: it creates the iframe, validates `postMessage` origins, and auto-mounts `data-tulpar-embed` elements.
+- `packages/embed-sdk` provides a typed TypeScript `mount` wrapper.
+- `apps/embed-demo` is a separate-origin demo host page.
+- Community settings now has an Embeds section to create, inspect, and revoke applications.
+
+### Tests
+
+- `crates/api/tests/embed_flow.rs` covers public token issuance, community data, bad origins, disabled widgets, member authorization, code reuse rejection, revocation, and private-community rejection.
+- `cargo test -p tulpar-api --test embed_flow --no-run` passes locally; the database-backed test runs in CI with PostgreSQL.
+
+---
+
+## 2. Known gaps
+
+1. API keys, bot accounts, and scoped bot tokens are not implemented.
+2. Outgoing webhooks with signatures, retries, and SSRF protection are not implemented.
+3. Authenticated widget popup UX is API-ready but the host-side popup flow and widget sign-in button are not wired yet.
+4. Public message previews are not implemented; the `allow_message_preview` flag is stored but unused.
+5. The Rust SDK is not implemented.
+6. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
+
+---
+
+## 3. Next steps
+
+1. Add the authenticated widget popup and SDK `authenticated` option.
+2. Add API keys/bot accounts with scoped, hashed tokens.
+3. Add outgoing webhooks with HMAC signatures, retries, and SSRF checks.
+4. Add public channel message previews behind the existing flag.
+5. Add the Rust SDK and publish versioned SDK packages.

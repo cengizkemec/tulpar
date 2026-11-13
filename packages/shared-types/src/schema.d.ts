@@ -756,6 +756,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/communities/{community_id}/embed-apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_apps"];
+        put?: never;
+        post: operations["create_app"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/communities/{community_id}/invites": {
         parameters: {
             query?: never;
@@ -926,6 +942,70 @@ export interface paths {
         get: operations["list_dms"];
         put?: never;
         post: operations["create_dm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/embed-apps/{app_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["revoke_app"];
+        options?: never;
+        head?: never;
+        patch: operations["update_app"];
+        trace?: never;
+    };
+    "/api/v1/embed/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["authorize"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/embed/community": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["community"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/embed/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["token"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1580,6 +1660,13 @@ export interface components {
             /** Format: uuid */
             recipient_id: string;
         };
+        CreateEmbedAppRequest: {
+            allow_authenticated?: boolean;
+            allow_message_preview?: boolean;
+            allowed_origins: string[];
+            name: string;
+            widgets: string[];
+        };
         CreateInviteRequest: {
             /** Format: uuid */
             channel_id?: string | null;
@@ -1643,6 +1730,61 @@ export interface components {
         };
         EmailRequest: {
             email: string;
+        };
+        EmbedAppDto: {
+            allow_authenticated: boolean;
+            allow_message_preview: boolean;
+            allowed_origins: string[];
+            /** Format: uuid */
+            community_id: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            public_key: string;
+            /** Format: date-time */
+            revoked_at?: string | null;
+            /** Format: int32 */
+            token_version: number;
+            widgets: string[];
+        };
+        EmbedAuthorizeRequest: {
+            origin: string;
+            public_key: string;
+            widget: string;
+        };
+        EmbedAuthorizeResponse: {
+            code: string;
+            /** Format: int64 */
+            expires_in: number;
+        };
+        EmbedCommunityDto: {
+            authenticated: boolean;
+            description?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            member_count: number;
+            name: string;
+            public_url: string;
+            /** Format: int64 */
+            voice_channel_count: number;
+        };
+        EmbedTokenRequest: {
+            code?: string | null;
+            origin: string;
+            public_key: string;
+            widget: string;
+        };
+        EmbedTokenResponse: {
+            authenticated: boolean;
+            /** Format: uuid */
+            community_id: string;
+            /** Format: int64 */
+            expires_in: number;
+            token: string;
+            widget: string;
         };
         FieldError: {
             code: string;
@@ -2037,6 +2179,14 @@ export interface components {
             description?: string | null;
             name?: string | null;
             visibility?: string | null;
+        };
+        UpdateEmbedAppRequest: {
+            allow_authenticated?: boolean | null;
+            allow_message_preview?: boolean | null;
+            allowed_origins?: string[] | null;
+            name?: string | null;
+            revoked?: boolean | null;
+            widgets?: string[] | null;
         };
         UpdateMemberRequest: {
             nickname?: string | null;
@@ -3643,6 +3793,54 @@ export interface operations {
             };
         };
     };
+    list_apps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedAppDto"][];
+                };
+            };
+        };
+    };
+    create_app: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Community identifier */
+                community_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateEmbedAppRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedAppDto"];
+                };
+            };
+        };
+    };
     list_invites: {
         parameters: {
             query?: never;
@@ -4050,6 +4248,118 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DirectConversationDto"];
+                };
+            };
+        };
+    };
+    revoke_app: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Embed application identifier */
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Embed application revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_app: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Embed application identifier */
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateEmbedAppRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedAppDto"];
+                };
+            };
+        };
+    };
+    authorize: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmbedAuthorizeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedAuthorizeResponse"];
+                };
+            };
+        };
+    };
+    community: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedCommunityDto"];
+                };
+            };
+        };
+    };
+    token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmbedTokenRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedTokenResponse"];
                 };
             };
         };

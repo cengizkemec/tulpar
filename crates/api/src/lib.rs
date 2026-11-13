@@ -150,6 +150,10 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/{community_id}/invites",
             get(routes::communities::list_invites).post(routes::communities::create_invite),
+        )
+        .route(
+            "/{community_id}/embed-apps",
+            get(routes::embed::list_apps).post(routes::embed::create_app),
         );
 
     let invites = Router::new().route(
@@ -299,6 +303,15 @@ pub fn router(state: AppState) -> Router {
         get(routes::social::list_dms).post(routes::social::create_dm),
     );
 
+    let embed = Router::new()
+        .route(
+            "/apps/{app_id}",
+            axum::routing::patch(routes::embed::update_app).delete(routes::embed::revoke_app),
+        )
+        .route("/authorize", post(routes::embed::authorize))
+        .route("/token", post(routes::embed::token))
+        .route("/community", get(routes::embed::community));
+
     let cors = cors_layer(&state);
     let body_limit = state
         .config
@@ -326,6 +339,7 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/friends", friends)
         .nest("/api/v1/blocks", blocks)
         .nest("/api/v1/dms", dms)
+        .nest("/api/v1/embed", embed)
         .with_state(state)
         .merge(SwaggerUi::new("/docs").url("/api/v1/openapi.json", openapi::document()))
         .layer(CompressionLayer::new())

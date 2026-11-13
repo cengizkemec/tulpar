@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tulpar Embed demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, "Segoe UI", system-ui, sans-serif;
+        background: #0b0e12;
+        color: #e8edf4;
+      }
+      body {
+        margin: 0;
+        padding: 40px;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      .card {
+        margin-top: 24px;
+        padding: 20px;
+        border: 1px solid #2a3543;
+        border-radius: 16px;
+        background: #171e27;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #2a3543;
+        background: #11161d;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        background: #2e6fe8;
+        border-color: #2e6fe8;
+        font-weight: 600;
+      }
+      code {
+        color: #9db7ff;
+      }
+      #embed {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Tulpar Embed demo</h1>
+      <p>
+        Create an embed application for a public community, allow
+        <code>http://localhost:8090</code>, enable the <code>community</code>
+        widget, then paste its public key below.
+      </p>
+      <div class="card">
+        <label for="key">Embed public key</label>
+        <div style="display: flex; gap: 8px; margin-top: 8px">
+          <input id="key" placeholder="emb_..." style="flex: 1" />
+          <button id="mount">Mount widget</button>
+        </div>
+        <div id="embed"></div>
+      </div>
+    </main>
+    <script src="http://localhost:15173/embed/v1/tulpar-embed.js"></script>
+    <script>
+      document.getElementById("mount").addEventListener("click", function () {
+        var key = document.getElementById("key").value.trim();
+        if (!key) {
+          return;
+        }
+        window.TulparEmbed.mount(document.getElementById("embed"), {
+          key: key,
+          instance: "http://localhost:15173",
+          widget: "community",
+          height: 240,
+          title: "Tulpar community embed",
+        });
+      });
+    </script>
+  </body>
+</html>
