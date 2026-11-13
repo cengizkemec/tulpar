@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "5.107.1",
+    "@tauri-apps/api": "^2.0.0",
     "@tulpar/shared-types": "workspace:*",
     "i18next": "27.1.1",
     "livekit-client": "2.24.0",

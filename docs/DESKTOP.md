@@ -1,6 +1,14 @@
 # Tulpar Desktop
 
-**Status:** Phase 0 design. Not implemented.
+**Status:** Phase 7 Windows foundation implemented in `apps/desktop`. The Tauri 2 shell embeds the shared web build, supports device authorization, OS keychain refresh tokens, single-flight refresh, tray/close-to-tray, native notifications, global PTT, deep links, autostart, single-instance forwarding, and window-state persistence. Linux packaging, signed releases, updater endpoints, diagnostics/crash reporting, and the full platform matrix remain release follow-ups.
+
+**Implementation notes (Windows):**
+
+- `apps/desktop/src-tauri` contains the Tauri shell and narrow Rust commands.
+- The web app detects Tauri and switches to the desktop adapter; the browser build keeps cookie auth and same-origin API calls.
+- The desktop connect screen is only rendered in Tauri; the web `/connect` route redirects to `/app`.
+- Device approval is served by the web app at `/device`.
+- `tests/web-e2e/desktop.mjs` verifies the full flow against a debug build: connect, device approval, keychain session, refresh after reload, PTT registration, capabilities, and deep-link forwarding.
 
 **Targets:** Windows 10/11 and Linux. macOS is out of scope for v1.
 

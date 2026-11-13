@@ -4,6 +4,14 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { request } from "../../lib/api";
+import {
+  desktopAutostartGet,
+  desktopAutostartSet,
+  desktopCapabilities,
+  desktopRegisterPtt,
+  isDesktop,
+  type DesktopCapabilities,
+} from "../../lib/desktop";
 import type { NotificationPreferences, UserSettings } from "../../lib/types";
 import { usePwa } from "../../stores/pwa";
 import { useSession } from "../../stores/session";
@@ -27,6 +35,15 @@ export function SettingsPage() {
   const [browserPermission, setBrowserPermission] = useState(
     typeof Notification === "undefined" ? "unsupported" : Notification.permission,
   );
+  const [pttShortcut, setPttShortcut] = useState(
+    () => window.localStorage.getItem("tulpar.ptt") ?? "",
+  );
+  const [autostart, setAutostart] = useState(false);
+  const [capabilities, setCapabilities] = useState<DesktopCapabilities | null>(
+    null,
+  );
+  const [desktopMessage, setDesktopMessage] = useState<string | null>(null);
+  const [desktopError, setDesktopError] = useState<string | null>(null);
 
   const settingsQuery = useQuery({
     queryKey: ["user-settings"],
@@ -46,6 +63,13 @@ export function SettingsPage() {
   useEffect(() => {
     if (notificationQuery.data) setNotifications(notificationQuery.data);
   }, [notificationQuery.data]);
+  useEffect(() => {
+    if (!isDesktop()) {
+      return;
+    }
+    void desktopAutostartGet().then(setAutostart).catch(() => undefined);
+    void desktopCapabilities().then(setCapabilities).catch(() => undefined);
+  }, []);
 
   const saveProfile = useMutation({
     mutationFn: () =>
@@ -143,6 +167,77 @@ export function SettingsPage() {
           ) : null}
         </div>
       </section>
+
+      {isDesktop() ? (
+        <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+          <h2 className="text-sm font-semibold">{t("desktopSettings")}</h2>
+          <label className="mt-3 block text-sm">
+            <span className="mb-1 block text-[var(--muted)]">
+              {t("desktopGlobalPtt")}
+            </span>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 font-mono"
+                value={pttShortcut}
+                onChange={(event) => setPttShortcut(event.target.value)}
+                placeholder="F8"
+              />
+              <button
+                className="rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white"
+                onClick={async () => {
+                  try {
+                    await desktopRegisterPtt(pttShortcut);
+                    window.localStorage.setItem("tulpar.ptt", pttShortcut);
+                    setDesktopMessage(t("desktopPttSaved"));
+                    setDesktopError(null);
+                  } catch (cause) {
+                    setDesktopError(
+                      cause instanceof Error ? cause.message : t("errorGeneric"),
+                    );
+                  }
+                }}
+              >
+                {t("save")}
+              </button>
+            </div>
+            <span className="mt-1 block text-xs text-[var(--muted)]">
+              {t("desktopPttHint")}
+            </span>
+          </label>
+          <label className="mt-3 flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={autostart}
+              onChange={async (event) => {
+                const next = event.target.checked;
+                try {
+                  await desktopAutostartSet(next);
+                  setAutostart(next);
+                  setDesktopError(null);
+                } catch (cause) {
+                  setDesktopError(
+                    cause instanceof Error ? cause.message : t("errorGeneric"),
+                  );
+                }
+              }}
+            />
+            {t("desktopAutostart")}
+          </label>
+          {capabilities ? (
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              {t("desktopKeychain")}:{" "}
+              {capabilities.keychain ? t("yes") : t("no")} · PTT:{" "}
+              {capabilities.globalShortcut ? t("yes") : t("no")}
+            </p>
+          ) : null}
+          {desktopMessage ? (
+            <p className="mt-2 text-sm text-[var(--success)]">{desktopMessage}</p>
+          ) : null}
+          {desktopError ? (
+            <p className="mt-2 text-sm text-red-300">{desktopError}</p>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
         <h2 className="text-sm font-semibold">{t("profile")}</h2>

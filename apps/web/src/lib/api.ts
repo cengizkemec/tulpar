@@ -1,5 +1,6 @@
 ﻿import { useInstances } from "../stores/instances";
 import { useSession } from "../stores/session";
+import { desktopLogout, desktopRefreshSession, isDesktop } from "./desktop";
 import type { LoginResponse, Schemas, SelfUser } from "./types";
 
 function baseUrl(): string {
@@ -52,6 +53,15 @@ async function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
+        if (isDesktop()) {
+          const instance = useInstances.getState().currentUrl;
+          if (!instance) {
+            return false;
+          }
+          const payload = await desktopRefreshSession(instance);
+          useSession.getState().setAccessToken(payload.accessToken);
+          return true;
+        }
         const response = await fetch(`${baseUrl()}/api/v1/auth/refresh`, {
           method: "POST",
           credentials: "include",
@@ -143,6 +153,13 @@ export async function refreshSession(): Promise<boolean> {
 
 export async function logout(): Promise<void> {
   try {
+    if (isDesktop()) {
+      const instance = useInstances.getState().currentUrl;
+      if (instance) {
+        await desktopLogout(instance);
+      }
+      return;
+    }
     await request("/api/v1/auth/logout", {
       method: "POST",
       body: {},

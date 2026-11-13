@@ -15,6 +15,8 @@ React 19 + TypeScript + Vite client foundation for Tulpar.
 - Browser notifications with permission control.
 - Instance admin panel: overview, user moderation/admin grants, and audit log.
 - Community settings: general, members, roles, invites, bans, and audit.
+- Device approval page at `/device` for desktop authorization.
+- Desktop adapter: Tauri detection, server selection, device login, keychain refresh, native notifications, global PTT, and deep links.
 - Full English/Turkish localization with a persisted language switcher.
 - PWA install prompt, offline banner, manifest, and shell-only service worker.
 - Accessibility pass: skip link, landmarks, labelled controls, keyboard navigation, and WCAG AA contrast.

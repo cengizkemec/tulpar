@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useVoiceStore } from "../stores/voice";
 import type { GatewayTicket, VoiceParticipant } from "./types";
 import { request } from "./api";
+import { desktopNotify, isDesktop } from "./desktop";
+import i18n from "./i18n";
 
 interface DispatchFrame {
   op: number;
@@ -117,14 +119,17 @@ function handleDispatch(frame: DispatchFrame, queryClient: QueryClient) {
   if (frame.t === "NOTIFICATION_CREATE") {
     void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     void queryClient.invalidateQueries({ queryKey: ["sync"] });
-    if (
+    const kind = i18n.t(
+      (payload?.kind as string | undefined) === "mention"
+        ? "mentioned"
+        : "notificationNew",
+    );
+    if (isDesktop()) {
+      void desktopNotify("Tulpar", kind);
+    } else if (
       typeof Notification !== "undefined" &&
       Notification.permission === "granted"
     ) {
-      const kind =
-        (payload?.kind as string | undefined) === "mention"
-          ? "You were mentioned"
-          : "New Tulpar notification";
       new Notification("Tulpar", { body: kind, tag: "tulpar-notification" });
     }
   }

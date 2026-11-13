@@ -95,6 +95,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Headless Edge web smoke test covering login, friends/settings/notification/community routes, language switching, skip link, responsive navigation, message send, gateway delivery, voice connection, camera publishing, screen sharing, leave cleanup, offline banner, service worker, and offline shell reload.
 - Docker nginx web container at `http://localhost:15173` proxying API, gateway, health, and webhooks; trusted-proxy IP handling for rate limits and audits.
 
+### Added — Phase 7 desktop client
+
+- Tauri 2 shell in `apps/desktop` embedding the shared web build.
+- Desktop-only server address entry, saved instances, and device authorization with browser approval.
+- Web `/device` approval page.
+- OS keychain storage for refresh tokens, serialized refresh, and keychain cleanup on logout/revocation.
+- System tray with close-to-tray, unread tooltip, and native notifications.
+- Global push-to-talk shortcut registration and `ptt` down/up events.
+- Deep links (`tulpar://add-instance`), single-instance forwarding, autostart, and window-state persistence.
+- Desktop capability reporting and CSP/CORS support for WebView2 origins.
+- `tests/web-e2e/desktop.mjs` Windows smoke test covering device approval, keychain refresh, PTT, capabilities, and deep links.
+
 ### Planned — Phase 4 follow-ups
 
 - Real-browser audio verification and TURN fallback with UDP blocked.

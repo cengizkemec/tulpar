@@ -4,11 +4,27 @@ import {
   logout as apiLogout,
   refreshSession,
 } from "../../lib/api";
+import { isDesktop } from "../../lib/desktop";
 import { useSession } from "../../stores/session";
 
 export async function bootstrapSession(): Promise<void> {
   const session = useSession.getState();
   try {
+    if (isDesktop()) {
+      if (!session.accessToken) {
+        const refreshed = await refreshSession();
+        if (!refreshed) {
+          session.clear();
+          return;
+        }
+      }
+      const user = await currentUser();
+      useSession.getState().setSession(
+        useSession.getState().accessToken ?? "",
+        user,
+      );
+      return;
+    }
     if (!session.accessToken) {
       const hasSessionHint =
         window.localStorage.getItem("tulpar.hasSession") === "1";

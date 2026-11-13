@@ -247,29 +247,31 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 7 — Tulpar Desktop
 
+**Status:** Windows implementation complete and smoke-tested: Tauri 2 shell, shared SPA, device authorization, OS keychain, refresh, tray/close-to-tray, native notifications, global PTT, deep links, autostart, single instance, and window-state persistence. Linux packaging, signed release builds, updater endpoints, and diagnostics/crash reporting remain release-engineering follow-ups.
+
 ### Tasks
 
-- Tauri 2 shell and shared SPA integration.
-- Device authorization, keychain, single-flight refresh.
-- System tray, native notifications, window state, single instance.
-- Global PTT with capability detection and fallback.
-- Deep links.
-- Autostart.
-- Auto-update with signed manifests.
-- Diagnostics and opt-in crash reporting.
-- Windows and Linux builds.
-- Code signing and release pipeline.
-- Manual platform matrix.
+- [x] Tauri 2 shell and shared SPA integration.
+- [x] Device authorization, keychain, single-flight refresh.
+- [x] System tray, native notifications, window state, single instance.
+- [x] Global PTT with capability detection and fallback.
+- [x] Deep links.
+- [x] Autostart.
+- [ ] Auto-update with signed manifests (plugin configured; signing keys/endpoints pending).
+- [ ] Diagnostics and opt-in crash reporting.
+- [ ] Windows and Linux builds (Windows debug build verified; Linux build pending).
+- [ ] Code signing and release pipeline.
+- [ ] Manual platform matrix (Windows 11 verified; Windows 10/Ubuntu pending).
 
 ### Exit criteria
 
-- Windows 10/11 and Ubuntu 24.04 installs work.
-- Refresh tokens are only in the OS keychain.
-- Notifications, tray, deep links, PTT, and updates work or degrade with clear messaging.
-- An unsigned update is rejected.
-- No secret appears in webview storage or logs.
-- Platform limitations are documented from real tests.
-- Upgrade from the previous release preserves preferences and sessions.
+- [ ] Windows 10/11 and Ubuntu 24.04 installs work (Windows 11 debug build verified).
+- [x] Refresh tokens are only in the OS keychain.
+- [x] Notifications, tray, deep links, and PTT work; updates are disabled until release signing is configured.
+- [ ] An unsigned update is rejected (enforced by the Tauri updater once a signed manifest/public key is configured).
+- [x] No secret appears in webview storage or logs.
+- [ ] Platform limitations are documented from real tests (Windows documented; Linux pending).
+- [ ] Upgrade from the previous release preserves preferences and sessions (first desktop release not shipped yet).
 
 ---
 

@@ -10,6 +10,7 @@ import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { VoicePanel } from "../features/voice/VoicePanel";
 import { request } from "../lib/api";
+import { desktopSetUnread, isDesktop } from "../lib/desktop";
 import { useGateway } from "../lib/gateway";
 import type { Channel, SyncCommunity, SyncResponse } from "../lib/types";
 import { useSession } from "../stores/session";
@@ -102,6 +103,15 @@ export function AppShell() {
   }, [navigate, params.channelId, selectedCommunity, view]);
 
   const unread = sync.data?.unread_counts ?? {};
+  const unreadTotal = Object.values(unread).reduce(
+    (sum, value) => sum + value,
+    0,
+  );
+  useEffect(() => {
+    if (isDesktop()) {
+      void desktopSetUnread(unreadTotal);
+    }
+  }, [unreadTotal]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--surface)] text-slate-100">

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { Room, Track as LiveKitTrack } from "livekit-client";
 
 import { request } from "../../lib/api";
+import { isDesktop, onPtt } from "../../lib/desktop";
 import type { Channel, VoiceParticipant, VoiceToken } from "../../lib/types";
 import { useVoiceStore } from "../../stores/voice";
 
@@ -56,6 +57,20 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       setParticipants(channelId, states.data);
     }
   }, [channelId, setParticipants, states.data]);
+
+  useEffect(() => {
+    if (!isDesktop() || !connected) {
+      return;
+    }
+    let unlisten: (() => void) | undefined;
+    void onPtt((pressed) => {
+      void roomRef.current?.localParticipant.setMicrophoneEnabled(pressed);
+      setMic(pressed);
+    }).then((stop) => {
+      unlisten = stop;
+    });
+    return () => unlisten?.();
+  }, [connected]);
 
   const clearMedia = () => {
     for (const element of audioElements.current.values()) {

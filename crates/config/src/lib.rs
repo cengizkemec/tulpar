@@ -279,7 +279,9 @@ impl AppConfig {
         for origin in &self.cors.allowed_origins {
             let parsed = Url::parse(origin)
                 .map_err(|_| ConfigError::Invalid(format!("invalid CORS origin: {origin}")))?;
-            if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+            if !matches!(parsed.scheme(), "http" | "https" | "tauri")
+                || parsed.host_str().is_none()
+            {
                 return Err(ConfigError::Invalid(format!(
                     "invalid CORS origin: {origin}"
                 )));
@@ -397,5 +399,12 @@ mod tests {
         let mut config = valid_config();
         config.cors.allowed_origins = vec!["javascript:alert(1)".into()];
         assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn accepts_desktop_custom_protocol_origin() {
+        let mut config = valid_config();
+        config.cors.allowed_origins = vec!["tauri://localhost".into()];
+        assert!(config.validate().is_ok());
     }
 }

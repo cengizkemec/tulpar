@@ -21,8 +21,8 @@ blob-report/
 .storybook-out/
 
 # Tauri
-src-tauri/gen/schemas/
-src-tauri/target/
+**/src-tauri/gen/schemas/
+**/src-tauri/target/
 *.msi
 *.msix
 *.nsis

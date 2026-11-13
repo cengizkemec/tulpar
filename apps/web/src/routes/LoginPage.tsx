@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { signIn } from "../features/auth/session";
+import { DesktopLogin } from "../features/desktop/DesktopLogin";
+import { isDesktop } from "../lib/desktop";
 
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,12 +22,17 @@ export function LoginPage() {
     setError(null);
     try {
       await signIn(email, password);
-      navigate("/app", { replace: true });
+      const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/app";
+      navigate(target, { replace: true });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
     } finally {
       setPending(false);
     }
+  }
+
+  if (isDesktop()) {
+    return <DesktopLogin />;
   }
 
   return (

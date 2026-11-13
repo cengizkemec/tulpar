@@ -21,7 +21,7 @@ Voice uses `TULPAR__VOICE__LIVEKIT_URL` (client URL), `TULPAR__VOICE__LIVEKIT_AP
 
 The development web container serves the built SPA through nginx at `http://localhost:15173` and proxies `/api`, `/gateway`, `/health`, and `/webhooks` to the API. The API public URL is the web origin so cookie Origin checks and gateway ticket URLs stay consistent.
 
-The web client always connects to the origin it is served from. Multi-server address entry belongs to the Windows/Linux desktop client; for remote desktop connections the target instance must allow the desktop/web origin and use HTTPS with secure cookies. Because requests arrive through nginx, the development API sets `TULPAR__SERVER__TRUST_PROXY=true` so `X-Forwarded-For` is used for rate limiting and audit IPs. Do not enable proxy trust when the API is directly internet-facing without a trusted reverse proxy.
+The web client always connects to the origin it is served from. Multi-server address entry belongs to the Windows/Linux desktop client; for remote desktop connections the target instance must allow the desktop origin (`http://tauri.localhost`, `https://tauri.localhost`, or `tauri://localhost`) in `TULPAR__CORS__ALLOWED_ORIGINS` and use HTTPS with secure cookies. Because requests arrive through nginx, the development API sets `TULPAR__SERVER__TRUST_PROXY=true` so `X-Forwarded-For` is used for rate limiting and audit IPs. Do not enable proxy trust when the API is directly internet-facing without a trusted reverse proxy.
 
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 
@@ -191,7 +191,7 @@ Configuration is loaded from a TOML file plus environment overrides. Secrets com
 | `TULPAR__LIVEKIT__API_SECRET` | LiveKit secret | Yes |
 | `TULPAR__TURN__URLS` | TURN URLs | No |
 | `TULPAR__TURN__SECRET` | Shared Coturn secret | Yes |
-| `TULPAR__CORS__ALLOWED_ORIGINS` | Web origins | No |
+| `TULPAR__CORS__ALLOWED_ORIGINS` | Web and desktop origins | No |
 | `TULPAR__RATE_LIMIT__*` | Optional overrides | No |
 | `TULPAR__LOG__FORMAT` | `json` or `pretty` | No |
 | `TULPAR__METRICS__BIND_ADDR` | Internal metrics listener | No |

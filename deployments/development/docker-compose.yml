@@ -73,6 +73,7 @@ services:
     environment:
       TULPAR__INSTANCE__NAME: Tulpar Dev
       TULPAR__INSTANCE__PUBLIC_URL: ${TULPAR_PUBLIC_URL:-http://localhost:15173}
+      TULPAR__CORS__ALLOWED_ORIGINS: '["http://localhost:5173","http://localhost:15173","http://tauri.localhost","https://tauri.localhost","tauri://localhost"]'
       TULPAR__SERVER__TRUST_PROXY: "true"
       TULPAR__INSTANCE__ENVIRONMENT: development
       TULPAR__SERVER__BIND: 0.0.0.0:8080
