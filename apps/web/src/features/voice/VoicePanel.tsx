@@ -179,11 +179,18 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         clearMedia();
       });
       await room.connect(voice.url, voice.token);
-      await room.startAudio().catch(() => undefined);
-      await room.localParticipant.setMicrophoneEnabled(true);
-      setMic(true);
       setConnected(true);
-      await refreshDevices();
+      void refreshDevices();
+      try {
+        await room.startAudio().catch(() => undefined);
+        await room.localParticipant.setMicrophoneEnabled(true);
+        setMic(true);
+      } catch {
+        setMic(false);
+        setError(
+          "Connected without a microphone. Allow microphone access and use Mic to publish audio.",
+        );
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
       roomRef.current?.disconnect();
