@@ -278,15 +278,29 @@ export function AppShell() {
                   {selectedChannel.topic ?? ""}
                 </p>
               </div>
-              <span className="rounded-full bg-[var(--surface-3)] px-2.5 py-1 text-xs text-[var(--muted)]">
-                {selectedChannel.kind === "direct"
-                  ? t("directMessages")
-                  : t(
-                      selectedChannel.kind === "voice"
-                        ? "typeVoice"
-                        : "typeText",
-                    )}
-              </span>
+              <div className="flex items-center gap-2">
+                {selectedCommunity?.community?.id ? (
+                  <button
+                    className="rounded-lg bg-[var(--surface-3)] px-2.5 py-1 text-xs text-[var(--muted)] hover:text-white"
+                    onClick={() =>
+                      navigate(
+                        `/app/c/${selectedCommunity.community.id}/settings`,
+                      )
+                    }
+                  >
+                    Community settings
+                  </button>
+                ) : null}
+                <span className="rounded-full bg-[var(--surface-3)] px-2.5 py-1 text-xs text-[var(--muted)]">
+                  {selectedChannel.kind === "direct"
+                    ? t("directMessages")
+                    : t(
+                        selectedChannel.kind === "voice"
+                          ? "typeVoice"
+                          : "typeText",
+                      )}
+                </span>
+              </div>
             </header>
             {selectedChannel.kind === "voice" ? (
               <VoicePanel channel={selectedChannel as Channel} />

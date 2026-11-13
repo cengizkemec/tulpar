@@ -28,6 +28,7 @@
 - Responsive sidebar behavior for narrow screens.
 - Instance administration: overview counts, user search, enable/disable, grant/revoke instance admin, and global audit log. Non-admins get a clear access-denied state.
 - TeamSpeak-style server connection screen: enter an IP/domain, probe `/sync/instance`, save multiple servers in localStorage, and switch instances. Login shows the active server.
+- Community settings: general edits, member kick/ban, role/permission display, invite create/revoke/copy, active bans, and community audit log, with permission-gated actions.
 
 ### Media controls
 
@@ -70,7 +71,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 
 ## 3. Known gaps
 
-1. Community-settings UI is not implemented; instance administration is.
+1. Community settings covers common moderation flows but not bulk role editing/reordering.
 2. Browser notifications use the basic Web Notification API; desktop toast integration and notification-click routing are pending.
 3. PWA install/offline behavior has not been exercised on real devices; private data is intentionally not cached.
 4. Responsive layouts are basic and the accessibility audit is incomplete.

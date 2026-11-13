@@ -15,6 +15,7 @@ React 19 + TypeScript + Vite client foundation for Tulpar.
 - Browser notifications with permission control.
 - Instance admin panel: overview, user moderation/admin grants, and audit log.
 - Server-address connection screen with saved instances and `/sync/instance` probing.
+- Community settings: general, members, roles, invites, bans, and audit.
 - PWA manifest and shell-only service worker.
 - English/Turkish localization foundation.
 

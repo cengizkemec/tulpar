@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AdminPage } from "../features/admin/AdminPage";
 import { bootstrapSession } from "../features/auth/session";
+import { CommunitySettingsPage } from "../features/communities/CommunitySettingsPage";
 import { useInstances } from "../stores/instances";
 import { useSession } from "../stores/session";
 import { AppShell } from "../routes/AppShell";
@@ -102,6 +103,14 @@ export function App() {
               element={
                 <Protected>
                   <AppShell />
+                </Protected>
+              }
+            />
+            <Route
+              path="/app/c/:communityId/settings"
+              element={
+                <Protected>
+                  <CommunitySettingsPage />
                 </Protected>
               }
             />

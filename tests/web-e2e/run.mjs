@@ -86,6 +86,7 @@ async function setup() {
   });
   return {
     credentials: owner,
+    communityId,
     textChannelId: textChannel.id,
     voiceChannelName: voice.name,
     text,
@@ -163,6 +164,11 @@ try {
   await page.getByText("Profile").first().waitFor({ timeout: 10_000 });
   await page.getByTestId("nav-notifications").click();
   await page.getByText("Mark all read").waitFor({ timeout: 10_000 });
+  await page.goto(
+    `${webUrl}/app/c/${setupData.communityId}/settings`,
+  );
+  await page.getByText("Community settings").first().waitFor({ timeout: 15_000 });
+  await page.getByText("Members", { exact: false }).first().waitFor({ timeout: 15_000 });
   await page.goto(`${webUrl}/admin`);
   await page
     .getByText("not an instance administrator")
