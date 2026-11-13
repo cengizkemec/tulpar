@@ -222,7 +222,8 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Authenticated SPA shell and core routes (login/register/app/channel/DM).
 - [x] Communities, channels, messaging, DMs, friends, and personal settings UI.
 - [x] Voice/video UI integration (join/leave, mic, camera, screen share).
-- [ ] Notifications (in-app gateway events exist; browser notifications pending).
+- [x] In-app notification center and preferences.
+- [ ] Browser/desktop notifications.
 - [ ] Admin UI (instance and community).
 - [ ] Responsive layouts for desktop/tablet/mobile.
 - [ ] PWA manifest, service worker, offline shell.

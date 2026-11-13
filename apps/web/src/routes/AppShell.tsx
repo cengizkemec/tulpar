@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { signOut } from "../features/auth/session";
 import { MessagePanel } from "../features/chat/MessagePanel";
 import { FriendsPage } from "../features/friends/FriendsPage";
+import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { SettingsPage } from "../features/settings/SettingsPage";
 import { VoicePanel } from "../features/voice/VoicePanel";
 import { request } from "../lib/api";
@@ -23,7 +24,9 @@ export function AppShell() {
     ? "friends"
     : location.pathname.startsWith("/app/settings")
       ? "settings"
-      : "channel";
+      : location.pathname.startsWith("/app/notifications")
+        ? "notifications"
+        : "channel";
   const user = useSession((state) => state.user);
   useGateway(queryClient);
 
@@ -147,6 +150,21 @@ export function AppShell() {
           >
             {t("settings")}
           </button>
+          <button
+            className={`relative flex-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
+              view === "notifications"
+                ? "bg-[var(--surface-3)] text-white"
+                : "text-[var(--muted)] hover:bg-[var(--surface-3)]"
+            }`}
+            onClick={() => navigate("/app/notifications")}
+          >
+            {t("notifications")}
+            {sync.data?.notifications_unread ? (
+              <span className="absolute -right-1 -top-1 rounded-full bg-[var(--accent)] px-1 text-[9px] font-bold text-white">
+                {sync.data.notifications_unread}
+              </span>
+            ) : null}
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-3">
@@ -219,6 +237,8 @@ export function AppShell() {
           <FriendsPage />
         ) : view === "settings" ? (
           <SettingsPage />
+        ) : view === "notifications" ? (
+          <NotificationsPage />
         ) : selectedChannel ? (
           <>
             <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">

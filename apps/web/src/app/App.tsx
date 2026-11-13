@@ -111,6 +111,14 @@ export function App() {
                 </Protected>
               }
             />
+            <Route
+              path="/app/notifications"
+              element={
+                <Protected>
+                  <AppShell />
+                </Protected>
+              }
+            />
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>
         </Bootstrap>

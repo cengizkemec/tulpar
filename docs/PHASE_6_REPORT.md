@@ -23,6 +23,7 @@
 - LiveKit lazy-loaded media chunk.
 - Friends UI: search, requests, accept/decline, add/remove, block/unblock, and DM creation.
 - Settings UI: profile, presence, friend/DM privacy, read receipts, and notification preferences.
+- In-app notification center with unread badge, mark-one, and mark-all-read; gateway events refresh the badge.
 
 ### Media controls
 
@@ -58,7 +59,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 ## 3. Known gaps
 
 1. Admin UI and community-settings UI are not implemented.
-2. Notification list/toasts and browser notifications are not implemented; preferences exist.
+2. Browser notifications and desktop toasts are not implemented; in-app notification center and preferences exist.
 3. PWA manifest, service worker, and offline shell are not implemented.
 4. Responsive/mobile layouts and accessibility audit are incomplete.
 5. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.

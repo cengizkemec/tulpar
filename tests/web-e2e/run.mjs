@@ -158,6 +158,8 @@ try {
   await page.getByText("Find people").waitFor({ timeout: 10_000 });
   await page.getByRole("button", { name: "Settings" }).click();
   await page.getByText("Profile").first().waitFor({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Notifications" }).click();
+  await page.getByText("Mark all read").waitFor({ timeout: 10_000 });
   await page.goto(`${webUrl}/app`);
   await page.getByText("# general").first().waitFor({ timeout: 20_000 });
 

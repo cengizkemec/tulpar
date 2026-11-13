@@ -116,5 +116,6 @@ function handleDispatch(frame: DispatchFrame, queryClient: QueryClient) {
   }
   if (frame.t === "NOTIFICATION_CREATE") {
     void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    void queryClient.invalidateQueries({ queryKey: ["sync"] });
   }
 }

@@ -10,6 +10,7 @@ export type Message = Schemas["MessageDto"];
 export type SyncResponse = Schemas["SyncResponse"];
 export type UserSettings = Schemas["UserSettingsDto"];
 export type NotificationPreferences = Schemas["NotificationPreferencesDto"];
+export type Notification = Schemas["NotificationDto"];
 export type SyncCommunity = Schemas["SyncCommunityDto"];
 export type ReadState = Schemas["ReadStateDto"];
 export type VoiceParticipant = Schemas["VoiceParticipantDto"];
