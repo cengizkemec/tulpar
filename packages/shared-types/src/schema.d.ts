@@ -1665,6 +1665,8 @@ export interface components {
             allow_message_preview?: boolean;
             allowed_origins: string[];
             name: string;
+            /** Format: uuid */
+            public_channel_id?: string | null;
             widgets: string[];
         };
         CreateInviteRequest: {
@@ -1742,6 +1744,8 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            /** Format: uuid */
+            public_channel_id?: string | null;
             public_key: string;
             /** Format: date-time */
             revoked_at?: string | null;
@@ -1766,10 +1770,19 @@ export interface components {
             id: string;
             /** Format: int64 */
             member_count: number;
+            messages: components["schemas"]["EmbedMessageDto"][];
             name: string;
             public_url: string;
             /** Format: int64 */
             voice_channel_count: number;
+        };
+        EmbedMessageDto: {
+            author: string;
+            content: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            id: string;
         };
         EmbedTokenRequest: {
             code?: string | null;
@@ -2185,6 +2198,8 @@ export interface components {
             allow_message_preview?: boolean | null;
             allowed_origins?: string[] | null;
             name?: string | null;
+            /** Format: uuid */
+            public_channel_id?: string | null;
             revoked?: boolean | null;
             widgets?: string[] | null;
         };

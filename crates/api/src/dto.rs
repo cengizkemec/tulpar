@@ -1296,6 +1296,7 @@ pub struct EmbedAppDto {
     pub widgets: Vec<String>,
     pub allow_authenticated: bool,
     pub allow_message_preview: bool,
+    pub public_channel_id: Option<Uuid>,
     pub token_version: i32,
     pub created_at: DateTime<Utc>,
     pub revoked_at: Option<DateTime<Utc>>,
@@ -1310,6 +1311,8 @@ pub struct CreateEmbedAppRequest {
     pub allow_authenticated: bool,
     #[serde(default)]
     pub allow_message_preview: bool,
+    #[serde(default)]
+    pub public_channel_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -1324,6 +1327,8 @@ pub struct UpdateEmbedAppRequest {
     pub allow_authenticated: Option<bool>,
     #[serde(default)]
     pub allow_message_preview: Option<bool>,
+    #[serde(default)]
+    pub public_channel_id: Option<Uuid>,
     #[serde(default)]
     pub revoked: Option<bool>,
 }
@@ -1368,4 +1373,13 @@ pub struct EmbedCommunityDto {
     pub voice_channel_count: i64,
     pub public_url: String,
     pub authenticated: bool,
+    pub messages: Vec<EmbedMessageDto>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct EmbedMessageDto {
+    pub id: Uuid,
+    pub author: String,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
 }

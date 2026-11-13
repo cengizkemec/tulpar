@@ -277,12 +277,12 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 8 — Embed and developer platform
 
-**Status:** Embed MVP complete: app management, origin allowlisting, public and authenticated token flows, iframe widget, postMessage loader, TypeScript wrapper, demo site, and embed tests. API keys/bots, outgoing webhooks, message previews, the authenticated popup UX, and the Rust SDK remain follow-ups.
+**Status:** Embed MVP complete: app management, origin allowlisting, public and authenticated token flows, authenticated popup UX, message previews, iframe widget, postMessage loader, TypeScript wrapper, demo site, and embed tests. API keys/bots, outgoing webhooks, and the Rust SDK remain follow-ups.
 
 ### Tasks
 
 - [x] Embed apps, origins, scoped tokens, iframe widgets.
-- [x] Public widget flow and authenticated token API (popup UX pending).
+- [x] Public and authenticated widget flows.
 - [x] postMessage protocol and SDK loader.
 - [x] Embed demo site.
 - [x] REST API v1/OpenAPI contract.
@@ -291,7 +291,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [ ] API keys, bot accounts, bot tokens, scopes.
 - [x] TypeScript SDK (Rust SDK pending).
 - [x] Developer examples for the embed loader.
-- [x] Embed security tests (public/member/origin/widget/revocation).
+- [x] Embed security tests (public/member/origin/widget/revocation/preview).
 
 ### Exit criteria
 

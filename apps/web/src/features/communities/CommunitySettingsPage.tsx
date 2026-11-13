@@ -42,6 +42,8 @@ export function CommunitySettingsPage() {
     "join",
   ]);
   const [embedAuth, setEmbedAuth] = useState(false);
+  const [embedPreview, setEmbedPreview] = useState(false);
+  const [embedChannel, setEmbedChannel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
 
@@ -210,6 +212,9 @@ export function CommunitySettingsPage() {
             .filter(Boolean),
           widgets: embedWidgets,
           allow_authenticated: embedAuth,
+          allow_message_preview: embedPreview,
+          public_channel_id:
+            embedPreview && embedChannel ? embedChannel : undefined,
         },
       }),
     onSuccess: async () => {
@@ -408,7 +413,7 @@ export function CommunitySettingsPage() {
                   {t("embedWidgets")}
                 </span>
                 <div className="flex flex-wrap gap-3">
-                  {["community", "join", "members", "voice_preview"].map(
+                  {["community", "join", "members", "voice_preview", "channel_preview"].map(
                     (widget) => (
                       <label
                         key={widget}
@@ -433,6 +438,39 @@ export function CommunitySettingsPage() {
                 />
                 {t("embedAllowAuth")}
               </label>
+              <label className="flex items-center gap-2 text-sm md:col-span-2">
+                <input
+                  type="checkbox"
+                  checked={embedPreview}
+                  onChange={(event) => setEmbedPreview(event.target.checked)}
+                />
+                {t("embedAllowPreview")}
+              </label>
+              {embedPreview ? (
+                <label className="text-sm md:col-span-2">
+                  <span className="mb-1 block text-[var(--muted)]">
+                    {t("embedPreviewChannel")}
+                  </span>
+                  <select
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+                    value={embedChannel}
+                    onChange={(event) => setEmbedChannel(event.target.value)}
+                  >
+                    <option value="">{t("embedSelectChannel")}</option>
+                    {(details.data?.channels ?? [])
+                      .filter(
+                        (channel) =>
+                          channel.kind === "text" ||
+                          channel.kind === "announcement",
+                      )
+                      .map((channel) => (
+                        <option key={channel.id} value={channel.id}>
+                          {channel.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              ) : null}
             </div>
             <button
               className="mt-3 rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white disabled:opacity-50"

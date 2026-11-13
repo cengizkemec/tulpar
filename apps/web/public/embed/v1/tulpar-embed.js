@@ -28,7 +28,8 @@
       "&widget=" +
       encodeURIComponent(widget) +
       "&origin=" +
-      encodeURIComponent(origin);
+      encodeURIComponent(origin) +
+      (options.authenticated ? "&auth=1" : "");
     iframe.style.border = "0";
     iframe.style.width = "100%";
     iframe.style.height = (options.height || 240) + "px";
@@ -77,6 +78,7 @@
         instance: element.getAttribute("data-instance") || undefined,
         height: Number(element.getAttribute("data-height")) || undefined,
         title: element.getAttribute("data-title") || undefined,
+        authenticated: element.getAttribute("data-auth") === "true",
       });
     }
   }

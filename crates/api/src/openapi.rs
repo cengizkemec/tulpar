@@ -233,6 +233,7 @@ use crate::{dto, error, routes};
         dto::EmbedTokenRequest,
         dto::EmbedTokenResponse,
         dto::EmbedCommunityDto,
+        dto::EmbedMessageDto,
         dto::ReactionDto,
         dto::ReadStateDto,
         dto::SendMessageRequest,

@@ -12,6 +12,8 @@ export interface EmbedMountOptions {
   widget?: EmbedWidget;
   height?: number;
   title?: string;
+  /** Request an authenticated member view. The widget shows a sign-in button. */
+  authenticated?: boolean;
 }
 
 export interface EmbedHandle {

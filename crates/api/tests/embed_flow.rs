@@ -117,6 +117,43 @@ async fn embed_public_and_member_flow(pool: PgPool) {
         .unwrap()
         .to_string();
 
+    let channels = app
+        .clone()
+        .oneshot(
+            with_auth(
+                Request::builder()
+                    .method("GET")
+                    .uri(format!("/api/v1/communities/{community_id}/channels")),
+                &owner,
+            )
+            .body(Body::empty())
+            .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(channels.status(), StatusCode::OK);
+    let channels_json = body_json(channels).await;
+    let channel_id = channels_json
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|channel| channel["kind"] == "text")
+        .unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let message = app
+        .clone()
+        .oneshot(json_request(
+            "POST",
+            &format!("/api/v1/channels/{channel_id}/messages"),
+            Some(&owner),
+            json!({ "content": "embed preview" }),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(message.status(), StatusCode::OK);
+
     let joined = app
         .clone()
         .oneshot(json_request(
@@ -138,8 +175,10 @@ async fn embed_public_and_member_flow(pool: PgPool) {
             json!({
                 "name": "Demo embed",
                 "allowed_origins": ["https://example.com"],
-                "widgets": ["community", "join"],
-                "allow_authenticated": true
+                "widgets": ["community", "join", "channel_preview"],
+                "allow_authenticated": true,
+                "allow_message_preview": true,
+                "public_channel_id": channel_id
             }),
         ))
         .await
@@ -188,6 +227,7 @@ async fn embed_public_and_member_flow(pool: PgPool) {
     assert_eq!(community_json["name"], "Embed Test");
     assert_eq!(community_json["member_count"], 2);
     assert_eq!(community_json["authenticated"], false);
+    assert_eq!(community_json["messages"][0]["content"], "embed preview");
 
     let denied_origin = app
         .clone()

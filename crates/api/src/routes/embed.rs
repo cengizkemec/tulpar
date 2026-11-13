@@ -15,7 +15,8 @@ use uuid::Uuid;
 use crate::{
     dto::{
         CreateEmbedAppRequest, EmbedAppDto, EmbedAuthorizeRequest, EmbedAuthorizeResponse,
-        EmbedCommunityDto, EmbedTokenRequest, EmbedTokenResponse, UpdateEmbedAppRequest,
+        EmbedCommunityDto, EmbedMessageDto, EmbedTokenRequest, EmbedTokenResponse,
+        UpdateEmbedAppRequest,
     },
     error::ApiError,
     extract::{enforce_rate_limit, request_ip_key, CurrentUser, RequestContext},
@@ -25,7 +26,13 @@ use crate::{
 const EMBED_AUDIENCE: &str = "embed";
 const EMBED_TOKEN_TTL_SECONDS: i64 = 900;
 const EMBED_CODE_TTL_SECONDS: i64 = 60;
-const WIDGETS: &[&str] = &["community", "members", "voice_preview", "join"];
+const WIDGETS: &[&str] = &[
+    "community",
+    "members",
+    "voice_preview",
+    "channel_preview",
+    "join",
+];
 
 #[derive(Debug, Clone, FromRow)]
 struct EmbedAppRow {
@@ -37,6 +44,7 @@ struct EmbedAppRow {
     widgets: Vec<String>,
     allow_authenticated: bool,
     allow_message_preview: bool,
+    public_channel_id: Option<Uuid>,
     token_version: i32,
     created_at: DateTime<Utc>,
     revoked_at: Option<DateTime<Utc>>,
@@ -53,6 +61,7 @@ impl From<EmbedAppRow> for EmbedAppDto {
             widgets: value.widgets,
             allow_authenticated: value.allow_authenticated,
             allow_message_preview: value.allow_message_preview,
+            public_channel_id: value.public_channel_id,
             token_version: value.token_version,
             created_at: value.created_at,
             revoked_at: value.revoked_at,
@@ -141,7 +150,7 @@ fn normalize_origins(origins: &[String]) -> Result<Vec<String>, ApiError> {
 fn normalize_widgets(widgets: &[String]) -> Result<Vec<String>, ApiError> {
     if widgets.is_empty() || widgets.len() > WIDGETS.len() {
         return Err(ApiError::validation(
-            "Select between 1 and 4 embed widgets.",
+            "Select between 1 and 5 embed widgets.",
         ));
     }
     let mut normalized = Vec::new();
@@ -162,7 +171,7 @@ fn normalize_widgets(widgets: &[String]) -> Result<Vec<String>, ApiError> {
 async fn load_app_by_key(state: &AppState, public_key: &str) -> Result<EmbedAppRow, ApiError> {
     sqlx::query_as::<_, EmbedAppRow>(
         "SELECT id, community_id, name, public_key, allowed_origins, widgets,
-                allow_authenticated, allow_message_preview, token_version, created_at, revoked_at
+                allow_authenticated, allow_message_preview, public_channel_id, token_version, created_at, revoked_at
          FROM embed_apps WHERE public_key = $1",
     )
     .bind(public_key)
@@ -178,7 +187,7 @@ async fn load_app_by_key(state: &AppState, public_key: &str) -> Result<EmbedAppR
 async fn load_app_by_id(state: &AppState, app_id: Uuid) -> Result<EmbedAppRow, ApiError> {
     sqlx::query_as::<_, EmbedAppRow>(
         "SELECT id, community_id, name, public_key, allowed_origins, widgets,
-                allow_authenticated, allow_message_preview, token_version, created_at, revoked_at
+                allow_authenticated, allow_message_preview, public_channel_id, token_version, created_at, revoked_at
          FROM embed_apps WHERE id = $1",
     )
     .bind(app_id)
@@ -219,6 +228,33 @@ fn ensure_origin(app: &EmbedAppRow, origin: &str) -> Result<(), ApiError> {
         ));
     }
     Ok(())
+}
+
+async fn validate_public_channel(
+    state: &AppState,
+    community_id: Uuid,
+    channel_id: Uuid,
+) -> Result<(), ApiError> {
+    let row: Option<(String, Option<Uuid>, Option<DateTime<Utc>>)> =
+        sqlx::query_as("SELECT kind, community_id, deleted_at FROM channels WHERE id = $1")
+            .bind(channel_id)
+            .fetch_optional(&state.db)
+            .await
+            .map_err(|error| {
+                tracing::error!(%error, "failed to validate embed public channel");
+                ApiError::dependency_unavailable("Embed applications are temporarily unavailable.")
+            })?;
+    match row {
+        Some((kind, Some(channel_community), None))
+            if channel_community == community_id
+                && matches!(kind.as_str(), "text" | "announcement") =>
+        {
+            Ok(())
+        }
+        _ => Err(ApiError::validation(
+            "The public preview channel must be an active text or announcement channel in this community.",
+        )),
+    }
 }
 
 fn sign_embed_token(
@@ -317,13 +353,21 @@ pub async fn create_app(
     }
     let origins = normalize_origins(&payload.allowed_origins)?;
     let widgets = normalize_widgets(&payload.widgets)?;
+    if payload.allow_message_preview && payload.public_channel_id.is_none() {
+        return Err(ApiError::validation(
+            "Select a public preview channel before enabling message previews.",
+        ));
+    }
+    if let Some(channel_id) = payload.public_channel_id {
+        validate_public_channel(&state, community_id, channel_id).await?;
+    }
     let app = sqlx::query_as::<_, EmbedAppRow>(
         "INSERT INTO embed_apps
             (id, community_id, name, public_key, allowed_origins, widgets,
-             allow_authenticated, allow_message_preview, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             allow_authenticated, allow_message_preview, public_channel_id, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING id, community_id, name, public_key, allowed_origins, widgets,
-                   allow_authenticated, allow_message_preview, token_version, created_at, revoked_at",
+                   allow_authenticated, allow_message_preview, public_channel_id, token_version, created_at, revoked_at",
     )
     .bind(Uuid::now_v7())
     .bind(community_id)
@@ -333,6 +377,7 @@ pub async fn create_app(
     .bind(&widgets)
     .bind(payload.allow_authenticated)
     .bind(payload.allow_message_preview)
+    .bind(payload.public_channel_id)
     .bind(current.user().id)
     .fetch_one(&state.db)
     .await
@@ -371,7 +416,7 @@ pub async fn list_apps(
     require_permission(&access, Permissions::MANAGE_COMMUNITY)?;
     let apps = sqlx::query_as::<_, EmbedAppRow>(
         "SELECT id, community_id, name, public_key, allowed_origins, widgets,
-                allow_authenticated, allow_message_preview, token_version, created_at, revoked_at
+                allow_authenticated, allow_message_preview, public_channel_id, token_version, created_at, revoked_at
          FROM embed_apps WHERE community_id = $1 ORDER BY created_at DESC",
     )
     .bind(community_id)
@@ -425,6 +470,18 @@ pub async fn update_app(
         Some(values) => normalize_widgets(&values)?,
         None => existing.widgets.clone(),
     };
+    let allow_message_preview = payload
+        .allow_message_preview
+        .unwrap_or(existing.allow_message_preview);
+    let public_channel_id = payload.public_channel_id.or(existing.public_channel_id);
+    if allow_message_preview && public_channel_id.is_none() {
+        return Err(ApiError::validation(
+            "Select a public preview channel before enabling message previews.",
+        ));
+    }
+    if let Some(channel_id) = public_channel_id {
+        validate_public_channel(&state, existing.community_id, channel_id).await?;
+    }
     let revoked_at = match payload.revoked {
         Some(true) => Some(Utc::now()),
         Some(false) => None,
@@ -438,17 +495,19 @@ pub async fn update_app(
     let app = sqlx::query_as::<_, EmbedAppRow>(
         "UPDATE embed_apps
          SET name = $2, allowed_origins = $3, widgets = $4, allow_authenticated = $5,
-             allow_message_preview = $6, revoked_at = $7, token_version = $8, updated_at = now()
+             allow_message_preview = $6, public_channel_id = $7, revoked_at = $8,
+             token_version = $9, updated_at = now()
          WHERE id = $1
          RETURNING id, community_id, name, public_key, allowed_origins, widgets,
-                   allow_authenticated, allow_message_preview, token_version, created_at, revoked_at",
+                   allow_authenticated, allow_message_preview, public_channel_id, token_version, created_at, revoked_at",
     )
     .bind(app_id)
     .bind(name)
     .bind(&origins)
     .bind(&widgets)
     .bind(payload.allow_authenticated.unwrap_or(existing.allow_authenticated))
-    .bind(payload.allow_message_preview.unwrap_or(existing.allow_message_preview))
+    .bind(allow_message_preview)
+    .bind(public_channel_id)
     .bind(revoked_at)
     .bind(token_version)
     .fetch_one(&state.db)
@@ -749,6 +808,36 @@ pub async fn community(
             "Public widgets are only available for public communities.",
         ));
     }
+    let messages = if app.allow_message_preview {
+        match app.public_channel_id {
+            Some(channel_id) => sqlx::query_as::<_, (Uuid, String, String, DateTime<Utc>)>(
+                "SELECT m.id, COALESCE(u.display_name, 'system'), m.content, m.created_at
+                 FROM messages m
+                 LEFT JOIN users u ON u.id = m.author_id
+                 WHERE m.channel_id = $1 AND m.deleted_at IS NULL AND m.content IS NOT NULL
+                 ORDER BY m.created_at DESC, m.id DESC
+                 LIMIT 10",
+            )
+            .bind(channel_id)
+            .fetch_all(&state.db)
+            .await
+            .map_err(|error| {
+                tracing::error!(%error, "failed to load embed message previews");
+                ApiError::dependency_unavailable("Embed previews are temporarily unavailable.")
+            })?
+            .into_iter()
+            .map(|(id, author, content, created_at)| EmbedMessageDto {
+                id,
+                author,
+                content,
+                created_at,
+            })
+            .collect(),
+            None => Vec::new(),
+        }
+    } else {
+        Vec::new()
+    };
     Ok(Json(EmbedCommunityDto {
         id,
         name,
@@ -762,5 +851,6 @@ pub async fn community(
             .trim_end_matches('/')
             .to_string(),
         authenticated: claims.sub.is_some(),
+        messages,
     }))
 }

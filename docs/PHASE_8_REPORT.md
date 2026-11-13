@@ -1,6 +1,6 @@
 # Phase 8 Report — Embed and developer platform
 
-**Status:** Embed MVP implemented. Public community widgets, one-time authenticated member authorization, the embed app management API/UI, the hosted widget page, the SDK loader, a typed TypeScript wrapper, and a demo host page are in place. API keys/bot accounts, outgoing webhooks, message previews, and the Rust SDK remain follow-ups.
+**Status:** Embed MVP implemented. Public community widgets, one-time authenticated member authorization with a popup flow, public message previews, the embed app management API/UI, the hosted widget page, the SDK loader, a typed TypeScript wrapper, and a demo host page are in place. API keys/bot accounts, outgoing webhooks, and the Rust SDK remain follow-ups.
 
 **Date:** 2026-11-13
 
@@ -35,6 +35,8 @@
 ### Frontend and SDK
 
 - `/embed/widget` renders a minimal community card, posts `tulpar:ready`/`tulpar:resize` messages, and never exposes the token to the host page.
+- `/embed/authorize` is the first-party popup that approves a member token and posts the one-time code back to the widget.
+- Public message previews use the configured public text/announcement channel and the `allow_message_preview` flag.
 - `/embed/v1/tulpar-embed.js` is the hosted loader: it creates the iframe, validates `postMessage` origins, and auto-mounts `data-tulpar-embed` elements.
 - `packages/embed-sdk` provides a typed TypeScript `mount` wrapper.
 - `apps/embed-demo` is a separate-origin demo host page.
@@ -51,10 +53,8 @@
 
 1. API keys, bot accounts, and scoped bot tokens are not implemented.
 2. Outgoing webhooks with signatures, retries, and SSRF protection are not implemented.
-3. Authenticated widget popup UX is API-ready but the host-side popup flow and widget sign-in button are not wired yet.
-4. Public message previews are not implemented; the `allow_message_preview` flag is stored but unused.
-5. The Rust SDK is not implemented.
-6. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
+3. The Rust SDK is not implemented.
+4. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
 
 ---
 

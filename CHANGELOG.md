@@ -111,6 +111,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 
 - Embed applications with exact origin allowlists, widget flags, public keys, and token-version revocation.
 - Public embed tokens and one-time authenticated member authorization codes.
+- `/embed/authorize` popup flow and member-view sign-in in the widget.
+- Public message previews for a configured public text/announcement channel.
 - `/api/v1/embed/*` token, community, and authorization endpoints.
 - Hosted `/embed/widget` iframe page with postMessage resize/ready events.
 - `/embed/v1/tulpar-embed.js` loader and `@tulpar/embed-sdk` TypeScript wrapper.
