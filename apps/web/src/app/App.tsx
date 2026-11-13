@@ -95,6 +95,22 @@ export function App() {
                 </Protected>
               }
             />
+            <Route
+              path="/app/friends"
+              element={
+                <Protected>
+                  <AppShell />
+                </Protected>
+              }
+            />
+            <Route
+              path="/app/settings"
+              element={
+                <Protected>
+                  <AppShell />
+                </Protected>
+              }
+            />
             <Route path="*" element={<Navigate to="/app" replace />} />
           </Routes>
         </Bootstrap>

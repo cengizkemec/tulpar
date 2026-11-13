@@ -220,7 +220,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 ### Tasks
 
 - [x] Authenticated SPA shell and core routes (login/register/app/channel/DM).
-- [ ] Communities, channels, messaging, DMs, friends, settings (messaging/DMs done; friends/settings UI pending).
+- [x] Communities, channels, messaging, DMs, friends, and personal settings UI.
 - [x] Voice/video UI integration (join/leave, mic, camera, screen share).
 - [ ] Notifications (in-app gateway events exist; browser notifications pending).
 - [ ] Admin UI (instance and community).

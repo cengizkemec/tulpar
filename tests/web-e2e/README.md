@@ -25,8 +25,8 @@ npm install
 npm test
 ```
 
-If the fixed `webe2eowner` account hits development login rate limits, flush the
-disposable development Redis database once:
+Each run creates a fresh account. If repeated runs hit development registration rate
+limits, flush the disposable development Redis database once:
 
 ```bash
 docker exec tulpar-dev-redis-1 redis-cli FLUSHDB

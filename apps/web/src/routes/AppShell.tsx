@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { signOut } from "../features/auth/session";
 import { MessagePanel } from "../features/chat/MessagePanel";
+import { FriendsPage } from "../features/friends/FriendsPage";
+import { SettingsPage } from "../features/settings/SettingsPage";
 import { VoicePanel } from "../features/voice/VoicePanel";
 import { request } from "../lib/api";
 import { useGateway } from "../lib/gateway";
@@ -14,8 +16,14 @@ import { useSession } from "../stores/session";
 export function AppShell() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const params = useParams();
+  const view = location.pathname.startsWith("/app/friends")
+    ? "friends"
+    : location.pathname.startsWith("/app/settings")
+      ? "settings"
+      : "channel";
   const user = useSession((state) => state.user);
   useGateway(queryClient);
 
@@ -56,7 +64,7 @@ export function AppShell() {
   }, [allChannels, params.channelId, sync.data?.dms, t]);
 
   useEffect(() => {
-    if (params.channelId || !selectedCommunity) {
+    if (view !== "channel" || params.channelId || !selectedCommunity) {
       return;
     }
     const first = firstTextChannel(selectedCommunity);
@@ -65,7 +73,7 @@ export function AppShell() {
         replace: true,
       });
     }
-  }, [navigate, params.channelId, selectedCommunity]);
+  }, [navigate, params.channelId, selectedCommunity, view]);
 
   const unread = sync.data?.unread_counts ?? {};
 
@@ -116,6 +124,29 @@ export function AppShell() {
               );
             })}
           </div>
+        </div>
+
+        <div className="flex gap-1 border-b border-[var(--border)] px-2 py-2">
+          <button
+            className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
+              view === "friends"
+                ? "bg-[var(--surface-3)] text-white"
+                : "text-[var(--muted)] hover:bg-[var(--surface-3)]"
+            }`}
+            onClick={() => navigate("/app/friends")}
+          >
+            {t("friends")}
+          </button>
+          <button
+            className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
+              view === "settings"
+                ? "bg-[var(--surface-3)] text-white"
+                : "text-[var(--muted)] hover:bg-[var(--surface-3)]"
+            }`}
+            onClick={() => navigate("/app/settings")}
+          >
+            {t("settings")}
+          </button>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-3">
@@ -184,7 +215,11 @@ export function AppShell() {
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col">
-        {selectedChannel ? (
+        {view === "friends" ? (
+          <FriendsPage />
+        ) : view === "settings" ? (
+          <SettingsPage />
+        ) : selectedChannel ? (
           <>
             <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
               <div>

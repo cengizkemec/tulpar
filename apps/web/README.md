@@ -9,6 +9,8 @@ React 19 + TypeScript + Vite client foundation for Tulpar.
 - Text message history and sending.
 - WebSocket gateway live updates.
 - LiveKit voice join/leave, microphone, camera, and screen share.
+- Friends/search/requests/blocking/DM UI.
+- Profile, privacy, and notification settings UI.
 - English/Turkish localization foundation.
 
 ## Commands

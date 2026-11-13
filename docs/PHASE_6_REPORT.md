@@ -21,6 +21,8 @@
 - Gateway WebSocket: HELLO/IDENTIFY/READY, heartbeats, reconnect, message invalidation, voice-state updates, notification invalidation.
 - English/Turkish localization with i18next.
 - LiveKit lazy-loaded media chunk.
+- Friends UI: search, requests, accept/decline, add/remove, block/unblock, and DM creation.
+- Settings UI: profile, presence, friend/DM privacy, read receipts, and notification preferences.
 
 ### Media controls
 
@@ -55,13 +57,14 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 
 ## 3. Known gaps
 
-1. Friends, settings, notification preferences, and admin UI are not implemented.
-2. PWA manifest, service worker, and offline shell are not implemented.
-3. Responsive/mobile layouts and accessibility audit are incomplete.
-4. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.
-5. Camera/screen video tiles and layout modes (grid/focus/pin/fullscreen) are incomplete.
-6. Browser matrix, capability detection, and desktop WebView tests are not recorded.
-7. Web e2e and voice e2e require a local Docker media stack and are not in CI.
+1. Admin UI and community-settings UI are not implemented.
+2. Notification list/toasts and browser notifications are not implemented; preferences exist.
+3. PWA manifest, service worker, and offline shell are not implemented.
+4. Responsive/mobile layouts and accessibility audit are incomplete.
+5. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.
+6. Camera/screen video tiles and layout modes (grid/focus/pin/fullscreen) are incomplete.
+7. Browser matrix, capability detection, and desktop WebView tests are not recorded.
+8. Web e2e and voice e2e require a local Docker media stack and are not in CI.
 
 ---
 

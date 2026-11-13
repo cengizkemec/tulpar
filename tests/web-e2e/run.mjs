@@ -30,25 +30,17 @@ async function api(path, { method = "GET", token, body } = {}) {
 }
 
 async function session() {
-  const username = "webe2eowner";
+  const username = `webe2e${Date.now().toString(36)}`.slice(0, 30);
   const email = `${username}@example.com`;
   const password = "correct horse battery staple";
-  let login;
-  try {
-    login = await api("/api/v1/auth/login", {
-      method: "POST",
-      body: { login: email, password },
-    });
-  } catch (error) {
-    await api("/api/v1/auth/register", {
-      method: "POST",
-      body: { username, display_name: "Web E2E", email, password },
-    });
-    login = await api("/api/v1/auth/login", {
-      method: "POST",
-      body: { login: email, password },
-    });
-  }
+  await api("/api/v1/auth/register", {
+    method: "POST",
+    body: { username, display_name: "Web E2E", email, password },
+  });
+  const login = await api("/api/v1/auth/login", {
+    method: "POST",
+    body: { login: email, password },
+  });
   return { email, password, token: login.access_token };
 }
 
@@ -161,6 +153,13 @@ try {
   await page.getByTestId("login-submit").click();
   await page.getByText("# general").first().waitFor({ timeout: 20_000 });
   await page.getByText(setupData.text).first().waitFor({ timeout: 20_000 });
+
+  await page.getByRole("button", { name: "Friends" }).click();
+  await page.getByText("Find people").waitFor({ timeout: 10_000 });
+  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByText("Profile").first().waitFor({ timeout: 10_000 });
+  await page.goto(`${webUrl}/app`);
+  await page.getByText("# general").first().waitFor({ timeout: 20_000 });
 
   const text = `browser message ${Date.now()}`;
   await page.getByTestId("message-input").fill(text);
