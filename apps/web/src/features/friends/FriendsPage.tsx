@@ -111,10 +111,10 @@ export function FriendsPage() {
       <h1 className="text-xl font-semibold">{t("friends")}</h1>
 
       <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-        <h2 className="text-sm font-semibold">Find people</h2>
+        <h2 className="text-sm font-semibold">{t("findPeople")}</h2>
         <input
           className="mt-2 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-          placeholder="Search username…"
+          placeholder={t("searchUsername")}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -133,32 +133,32 @@ export function FriendsPage() {
                   className="rounded bg-[var(--accent)] px-2 py-1 text-xs font-medium text-white"
                   onClick={() => addFriend.mutate(user.id!)}
                 >
-                  Add friend
+                  {t("addFriend")}
                 </button>
                 <button
                   className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                   onClick={() => dm.mutate(user.id!)}
                 >
-                  Message
+                  {t("message")}
                 </button>
                 <button
                   className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-200"
                   onClick={() => block.mutate(user.id!)}
                 >
-                  Block
+                  {t("block")}
                 </button>
               </span>
             </div>
           ))}
           {query.length >= 2 && !search.isLoading && !search.data?.length ? (
-            <p className="text-xs text-[var(--muted)]">No users found.</p>
+            <p className="text-xs text-[var(--muted)]">{t("noUsersFound")}</p>
           ) : null}
         </div>
       </section>
 
       {incoming.length ? (
         <section className="mt-5">
-          <h2 className="text-sm font-semibold">Incoming requests</h2>
+          <h2 className="text-sm font-semibold">{t("incomingRequests")}</h2>
           <div className="mt-2 space-y-2">
             {incoming.map((entry) => (
               <div
@@ -174,13 +174,13 @@ export function FriendsPage() {
                     className="rounded bg-[var(--success)] px-2 py-1 text-xs font-semibold text-slate-950"
                     onClick={() => accept.mutate(entry.id!)}
                   >
-                    Accept
+                    {t("accept")}
                   </button>
                   <button
                     className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                     onClick={() => decline.mutate(entry.id!)}
                   >
-                    Decline
+                    {t("decline")}
                   </button>
                 </span>
               </div>
@@ -191,14 +191,14 @@ export function FriendsPage() {
 
       {outgoing.length ? (
         <section className="mt-5">
-          <h2 className="text-sm font-semibold">Outgoing requests</h2>
+          <h2 className="text-sm font-semibold">{t("outgoingRequests")}</h2>
           <div className="mt-2 space-y-2">
             {outgoing.map((entry) => (
               <div
                 key={entry.id}
                 className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2 text-sm text-[var(--muted)]"
               >
-                Waiting for {entry.user.display_name} to respond.
+                {t("waitingFor", { name: entry.user.display_name })}
               </div>
             ))}
           </div>
@@ -222,26 +222,26 @@ export function FriendsPage() {
                   className="rounded bg-[var(--accent)] px-2 py-1 text-xs font-medium text-white"
                   onClick={() => dm.mutate(friend.id!)}
                 >
-                  Message
+                  {t("message")}
                 </button>
                 <button
                   className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                   onClick={() => remove.mutate(friend.id!)}
                 >
-                  Remove
+                  {t("remove")}
                 </button>
               </span>
             </div>
           ))}
           {!friends.isLoading && !friends.data?.length ? (
-            <p className="text-sm text-[var(--muted)]">No friends yet.</p>
+            <p className="text-sm text-[var(--muted)]">{t("noFriends")}</p>
           ) : null}
         </div>
       </section>
 
       {blocks.data?.length ? (
         <section className="mt-5">
-          <h2 className="text-sm font-semibold">Blocked</h2>
+          <h2 className="text-sm font-semibold">{t("blocked")}</h2>
           <div className="mt-2 space-y-2">
             {blocks.data.map((blocked) => (
               <div
@@ -253,7 +253,7 @@ export function FriendsPage() {
                   className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                   onClick={() => unblock.mutate(blocked.id!)}
                 >
-                  Unblock
+                  {t("unblock")}
                 </button>
               </div>
             ))}

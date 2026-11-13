@@ -1,14 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AdminPage } from "../features/admin/AdminPage";
 import { bootstrapSession } from "../features/auth/session";
 import { CommunitySettingsPage } from "../features/communities/CommunitySettingsPage";
 import { useInstances } from "../stores/instances";
+import { type InstallPromptEvent, usePwa } from "../stores/pwa";
 import { useSession } from "../stores/session";
 import { AppShell } from "../routes/AppShell";
-import { ConnectPage } from "../routes/ConnectPage";
 import { LoginPage } from "../routes/LoginPage";
 import { RegisterPage } from "../routes/RegisterPage";
 
@@ -23,10 +24,11 @@ const queryClient = new QueryClient({
 });
 
 function Protected({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const token = useSession((state) => state.accessToken);
   const bootstrapped = useSession((state) => state.bootstrapped);
   if (!bootstrapped) {
-    return <div className="p-8 text-sm text-[var(--muted)]">Loading…</div>;
+    return <div className="p-8 text-sm text-[var(--muted)]">{t("loading")}</div>;
   }
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -60,12 +62,30 @@ function Bootstrap({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
+  const setPrompt = usePwa((state) => state.setPrompt);
+  const setInstalled = usePwa((state) => state.setInstalled);
+  useEffect(() => {
+    const onPrompt = (event: Event) => {
+      event.preventDefault();
+      setPrompt(event as InstallPromptEvent);
+    };
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setInstalled(true);
+    }
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, [setInstalled, setPrompt]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Bootstrap>
           <Routes>
-            <Route path="/connect" element={<ConnectPage />} />
             <Route
               path="/login"
               element={

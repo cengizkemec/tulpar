@@ -5,10 +5,15 @@ import { Link } from "react-router-dom";
 
 import { request } from "../../lib/api";
 import type { NotificationPreferences, UserSettings } from "../../lib/types";
+import { usePwa } from "../../stores/pwa";
 import { useSession } from "../../stores/session";
 
 export function SettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const installPrompt = usePwa((state) => state.prompt);
+  const installed = usePwa((state) => state.installed);
+  const setInstalled = usePwa((state) => state.setInstalled);
+  const setPrompt = usePwa((state) => state.setPrompt);
   const queryClient = useQueryClient();
   const user = useSession((state) => state.user);
   const setUser = useSession((state) => state.setUser);
@@ -90,17 +95,57 @@ export function SettingsPage() {
     <div className="flex-1 overflow-y-auto p-6">
       <h1 className="text-xl font-semibold">{t("settings")}</h1>
       {saved ? (
-        <p className="mt-2 text-sm text-[var(--success)]">Saved.</p>
+        <p className="mt-2 text-sm text-[var(--success)]">{t("saved")}</p>
       ) : null}
       <Link
         className="mt-3 inline-block rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm"
         to="/admin"
       >
-        Instance administration
+        {t("instanceAdministration")}
       </Link>
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-        <h2 className="text-sm font-semibold">Profile</h2>
+        <h2 className="text-sm font-semibold">{t("language")}</h2>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            data-testid="language-select"
+            className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm"
+            value={i18n.language.startsWith("tr") ? "tr" : "en"}
+            onChange={(event) => {
+              const language = event.target.value;
+              void i18n.changeLanguage(language);
+              window.localStorage.setItem("tulpar.language", language);
+              document.documentElement.lang = language;
+            }}
+          >
+            <option value="en">{t("english")}</option>
+            <option value="tr">{t("turkish")}</option>
+          </select>
+          {installed ? (
+            <span className="text-xs text-[var(--success)]">
+              {t("appInstalled")}
+            </span>
+          ) : installPrompt ? (
+            <button
+              className="rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm"
+              onClick={async () => {
+                await installPrompt.prompt();
+                const choice = await installPrompt.userChoice;
+                if (choice.outcome === "accepted") {
+                  setInstalled(true);
+                } else {
+                  setPrompt(null);
+                }
+              }}
+            >
+              {t("installApp")}
+            </button>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+        <h2 className="text-sm font-semibold">{t("profile")}</h2>
         <label className="mt-3 block text-sm">
           <span className="mb-1 block text-[var(--muted)]">
             {t("displayName")}
@@ -112,7 +157,7 @@ export function SettingsPage() {
           />
         </label>
         <label className="mt-3 block text-sm">
-          <span className="mb-1 block text-[var(--muted)]">Bio</span>
+          <span className="mb-1 block text-[var(--muted)]">{t("bio")}</span>
           <textarea
             className="min-h-20 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
             value={bio}
@@ -120,16 +165,16 @@ export function SettingsPage() {
           />
         </label>
         <label className="mt-3 block text-sm">
-          <span className="mb-1 block text-[var(--muted)]">Status</span>
+          <span className="mb-1 block text-[var(--muted)]">{t("status")}</span>
           <select
             className="rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
             value={status}
             onChange={(event) => setStatus(event.target.value)}
           >
-            <option value="online">Online</option>
-            <option value="idle">Idle</option>
-            <option value="dnd">Do not disturb</option>
-            <option value="invisible">Invisible</option>
+            <option value="online">{t("online")}</option>
+            <option value="idle">{t("idle")}</option>
+            <option value="dnd">{t("dnd")}</option>
+            <option value="invisible">{t("invisible")}</option>
           </select>
         </label>
         <button
@@ -142,12 +187,12 @@ export function SettingsPage() {
       </section>
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-        <h2 className="text-sm font-semibold">Privacy</h2>
+        <h2 className="text-sm font-semibold">{t("privacy")}</h2>
         {settings ? (
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             <label className="text-sm">
               <span className="mb-1 block text-[var(--muted)]">
-                Friend requests
+                {t("friendRequests")}
               </span>
               <select
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-2"
@@ -159,13 +204,13 @@ export function SettingsPage() {
                   })
                 }
               >
-                <option value="everyone">Everyone</option>
-                <option value="mutual_communities">Mutual communities</option>
-                <option value="nobody">Nobody</option>
+                <option value="everyone">{t("everyone")}</option>
+                <option value="mutual_communities">{t("mutualCommunities")}</option>
+                <option value="nobody">{t("nobody")}</option>
               </select>
             </label>
             <label className="text-sm">
-              <span className="mb-1 block text-[var(--muted)]">Direct messages</span>
+              <span className="mb-1 block text-[var(--muted)]">{t("directMessages")}</span>
               <select
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-2"
                 value={settings.allow_dms_from}
@@ -176,14 +221,14 @@ export function SettingsPage() {
                   })
                 }
               >
-                <option value="everyone">Everyone</option>
-                <option value="friends">Friends</option>
-                <option value="mutual_communities">Mutual communities</option>
-                <option value="nobody">Nobody</option>
+                <option value="everyone">{t("everyone")}</option>
+                <option value="friends">{t("friends")}</option>
+                <option value="mutual_communities">{t("mutualCommunities")}</option>
+                <option value="nobody">{t("nobody")}</option>
               </select>
             </label>
             <label className="text-sm">
-              <span className="mb-1 block text-[var(--muted)]">Presence</span>
+              <span className="mb-1 block text-[var(--muted)]">{t("presence")}</span>
               <select
                 className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 py-2"
                 value={settings.presence_visibility}
@@ -194,9 +239,9 @@ export function SettingsPage() {
                   })
                 }
               >
-                <option value="everyone">Everyone</option>
-                <option value="friends">Friends</option>
-                <option value="nobody">Nobody</option>
+                <option value="everyone">{t("everyone")}</option>
+                <option value="friends">{t("friends")}</option>
+                <option value="nobody">{t("nobody")}</option>
               </select>
             </label>
             <label className="flex items-center gap-2 self-end text-sm">
@@ -210,7 +255,7 @@ export function SettingsPage() {
                   })
                 }
               />
-              Read receipts
+              {t("readReceipts")}
             </label>
           </div>
         ) : (
@@ -226,7 +271,7 @@ export function SettingsPage() {
       </section>
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-        <h2 className="text-sm font-semibold">Notifications</h2>
+        <h2 className="text-sm font-semibold">{t("notifications")}</h2>
         <div className="mt-3 flex items-center gap-3 text-sm">
           <button
             className="rounded-lg bg-[var(--surface-3)] px-3 py-2"
@@ -236,7 +281,7 @@ export function SettingsPage() {
               setBrowserPermission(permission);
             }}
           >
-            Enable browser notifications
+            {t("enableBrowserNotifications")}
           </button>
           <span className="text-xs text-[var(--muted)]">
             {browserPermission}
@@ -245,11 +290,11 @@ export function SettingsPage() {
         {notifications ? (
           <div className="mt-3 space-y-2 text-sm">
             {[
-              ["desktop_enabled", "Desktop notifications"],
-              ["sound_enabled", "Notification sound"],
-              ["mentions_only", "Mentions only"],
-              ["suppress_everyone", "Suppress @everyone"],
-              ["email_enabled", "Email notifications"],
+              ["desktop_enabled", t("desktopNotifications")],
+              ["sound_enabled", t("notificationSound")],
+              ["mentions_only", t("mentionsOnly")],
+              ["suppress_everyone", t("suppressEveryone")],
+              ["email_enabled", t("emailNotifications")],
             ].map(([key, label]) => (
               <label key={key} className="flex items-center gap-2">
                 <input

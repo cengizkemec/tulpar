@@ -77,21 +77,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - `/sync`-driven community, channel, and DM navigation.
 - Text message history and sending with REST and live gateway invalidation.
 - LiveKit voice join/leave, microphone, camera, and screen-share controls with lazy-loaded media chunk.
-- English/Turkish localization foundation.
+- Full English/Turkish UI localization with persisted language choice and `document.lang` updates.
 - Friends UI: user search, requests, add/remove, block/unblock, and DM creation.
 - Personal settings UI: profile, status, privacy, read receipts, and notification preferences.
 - In-app notification center with unread badge and read controls.
-- PWA manifest, icon, and shell-only service worker; private API/gateway responses are never cached.
+- PWA manifest, install prompt, offline banner, and shell-only service worker; private API/gateway responses are never cached, and offline shell navigation is verified in Docker mode.
 - Camera/screen video tiles with LiveKit track attachment, grid/focus/pin layouts, and fullscreen; remote audio cleanup on leave/unsubscribe.
 - Microphone and camera device selection with live device switching.
 - Push-to-talk hold control and LiveKit connection-quality indicator.
 - Voice connection now succeeds without microphone permission; mic errors are non-fatal.
 - Browser notification permission control and gateway-driven notifications.
 - Instance administration API and UI: overview metrics, user search, enable/disable, grant/revoke admin, and global audit log.
-- TeamSpeak-style server-address connection screen with `/sync/instance` probing and a saved instance registry.
+- Accessibility pass: skip link, navigation landmark, labelled controls, Escape-to-close mobile navigation, and WCAG AA accent contrast; Lighthouse login shell scores 100/100/100.
+- Web connects to its own origin; multi-server IP/domain entry is reserved for the desktop client.
 - Community settings UI: general edits, member kick/ban, role display, invites, bans, and audit log with permission-gated actions.
-- Push-to-talk and voice connection-quality indicator; voice now connects even if microphone permission is denied.
-- Headless Edge web smoke test covering login, friends/settings routes, message send, gateway delivery, voice connection, camera publishing, screen sharing, and leave cleanup.
+- Session bootstrap avoids unauthenticated refresh requests on first visit using a non-sensitive local hint.
+- Headless Edge web smoke test covering login, friends/settings/notification/community routes, language switching, skip link, responsive navigation, message send, gateway delivery, voice connection, camera publishing, screen sharing, leave cleanup, offline banner, service worker, and offline shell reload.
 - Docker nginx web container at `http://localhost:15173` proxying API, gateway, health, and webhooks; trusted-proxy IP handling for rate limits and audits.
 
 ### Planned — Phase 4 follow-ups

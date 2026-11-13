@@ -10,6 +10,12 @@ export async function bootstrapSession(): Promise<void> {
   const session = useSession.getState();
   try {
     if (!session.accessToken) {
+      const hasSessionHint =
+        window.localStorage.getItem("tulpar.hasSession") === "1";
+      if (!hasSessionHint) {
+        session.setBootstrapped();
+        return;
+      }
       const refreshed = await refreshSession();
       if (!refreshed) {
         session.clear();

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
 
 import { request } from "../../lib/api";
@@ -15,6 +16,7 @@ import type {
 import { useSession } from "../../stores/session";
 
 export function CommunitySettingsPage() {
+  const { t } = useTranslation();
   const { communityId = "" } = useParams();
   const queryClient = useQueryClient();
   const currentUser = useSession((state) => state.user);
@@ -113,7 +115,7 @@ export function CommunitySettingsPage() {
       await invalidate();
     },
     onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Save failed."),
+      setError(cause instanceof Error ? cause.message : t("saveFailed")),
   });
 
   const createInvite = useMutation({
@@ -132,7 +134,7 @@ export function CommunitySettingsPage() {
       await invalidate();
     },
     onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Invite failed."),
+      setError(cause instanceof Error ? cause.message : t("inviteFailed")),
   });
 
   const revokeInvite = useMutation({
@@ -148,18 +150,18 @@ export function CommunitySettingsPage() {
       }),
     onSuccess: invalidate,
     onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Kick failed."),
+      setError(cause instanceof Error ? cause.message : t("kickFailed")),
   });
 
   const ban = useMutation({
     mutationFn: (userId: string) =>
       request(`/api/v1/communities/${communityId}/bans/${userId}`, {
         method: "PUT",
-        body: { reason: "Removed by moderator" },
+        body: { reason: t("removedByModerator") },
       }),
     onSuccess: invalidate,
     onError: (cause) =>
-      setError(cause instanceof Error ? cause.message : "Ban failed."),
+      setError(cause instanceof Error ? cause.message : t("banFailed")),
   });
 
   const unban = useMutation({
@@ -175,16 +177,16 @@ export function CommunitySettingsPage() {
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">Community settings</h1>
+            <h1 className="text-xl font-semibold">{t("communitySettings")}</h1>
             <p className="text-sm text-[var(--muted)]">
-              {details.data?.community.name ?? "Loading…"}
+              {details.data?.community.name ?? t("loading")}
             </p>
           </div>
           <Link
             className="rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm"
             to={`/app/c/${communityId}`}
           >
-            Back to community
+            {t("backToCommunity")}
           </Link>
         </header>
 
@@ -196,10 +198,10 @@ export function CommunitySettingsPage() {
 
         {can("MANAGE_COMMUNITY") ? (
           <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-            <h2 className="text-sm font-semibold">General</h2>
+            <h2 className="text-sm font-semibold">{t("general")}</h2>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <label className="text-sm">
-                <span className="mb-1 block text-[var(--muted)]">Name</span>
+                <span className="mb-1 block text-[var(--muted)]">{t("name")}</span>
                 <input
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
                   value={name}
@@ -208,20 +210,20 @@ export function CommunitySettingsPage() {
               </label>
               <label className="text-sm">
                 <span className="mb-1 block text-[var(--muted)]">
-                  Visibility
+                  {t("visibility")}
                 </span>
                 <select
                   className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
                   value={visibility}
                   onChange={(event) => setVisibility(event.target.value)}
                 >
-                  <option value="private">Private</option>
-                  <option value="public">Public</option>
+                  <option value="private">{t("private")}</option>
+                  <option value="public">{t("public")}</option>
                 </select>
               </label>
               <label className="text-sm md:col-span-2">
                 <span className="mb-1 block text-[var(--muted)]">
-                  Description
+                  {t("description")}
                 </span>
                 <textarea
                   className="min-h-20 w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
@@ -235,7 +237,7 @@ export function CommunitySettingsPage() {
               disabled={saveGeneral.isPending}
               onClick={() => saveGeneral.mutate()}
             >
-              Save changes
+              {t("saveChanges")}
             </button>
           </section>
         ) : null}
@@ -243,7 +245,7 @@ export function CommunitySettingsPage() {
         {can("VIEW_MEMBER_LIST") ? (
           <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
             <h2 className="text-sm font-semibold">
-              Members ({members.data?.length ?? details.data?.member_count ?? 0})
+              {t("members")} ({members.data?.length ?? details.data?.member_count ?? 0})
             </h2>
             <div className="mt-3 divide-y divide-[var(--border)]">
               {(members.data ?? []).map((member) => (
@@ -259,9 +261,9 @@ export function CommunitySettingsPage() {
                       </span>
                     </div>
                     <div className="text-xs text-[var(--muted)]">
-                      Joined {new Date(member.joined_at).toLocaleDateString()}
+                      {t("joined")} {new Date(member.joined_at).toLocaleDateString()}
                       {member.communication_disabled_until
-                        ? " · timed out"
+                        ? ` · ${t("timedOut")}`
                         : ""}
                     </div>
                   </div>
@@ -272,7 +274,7 @@ export function CommunitySettingsPage() {
                           className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                           onClick={() => kick.mutate(member.user_id)}
                         >
-                          Kick
+                          {t("kick")}
                         </button>
                       ) : null}
                       {can("BAN_MEMBERS") ? (
@@ -280,7 +282,7 @@ export function CommunitySettingsPage() {
                           className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-200"
                           onClick={() => ban.mutate(member.user_id)}
                         >
-                          Ban
+                          {t("ban")}
                         </button>
                       ) : null}
                     </div>
@@ -292,7 +294,7 @@ export function CommunitySettingsPage() {
         ) : null}
 
         <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-          <h2 className="text-sm font-semibold">Roles</h2>
+          <h2 className="text-sm font-semibold">{t("roles")}</h2>
           <div className="mt-3 space-y-2">
             {(roles.data ?? []).map((role) => (
               <div
@@ -303,8 +305,9 @@ export function CommunitySettingsPage() {
                   {role.name}
                 </span>
                 <span className="text-xs text-[var(--muted)]">
-                  position {role.position} · {role.permissions.length} permissions
-                  {role.is_default ? " · default" : ""}
+                  {t("position")} {role.position} · {role.permissions.length}{" "}
+                  {t("permissions")}
+                  {role.is_default ? ` · ${t("defaultRole")}` : ""}
                 </span>
               </div>
             ))}
@@ -313,11 +316,11 @@ export function CommunitySettingsPage() {
 
         {can("MANAGE_INVITES") ? (
           <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-            <h2 className="text-sm font-semibold">Invites</h2>
+            <h2 className="text-sm font-semibold">{t("invites")}</h2>
             {can("CREATE_INVITES") ? (
               <div className="mt-3 flex flex-wrap items-end gap-2">
                 <label className="text-xs">
-                  Max uses (0 = unlimited)
+                  {t("maxUses")}
                   <input
                     className="mt-1 w-28 rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1"
                     type="number"
@@ -327,7 +330,7 @@ export function CommunitySettingsPage() {
                   />
                 </label>
                 <label className="text-xs">
-                  Expires (hours)
+                  {t("expiresHours")}
                   <input
                     className="mt-1 w-28 rounded border border-[var(--border)] bg-[var(--surface)] px-2 py-1"
                     type="number"
@@ -341,7 +344,7 @@ export function CommunitySettingsPage() {
                   disabled={createInvite.isPending}
                   onClick={() => createInvite.mutate()}
                 >
-                  Create invite
+                  {t("createInvite")}
                 </button>
                 {createdCode ? (
                   <code className="rounded bg-[var(--surface)] px-2 py-1 text-xs">
@@ -359,18 +362,18 @@ export function CommunitySettingsPage() {
                   <code>{invite.code}</code>
                   <span className="flex items-center gap-3 text-xs text-[var(--muted)]">
                     {invite.uses}
-                    {invite.max_uses ? `/${invite.max_uses}` : ""} uses
+                    {invite.max_uses ? `/${invite.max_uses}` : ""} {t("uses")}
                     <button
                       className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                       onClick={() => void navigator.clipboard.writeText(invite.code)}
                     >
-                      Copy
+                      {t("copy")}
                     </button>
                     <button
                       className="rounded bg-red-500/15 px-2 py-1 text-xs text-red-200"
                       onClick={() => revokeInvite.mutate(invite.code)}
                     >
-                      Revoke
+                      {t("revoke")}
                     </button>
                   </span>
                 </div>
@@ -381,7 +384,7 @@ export function CommunitySettingsPage() {
 
         {can("BAN_MEMBERS") ? (
           <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-            <h2 className="text-sm font-semibold">Bans</h2>
+            <h2 className="text-sm font-semibold">{t("bans")}</h2>
             <div className="mt-3 space-y-2">
               {(bans.data ?? []).map((entry) => (
                 <div
@@ -391,19 +394,19 @@ export function CommunitySettingsPage() {
                   <span>
                     @{entry.username}{" "}
                     <span className="text-xs text-[var(--muted)]">
-                      {entry.reason ?? "no reason"}
+                      {entry.reason ?? t("noReason")}
                     </span>
                   </span>
                   <button
                     className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                     onClick={() => unban.mutate(entry.user_id)}
                   >
-                    Unban
+                    {t("unban")}
                   </button>
                 </div>
               ))}
               {!bans.isLoading && !bans.data?.length ? (
-                <p className="text-sm text-[var(--muted)]">No active bans.</p>
+                <p className="text-sm text-[var(--muted)]">{t("noActiveBans")}</p>
               ) : null}
             </div>
           </section>
@@ -411,7 +414,7 @@ export function CommunitySettingsPage() {
 
         {can("VIEW_AUDIT_LOG") ? (
           <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-            <h2 className="text-sm font-semibold">Audit log</h2>
+            <h2 className="text-sm font-semibold">{t("auditLog")}</h2>
             <div className="mt-3 space-y-2">
               {(audit.data ?? []).map((entry) => (
                 <div

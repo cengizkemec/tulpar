@@ -29,7 +29,29 @@ export function AppShell() {
         : "channel";
   const user = useSession((state) => state.user);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [online, setOnline] = useState(navigator.onLine);
   useGateway(queryClient);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  useEffect(() => {
+    if (!sidebarOpen) {
+      return;
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [sidebarOpen]);
 
   const sync = useQuery({
     queryKey: ["sync"],
@@ -83,14 +105,22 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--surface)] text-slate-100">
+      <a
+        href="#main-content"
+        className="sr-only z-50 rounded bg-[var(--accent)] px-3 py-2 text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+      >
+        {t("skipToContent")}
+      </a>
       {sidebarOpen ? (
         <button
-          aria-label="Close navigation"
+          aria-label={t("closeNavigation")}
           className="fixed inset-0 z-10 bg-black/50 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       ) : null}
       <aside
+        role="navigation"
+        aria-label={t("primaryNavigation")}
         className={`${
           sidebarOpen ? "flex" : "hidden"
         } fixed inset-y-0 left-0 z-20 w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface-2)] md:static md:flex`}
@@ -99,16 +129,12 @@ export function AppShell() {
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-[var(--accent)] font-bold">
             T
           </span>
-          <button
-            className="min-w-0 text-left"
-            title="Change server"
-            onClick={() => navigate("/connect")}
-          >
+          <div className="min-w-0 text-left">
             <p className="truncate text-sm font-semibold">{t("appName")}</p>
             <p className="truncate text-xs text-[var(--muted)]">
-              {sync.data?.instance?.name ?? "Change server"}
+              {sync.data?.instance?.name ?? ""}
             </p>
-          </button>
+          </div>
         </div>
 
         <div className="border-b border-[var(--border)] px-2 py-3">
@@ -251,7 +277,15 @@ export function AppShell() {
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main id="main-content" className="flex min-w-0 flex-1 flex-col">
+        {!online ? (
+          <div
+            role="status"
+            className="border-b border-amber-500/30 bg-amber-500/10 px-5 py-2 text-center text-xs text-amber-200"
+          >
+            {t("offline")}
+          </div>
+        ) : null}
         {view === "friends" ? (
           <FriendsPage />
         ) : view === "settings" ? (
@@ -262,7 +296,7 @@ export function AppShell() {
           <>
             <header className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3">
               <button
-                aria-label="Open navigation"
+                aria-label={t("openNavigation")}
                 className="mr-2 rounded-lg px-2 py-1 text-lg md:hidden"
                 onClick={() => setSidebarOpen(true)}
               >

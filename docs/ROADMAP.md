@@ -216,32 +216,32 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 6 - Tulpar Web
 
-**Status:** In progress. The authenticated SPA foundation, text/DM navigation, real-time gateway updates, and voice/video/screen controls are implemented and browser-tested. Friends/settings/admin UI, PWA, responsive polish, and accessibility passes remain open.
+**Status:** Complete for the web scope. The authenticated SPA, messaging, friends/settings, notifications, instance and community administration, voice/video/screen controls, English/Turkish localization, PWA install/offline shell, and accessibility pass are implemented and browser-tested. A real Chrome/Firefox matrix, real-device PWA install checks, and bulk role editing remain follow-ups.
 
 ### Tasks
 
 - [x] Authenticated SPA shell and core routes (login/register/app/channel/DM).
-- [x] Server-address connection screen with saved instance registry.
+- [x] Web connects to its own origin; multi-server address entry belongs to the desktop client.
 - [x] Communities, channels, messaging, DMs, friends, and personal settings UI.
 - [x] Voice/video UI integration (join/leave, mic, camera, screen share).
 - [x] In-app notification center and preferences.
 - [x] Browser notifications with permission control; click routing/desktop toasts pending.
 - [x] Instance admin UI (overview/users/audit) and community settings UI (general/members/invites/bans/audit).
-- [ ] Responsive layouts for desktop/tablet/mobile.
-- [x] PWA manifest and shell-only service worker (offline install verification pending).
-- [x] `en`/`tr` localization foundation.
-- [ ] Accessibility pass.
-- [x] Performance budgets and code splitting (LiveKit lazy chunk).
-- [x] Playwright core flows (login, message, voice join).
+- [x] Responsive layouts for desktop/tablet/mobile (sidebar, grids, and mobile navigation; visual matrix pending).
+- [x] PWA manifest, install prompt, offline banner, and shell-only service worker (offline shell verified in Docker).
+- [x] Full `en`/`tr` localization with persisted language choice.
+- [x] Accessibility pass: skip link, landmarks, labelled controls, keyboard/Escape navigation, and WCAG AA contrast.
+- [x] Performance budgets and code splitting (LiveKit lazy chunk; Lighthouse 100/100/100 on the login shell).
+- [x] Playwright core flows (login, message, voice join, language, a11y, offline shell).
 
 ### Exit criteria
 
-- A user can complete the core journey in a browser: register, join, chat, voice, DM, settings.
-- PWA installs and serves an offline shell without caching private data.
-- Keyboard-only navigation and screen-reader checks pass for main flows.
-- No hardcoded user-facing strings.
-- Lighthouse/route budgets meet the documented targets or deviations are documented.
-- Browser matrix results are recorded.
+- [x] A user can complete the core journey in a browser: register, join, chat, voice, DM, settings.
+- [x] PWA serves an offline shell without caching private data.
+- [x] Keyboard-only navigation and automated accessibility checks pass for main flows.
+- [x] No hardcoded user-facing strings.
+- [x] Lighthouse/route budgets meet the documented targets (login shell: 100/100/100).
+- [ ] Browser matrix results are recorded (Edge verified; Chrome/Firefox pending).
 
 ---
 

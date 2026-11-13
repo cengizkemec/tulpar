@@ -197,9 +197,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
         setMic(true);
       } catch {
         setMic(false);
-        setError(
-          "Connected without a microphone. Allow microphone access and use Mic to publish audio.",
-        );
+        setError(t("microphoneAccessWarning"));
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("errorGeneric"));
@@ -268,14 +266,14 @@ export function VoicePanel({ channel }: { channel: Channel }) {
   }
 
   const videoTiles = [
-    ...(localCamera ? [{ id: "local-camera", label: "You", track: localCamera, local: true, screen: false }] : []),
-    ...(localScreen ? [{ id: "local-screen", label: "Your screen", track: localScreen, local: true, screen: true }] : []),
+    ...(localCamera ? [{ id: "local-camera", label: t("you"), track: localCamera, local: true, screen: false }] : []),
+    ...(localScreen ? [{ id: "local-screen", label: t("yourScreen"), track: localScreen, local: true, screen: true }] : []),
     ...Object.entries(remoteMedia).flatMap(([identity, media]) => [
       ...(media.camera
         ? [{ id: `${identity}-camera`, label: identity.slice(0, 8), track: media.camera, local: false, screen: false }]
         : []),
       ...(media.screen
-        ? [{ id: `${identity}-screen`, label: `${identity.slice(0, 8)}'s screen`, track: media.screen, local: false, screen: true }]
+        ? [{ id: `${identity}-screen`, label: t("screenOf", { name: identity.slice(0, 8) }), track: media.screen, local: false, screen: true }]
         : []),
     ]),
   ];
@@ -374,7 +372,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       {connected ? (
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-[var(--muted)]">
           <label className="flex items-center gap-2">
-            Microphone
+            {t("microphone")}
             <select
               className="max-w-52 rounded border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1"
               value={micDevice}
@@ -382,18 +380,18 @@ export function VoicePanel({ channel }: { channel: Channel }) {
                 void selectDevice("audioinput", event.target.value)
               }
             >
-              <option value="">Default</option>
+              <option value="">{t("defaultDevice")}</option>
               {devices
                 .filter((device) => device.kind === "audioinput")
                 .map((device) => (
                   <option key={device.deviceId} value={device.deviceId}>
-                    {device.label || "Microphone"}
+                    {device.label || t("microphone")}
                   </option>
                 ))}
             </select>
           </label>
           <label className="flex items-center gap-2">
-            Camera
+            {t("camera")}
             <select
               className="max-w-52 rounded border border-[var(--border)] bg-[var(--surface-2)] px-2 py-1"
               value={cameraDevice}
@@ -401,12 +399,12 @@ export function VoicePanel({ channel }: { channel: Channel }) {
                 void selectDevice("videoinput", event.target.value)
               }
             >
-              <option value="">Default</option>
+              <option value="">{t("defaultDevice")}</option>
               {devices
                 .filter((device) => device.kind === "videoinput")
                 .map((device) => (
                   <option key={device.deviceId} value={device.deviceId}>
-                    {device.label || "Camera"}
+                    {device.label || t("camera")}
                   </option>
                 ))}
             </select>
@@ -423,17 +421,17 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       {videoTiles.length ? (
         <>
           <div className="mt-4 flex items-center gap-2">
-            <h2 className="text-sm font-semibold">Video</h2>
+            <h2 className="text-sm font-semibold">{t("video")}</h2>
             {focusedTile ? (
               <button
                 className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
                 onClick={() => setFocusedTile(null)}
               >
-                Back to grid
+                {t("backToGrid")}
               </button>
             ) : (
               <span className="text-xs text-[var(--muted)]">
-                Click a tile to focus
+                {t("clickTileToFocus")}
               </span>
             )}
           </div>
@@ -481,12 +479,16 @@ export function VoicePanel({ channel }: { channel: Channel }) {
                 {participant.display_name ?? participant.user_id}
               </p>
               <p className="mt-1 text-xs text-[var(--muted)]">
-                {participant.server_mute || participant.self_mute ? "muted" : "mic on"}
-                {participant.server_deaf || participant.self_deaf ? " · deafened" : ""}
+                {participant.server_mute || participant.self_mute
+                  ? t("muted")
+                  : t("micOn")}
+                {participant.server_deaf || participant.self_deaf
+                  ? ` · ${t("deafened")}`
+                  : ""}
               </p>
               {participant.tracks?.length ? (
                 <p className="mt-1 text-[10px] text-[var(--muted)]">
-                  {participant.tracks.length} track(s)
+                  {t("tracks", { count: participant.tracks.length })}
                 </p>
               ) : null}
             </div>
@@ -514,6 +516,7 @@ function VideoTile({
   onFocus: () => void;
   onPin: () => void;
 }) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -554,7 +557,7 @@ function VideoTile({
             onPin();
           }}
         >
-          {pinned ? "Unpin" : "Pin"}
+          {pinned ? t("unpin") : t("pin")}
         </button>
         <button
           className="rounded bg-black/60 px-2 py-1 text-xs text-white"
@@ -563,7 +566,7 @@ function VideoTile({
             void videoRef.current?.requestFullscreen();
           }}
         >
-          Fullscreen
+          {t("fullscreen")}
         </button>
       </div>
     </div>

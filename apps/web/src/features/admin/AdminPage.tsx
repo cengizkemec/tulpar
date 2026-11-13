@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { ApiError, request } from "../../lib/api";
 import type { AdminOverview, AdminUser, AuditLog } from "../../lib/types";
 
 export function AdminPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function AdminPage() {
     },
     onError: (error) => {
       setActionError(
-        error instanceof Error ? error.message : "Action failed.",
+        error instanceof Error ? error.message : t("errorGeneric"),
       );
     },
   });
@@ -64,15 +66,15 @@ export function AdminPage() {
     return (
       <main className="grid min-h-screen place-items-center bg-[var(--surface)] p-6">
         <div className="max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-6 text-center">
-          <h1 className="text-lg font-semibold">Instance administration</h1>
+          <h1 className="text-lg font-semibold">{t("instanceAdministration")}</h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            This account is not an instance administrator.
+            {t("notAdmin")}
           </p>
           <Link
             className="mt-4 inline-block rounded-lg bg-[var(--accent)] px-3 py-2 text-sm font-medium text-white"
             to="/app"
           >
-            Back to Tulpar
+            {t("backToTulpar")}
           </Link>
         </div>
       </main>
@@ -84,27 +86,27 @@ export function AdminPage() {
       <div className="mx-auto max-w-6xl">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">Instance administration</h1>
+            <h1 className="text-xl font-semibold">{t("instanceAdministration")}</h1>
             <p className="text-sm text-[var(--muted)]">
-              Users, activity, and audit records.
+              {t("adminSubtitle")}
             </p>
           </div>
           <Link
             className="rounded-lg bg-[var(--surface-3)] px-3 py-2 text-sm"
             to="/app"
           >
-            Back to app
+            {t("backToApp")}
           </Link>
         </header>
 
         <section className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           {[
-            ["Users", overview.data?.users],
-            ["Communities", overview.data?.communities],
-            ["Messages", overview.data?.messages],
-            ["Sessions", overview.data?.active_sessions],
-            ["Files", overview.data?.files],
-            ["Voice rooms", overview.data?.voice_channels],
+            [t("users"), overview.data?.users],
+            [t("communities"), overview.data?.communities],
+            [t("messages"), overview.data?.messages],
+            [t("sessions"), overview.data?.active_sessions],
+            [t("files"), overview.data?.files],
+            [t("voiceRooms"), overview.data?.voice_channels],
           ].map(([label, value]) => (
             <div
               key={String(label)}
@@ -118,10 +120,10 @@ export function AdminPage() {
 
         <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-sm font-semibold">Users</h2>
+            <h2 className="text-sm font-semibold">{t("users")}</h2>
             <input
               className="ml-auto w-64 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
-              placeholder="Search users…"
+              placeholder={t("searchUsers")}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -133,10 +135,10 @@ export function AdminPage() {
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="text-xs uppercase tracking-wide text-[var(--muted)]">
                 <tr>
-                  <th className="px-2 py-2">User</th>
-                  <th className="px-2 py-2">Email</th>
-                  <th className="px-2 py-2">Status</th>
-                  <th className="px-2 py-2">Admin</th>
+                  <th className="px-2 py-2">{t("user")}</th>
+                  <th className="px-2 py-2">{t("email")}</th>
+                  <th className="px-2 py-2">{t("status")}</th>
+                  <th className="px-2 py-2">{t("admin")}</th>
                   <th className="px-2 py-2" />
                 </tr>
               </thead>
@@ -154,15 +156,15 @@ export function AdminPage() {
                     </td>
                     <td className="px-2 py-2">
                       {user.disabled_at ? (
-                        <span className="text-red-300">disabled</span>
+                        <span className="text-red-300">{t("disabled")}</span>
                       ) : user.deleted_at ? (
-                        <span className="text-[var(--muted)]">deleted</span>
+                        <span className="text-[var(--muted)]">{t("deleted")}</span>
                       ) : (
-                        <span className="text-[var(--success)]">active</span>
+                        <span className="text-[var(--success)]">{t("active")}</span>
                       )}
                     </td>
                     <td className="px-2 py-2">
-                      {user.is_instance_admin ? "yes" : "no"}
+                      {user.is_instance_admin ? t("yes") : t("no")}
                     </td>
                     <td className="px-2 py-2">
                       <div className="flex justify-end gap-2">
@@ -175,7 +177,7 @@ export function AdminPage() {
                             })
                           }
                         >
-                          {user.disabled_at ? "Enable" : "Disable"}
+                          {user.disabled_at ? t("enable") : t("disable")}
                         </button>
                         <button
                           className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
@@ -189,8 +191,8 @@ export function AdminPage() {
                           }
                         >
                           {user.is_instance_admin
-                            ? "Revoke admin"
-                            : "Make admin"}
+                            ? t("revokeAdmin")
+                            : t("makeAdmin")}
                         </button>
                       </div>
                     </td>
@@ -202,7 +204,7 @@ export function AdminPage() {
         </section>
 
         <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
-          <h2 className="text-sm font-semibold">Audit log</h2>
+          <h2 className="text-sm font-semibold">{t("auditLog")}</h2>
           <div className="mt-3 space-y-2 text-sm">
             {(audit.data ?? []).map((entry) => (
               <div

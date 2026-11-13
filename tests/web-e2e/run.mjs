@@ -133,7 +133,7 @@ try {
       "--no-sandbox",
     ],
   });
-  const context = await browser.newContext();
+  const context = await browser.newContext({ locale: "en-US" });
   await context.grantPermissions(["microphone", "camera"], { origin: webUrl });
   const page = await context.newPage();
   page.on("pageerror", (error) => console.error("PAGE_ERROR", error.message));
@@ -148,20 +148,48 @@ try {
     }
   });
 
-  await page.goto(`${webUrl}/connect`);
-  await page.getByTestId("connect-address").fill(webUrl);
-  await page.getByTestId("connect-submit").click();
-  await page.waitForURL("**/login", { timeout: 20_000 });
+  await page.goto(`${webUrl}/login`);
   await page.getByTestId("login-email").fill(setupData.credentials.email);
   await page.getByTestId("login-password").fill(setupData.credentials.password);
   await page.getByTestId("login-submit").click();
   await page.getByText("# general").first().waitFor({ timeout: 20_000 });
   await page.getByText(setupData.text).first().waitFor({ timeout: 20_000 });
 
+  await page.keyboard.press("Tab");
+  const focusedText = await page.evaluate(
+    () => document.activeElement?.textContent ?? "",
+  );
+  if (!focusedText.includes("Skip to content")) {
+    throw new Error(`first tab stop was: ${focusedText}`);
+  }
+  await page.keyboard.press("Enter");
+  const skipHash = await page.evaluate(() => window.location.hash);
+  if (skipHash !== "#main-content") {
+    throw new Error(`skip link hash was: ${skipHash}`);
+  }
+
+  if (externalWeb) {
+    const serviceWorkerActive = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return false;
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((resolve) => setTimeout(() => resolve(null), 10_000)),
+      ]);
+      return Boolean(registration && registration.active);
+    });
+    if (!serviceWorkerActive) {
+      throw new Error("service worker is not active");
+    }
+  }
+
   await page.getByTestId("nav-friends").click();
   await page.getByText("Find people").waitFor({ timeout: 10_000 });
   await page.getByTestId("nav-settings").click();
   await page.getByText("Profile").first().waitFor({ timeout: 10_000 });
+  await page.getByTestId("language-select").selectOption("tr");
+  await page.getByText("Dil", { exact: true }).waitFor({ timeout: 5_000 });
+  await page.getByTestId("language-select").selectOption("en");
+  await page.getByText("Language", { exact: true }).waitFor({ timeout: 5_000 });
   await page.getByTestId("nav-notifications").click();
   await page.getByText("Mark all read").waitFor({ timeout: 10_000 });
   await page.goto(
@@ -213,6 +241,39 @@ try {
   await page
     .locator('[data-testid="voice-screen"][data-active="false"]')
     .waitFor({ timeout: 5_000 });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page
+    .getByRole("button", { name: "Open navigation" })
+    .waitFor({ timeout: 5_000 });
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  await page
+    .getByRole("navigation", { name: "Primary navigation" })
+    .waitFor({ timeout: 5_000 });
+  await page.keyboard.press("Escape");
+  await page
+    .getByRole("navigation", { name: "Primary navigation" })
+    .waitFor({ state: "hidden", timeout: 5_000 });
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await context.setOffline(true);
+  await page
+    .getByText("You are offline", { exact: false })
+    .waitFor({ timeout: 5_000 });
+  await context.setOffline(false);
+  await page
+    .getByText("You are offline", { exact: false })
+    .waitFor({ state: "hidden", timeout: 5_000 });
+
+  if (externalWeb) {
+    await context.setOffline(true);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const title = await page.title();
+    await context.setOffline(false);
+    if (title !== "Tulpar") {
+      throw new Error(`offline shell title was ${title}`);
+    }
+  }
 
   console.log(
     JSON.stringify({

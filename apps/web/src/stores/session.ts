@@ -17,9 +17,15 @@ export const useSession = create<SessionState>((set) => ({
   accessToken: null,
   user: null,
   bootstrapped: false,
-  setSession: (accessToken, user) => set({ accessToken, user }),
+  setSession: (accessToken, user) => {
+    window.localStorage.setItem("tulpar.hasSession", "1");
+    set({ accessToken, user });
+  },
   setAccessToken: (accessToken) => set({ accessToken }),
   setUser: (user) => set({ user }),
   setBootstrapped: () => set({ bootstrapped: true }),
-  clear: () => set({ accessToken: null, user: null, bootstrapped: true }),
+  clear: () => {
+    window.localStorage.removeItem("tulpar.hasSession");
+    set({ accessToken: null, user: null, bootstrapped: true });
+  },
 }));

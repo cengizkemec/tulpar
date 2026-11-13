@@ -72,7 +72,7 @@ export function MessagePanel({ channelId }: { channelId: string }) {
                       : ""}
                   </time>
                   {message.edited_at ? (
-                    <span className="text-[10px] text-[var(--muted)]">edited</span>
+                    <span className="text-[10px] text-[var(--muted)]">{t("edited")}</span>
                   ) : null}
                   {mine ? (
                     <button
@@ -84,11 +84,11 @@ export function MessagePanel({ channelId }: { channelId: string }) {
                   ) : null}
                 </div>
                 <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-slate-200">
-                  {message.content ?? (message.deleted_at ? "message deleted" : "")}
+                  {message.content ?? (message.deleted_at ? t("messageDeleted") : "")}
                 </p>
                 {message.attachments?.length ? (
                   <p className="mt-1 text-xs text-[var(--muted)]">
-                    📎 {message.attachments.length} attachment(s)
+                    📎 {t("attachments", { count: message.attachments.length })}
                   </p>
                 ) : null}
               </article>
