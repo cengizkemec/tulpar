@@ -69,6 +69,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Voice unit and integration tests with a mock LiveKit admin API.
 - Redis-backed voice projection with process-local fallback.
 - LiveKit participant reconciliation worker and role/overwrite bulk revocation.
+- Edge-based two-client voice e2e harness with fake microphones, direct and forced TURN relay modes.
 
 ### Planned — Phase 4 follow-ups
 

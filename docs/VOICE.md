@@ -1,6 +1,6 @@
 # Tulpar Voice
 
-**Status:** Phase 4 backend implemented and tested: token issuance, TURN credentials, room policy, signed webhooks, Redis-backed projection with reconciliation, moderation, and revocation. Real client audio and UDP-blocked TURN fallback remain open until the web client exists.
+**Status:** Phase 4 backend and transport verification complete: token issuance, TURN credentials, room policy, signed webhooks, Redis-backed projection with reconciliation, moderation, and revocation. Two real Edge clients hear each other directly and through forced TURN relay; client UI/device foundations remain Phase 6 work.
 
 **Media server:** LiveKit SFU, deployed independently from the Rust backend.
 

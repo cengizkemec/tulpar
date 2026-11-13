@@ -6,9 +6,9 @@ Tulpar combines Discord-like communities and real-time social features with Team
 
 Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastructure. A community owner can run a Tulpar instance on their own server and retain full control of users, messages, files, voice infrastructure, and configuration.
 
-> **Project status: Phase 4 in progress — Voice backend.**
+> **Project status: Phase 4 complete — Voice backend and transport verification.**
 >
-> The backend includes authentication, communities, permissions, moderation, social features, persistent messaging, a WebSocket gateway, sync, attachments, notifications, and Phase 4 voice infrastructure: LiveKit tokens, Coturn credentials, room passwords/capacity, webhooks/projection, and server moderation. A verified Docker development stack, generated TypeScript contracts, and a green GitHub Actions pipeline exist. Real client audio, video/screen sharing, and the clients themselves are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md), [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md), [PHASE_3_REPORT.md](docs/PHASE_3_REPORT.md), and [PHASE_4_REPORT.md](docs/PHASE_4_REPORT.md) for verification details and remaining work.
+> The backend includes authentication, communities, permissions, moderation, social features, messaging, a WebSocket gateway, sync, attachments, notifications, and voice infrastructure: LiveKit tokens, Coturn credentials, room policy, webhooks, Redis-backed projection, reconciliation, and moderation. Two real Edge clients hear each other directly and through a forced TURN relay path. A verified Docker development stack, generated TypeScript contracts, and a green GitHub Actions pipeline exist. The web/desktop clients and video/screen sharing are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md), [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md), [PHASE_3_REPORT.md](docs/PHASE_3_REPORT.md), and [PHASE_4_REPORT.md](docs/PHASE_4_REPORT.md) for verification details and remaining work.
 
 ---
 

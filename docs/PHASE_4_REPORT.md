@@ -1,6 +1,6 @@
 # Phase 4 Report — Voice Infrastructure
 
-**Status:** Backend infrastructure implemented and tested. Real-audio and TURN-fallback client verification remains open.
+**Status:** Backend and transport verification complete. Two real Edge clients hear each other directly and with `iceTransportPolicy=relay` through Coturn. Client UI/device foundations remain Phase 6 work.
 
 **Date:** 2026-11-13
 
@@ -63,6 +63,22 @@ pnpm generate:types                                -> pass
 pnpm typecheck                                     -> pass
 ```
 
+### Real client verification
+
+`tests/voice-e2e` launches two headless Microsoft Edge clients with fake microphone
+devices. Each joins the same LiveKit room, publishes audio, and receives the other
+participant's audio.
+
+```text
+node tests/voice-e2e/run.mjs                     -> both clients remoteAudio=1
+TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> both clients remoteAudio=1 through Coturn relay
+```
+
+The relay mode uses `iceTransportPolicy=relay`, so the media path is TURN-only and fails
+if Coturn credentials or relay ports are broken.
+
+### Voice integration test
+
 The voice integration test covers:
 
 1. Voice-channel token issue with LiveKit claims and two ICE entries.
@@ -82,8 +98,8 @@ The voice integration test covers:
 
 ## 3. Known gaps
 
-1. **No real browser audio test yet.** Two real clients hearing each other requires the Phase 6 web client.
-2. **No UDP-blocked TURN fallback test yet.** Coturn credentials and URLs are issued, but real relay behavior needs network-level testing.
+1. **Browser audio is verified manually, not in CI.** The Edge harness requires the Docker media stack and fake media devices.
+2. **TURN relay-only is verified; a real UDP-blocked network and TURN/TLS still need a network-level test.**
 3. **Voice projection is Redis-backed, but gateway voice events are process-local.** Multi-node deployments also need Redis pub/sub or a message bus for gateway fan-out.
 4. **Reconciliation runs every 60 seconds, not immediately after a missed webhook.** A short drift window remains.
 5. **No recording, transcription, E2EE, or stage channels.** These are out of v1 scope.
@@ -95,8 +111,8 @@ The voice integration test covers:
 
 ## 4. Recommended next steps
 
-1. Build the web client voice UI and run two-client real-audio tests in Phase 6.
-2. Test TURN fallback with UDP blocked and TURN/TLS.
+1. Build the web client voice UI and device/mute/PTT foundations in Phase 6.
+2. Test TURN/TLS and a genuinely UDP-blocked network.
 3. Add multi-node gateway voice event fan-out.
 4. Shorten the reconciliation drift window after webhook failures.
 5. Start Phase 5 video/screen-share design against the same token grants.
