@@ -304,13 +304,13 @@ pub fn router(state: AppState) -> Router {
     );
 
     let embed = Router::new()
-        .route(
-            "/apps/{app_id}",
-            axum::routing::patch(routes::embed::update_app).delete(routes::embed::revoke_app),
-        )
         .route("/authorize", post(routes::embed::authorize))
         .route("/token", post(routes::embed::token))
         .route("/community", get(routes::embed::community));
+    let embed_apps = Router::new().route(
+        "/{app_id}",
+        axum::routing::patch(routes::embed::update_app).delete(routes::embed::revoke_app),
+    );
 
     let cors = cors_layer(&state);
     let body_limit = state
@@ -340,6 +340,7 @@ pub fn router(state: AppState) -> Router {
         .nest("/api/v1/blocks", blocks)
         .nest("/api/v1/dms", dms)
         .nest("/api/v1/embed", embed)
+        .nest("/api/v1/embed-apps", embed_apps)
         .with_state(state)
         .merge(SwaggerUi::new("/docs").url("/api/v1/openapi.json", openapi::document()))
         .layer(CompressionLayer::new())

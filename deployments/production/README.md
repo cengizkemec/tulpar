@@ -2,7 +2,8 @@
 
 This directory contains a single-host production stack for Ubuntu Server 24.04:
 PostgreSQL, Redis, LiveKit, Coturn, the Tulpar API, the web container, and Caddy for
-TLS and security headers.
+TLS and security headers. The main app is frame-denied; `/embed/*` intentionally allows
+framing for third-party widgets while keeping the token/origin allowlist server-side.
 
 ## 1. DNS and firewall
 
