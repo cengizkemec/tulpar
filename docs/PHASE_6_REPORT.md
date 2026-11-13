@@ -35,7 +35,8 @@
 
 - Root `pnpm typecheck` now includes the web app.
 - TypeScript contract CI job runs the production web build.
-- `tests/web-e2e` logs in, loads `/sync`, sends a browser message, joins a LiveKit voice channel, reaches `Connected`, enables the fake camera, starts screen sharing with the Edge desktop-capture source, leaves voice, and confirms media state resets.
+- Docker development stack now serves the built web app through nginx at `http://localhost:15173`, proxying `/api`, `/gateway`, and `/webhooks`.
+- `tests/web-e2e` logs in, loads `/sync`, sends a browser message, receives an API-created message over the gateway socket, joins a LiveKit voice channel, reaches `Connected`, enables the fake camera, starts screen sharing with the Edge desktop-capture source, leaves voice, and confirms media state resets. It can run against Vite or the Docker web container.
 
 ---
 
@@ -44,7 +45,8 @@
 ```text
 pnpm --filter @tulpar/web typecheck -> pass
 pnpm --filter @tulpar/web build     -> pass (LiveKit split into a lazy chunk)
-node tests/web-e2e/run.mjs          -> login/text/voice/camera/screen/leave pass
+node tests/web-e2e/run.mjs          -> login/text/gateway/voice/camera/screen/leave pass
+TULPAR_WEB_URL=http://localhost:15173 node tests/web-e2e/run.mjs -> Docker nginx path pass
 node tests/voice-e2e/run.mjs        -> two-client direct audio pass
 TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 ```

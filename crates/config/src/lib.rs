@@ -48,6 +48,7 @@ pub struct ServerConfig {
     pub bind: String,
     pub request_timeout_seconds: u64,
     pub body_limit_bytes: usize,
+    pub trust_proxy: bool,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -135,6 +136,7 @@ impl Default for AppConfig {
                 bind: "0.0.0.0:8080".to_string(),
                 request_timeout_seconds: 30,
                 body_limit_bytes: 2 * 1024 * 1024,
+                trust_proxy: false,
             },
             database: DatabaseConfig {
                 url: String::new(),

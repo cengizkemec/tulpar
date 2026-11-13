@@ -109,36 +109,37 @@ impl FromRequestParts<AppState> for RequestContext {
 
     async fn from_request_parts(
         parts: &mut Parts,
-        _state: &AppState,
+        state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         Ok(Self {
             headers: parts.headers.clone(),
-            meta: request_meta(parts),
+            meta: request_meta(parts, state.config.server.trust_proxy),
         })
     }
 }
 
-pub fn request_meta(parts: &Parts) -> RequestMeta {
-    let mut ip = parts
+pub fn request_meta(parts: &Parts, trust_proxy: bool) -> RequestMeta {
+    let forwarded = parts
+        .headers
+        .get("x-forwarded-for")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(',').next())
+        .and_then(|value| value.trim().parse().ok());
+    let real_ip = parts
+        .headers
+        .get("x-real-ip")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.trim().parse().ok());
+    let peer = parts
         .extensions
         .get::<axum::extract::ConnectInfo<std::net::SocketAddr>>()
         .map(|connect| connect.0.ip());
 
-    if ip.is_none() {
-        ip = parts
-            .headers
-            .get("x-forwarded-for")
-            .and_then(|value| value.to_str().ok())
-            .and_then(|value| value.split(',').next())
-            .and_then(|value| value.trim().parse().ok());
-    }
-    if ip.is_none() {
-        ip = parts
-            .headers
-            .get("x-real-ip")
-            .and_then(|value| value.to_str().ok())
-            .and_then(|value| value.trim().parse().ok());
-    }
+    let ip = if trust_proxy {
+        forwarded.or(real_ip).or(peer)
+    } else {
+        peer.or(forwarded).or(real_ip)
+    };
 
     let user_agent = parts
         .headers

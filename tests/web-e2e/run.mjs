@@ -117,10 +117,13 @@ async function waitForServer(url, timeoutMs = 30_000) {
 }
 
 const setupData = await setup();
-const vite = spawn(process.execPath, [viteBin, "--port", "5173", "--strictPort"], {
-  cwd: join(repoRoot, "apps", "web"),
-  stdio: "ignore",
-});
+const externalWeb = Boolean(process.env.TULPAR_WEB_URL);
+const vite = externalWeb
+  ? null
+  : spawn(process.execPath, [viteBin, "--port", "5173", "--strictPort"], {
+      cwd: join(repoRoot, "apps", "web"),
+      stdio: "ignore",
+    });
 
 let browser;
 try {
@@ -164,6 +167,14 @@ try {
   await page.getByTestId("message-send").click();
   await page.getByText(text).first().waitFor({ timeout: 20_000 });
 
+  const gatewayText = `gateway message ${Date.now()}`;
+  await api(`/api/v1/channels/${setupData.textChannelId}/messages`, {
+    method: "POST",
+    token: setupData.credentials.token,
+    body: { content: gatewayText },
+  });
+  await page.getByText(gatewayText).first().waitFor({ timeout: 20_000 });
+
   await page.getByText(new RegExp(setupData.voiceChannelName)).first().click();
   await page.getByTestId("voice-join").click();
   await page
@@ -188,6 +199,7 @@ try {
     JSON.stringify({
       login: true,
       textMessage: true,
+      gatewayMessage: true,
       voiceConnected: true,
       cameraPublishing: true,
       screenPublishing: true,
@@ -215,6 +227,6 @@ try {
 }
 
 function cleanup() {
-  vite.kill();
+  vite?.kill();
   process.exit(0);
 }

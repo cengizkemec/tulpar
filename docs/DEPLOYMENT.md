@@ -19,6 +19,8 @@ The API container starts as root only to create and chown the uploads volume, th
 
 Voice uses `TULPAR__VOICE__LIVEKIT_URL` (client URL), `TULPAR__VOICE__LIVEKIT_API_URL` (internal admin URL), the LiveKit key/secret, and the Coturn shared secret for ephemeral TURN credentials. Coturn must run with `--use-auth-secret --static-auth-secret=<secret>`; static TURN users are not used. LiveKit webhooks are sent to `/webhooks/livekit` and verified against the API secret.
 
+The development web container serves the built SPA through nginx at `http://localhost:15173` and proxies `/api`, `/gateway`, `/health`, and `/webhooks` to the API. The API public URL is the web origin so cookie Origin checks and gateway ticket URLs stay consistent. Because requests arrive through nginx, the development API sets `TULPAR__SERVER__TRUST_PROXY=true` so `X-Forwarded-For` is used for rate limiting and audit IPs. Do not enable proxy trust when the API is directly internet-facing without a trusted reverse proxy.
+
 **Primary target:** Ubuntu Server 24.04, Docker Engine with Compose v2.
 
 **Initial topology:** one VPS for the application and data services, with LiveKit/Coturn either co-located or on a separate media host.

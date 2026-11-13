@@ -78,7 +78,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - Text message history and sending with REST and live gateway invalidation.
 - LiveKit voice join/leave, microphone, camera, and screen-share controls with lazy-loaded media chunk.
 - English/Turkish localization foundation.
-- Headless Edge web smoke test covering login, message send, voice connection, camera publishing, screen sharing, and leave cleanup.
+- Headless Edge web smoke test covering login, message send, gateway delivery, voice connection, camera publishing, screen sharing, and leave cleanup.
+- Docker nginx web container at `http://localhost:15173` proxying API, gateway, health, and webhooks; trusted-proxy IP handling for rate limits and audits.
 
 ### Planned — Phase 4 follow-ups
 

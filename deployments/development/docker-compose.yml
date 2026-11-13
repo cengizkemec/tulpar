@@ -72,7 +72,8 @@ services:
         condition: service_healthy
     environment:
       TULPAR__INSTANCE__NAME: Tulpar Dev
-      TULPAR__INSTANCE__PUBLIC_URL: ${TULPAR_PUBLIC_URL:-http://localhost:8080}
+      TULPAR__INSTANCE__PUBLIC_URL: ${TULPAR_PUBLIC_URL:-http://localhost:15173}
+      TULPAR__SERVER__TRUST_PROXY: "true"
       TULPAR__INSTANCE__ENVIRONMENT: development
       TULPAR__SERVER__BIND: 0.0.0.0:8080
       TULPAR__DATABASE__URL: postgres://tulpar:${TULPAR_POSTGRES_PASSWORD}@postgres:5432/tulpar
@@ -101,6 +102,17 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deployments/development/web.Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${TULPAR_WEB_PORT:-15173}:80"
     restart: unless-stopped
 
 volumes:
