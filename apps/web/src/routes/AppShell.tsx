@@ -143,6 +143,7 @@ export function AppShell() {
 
         <div className="flex gap-1 border-b border-[var(--border)] px-2 py-2">
           <button
+            data-testid="nav-friends"
             className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
               view === "friends"
                 ? "bg-[var(--surface-3)] text-white"
@@ -153,6 +154,7 @@ export function AppShell() {
             {t("friends")}
           </button>
           <button
+            data-testid="nav-settings"
             className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
               view === "settings"
                 ? "bg-[var(--surface-3)] text-white"
@@ -163,6 +165,7 @@ export function AppShell() {
             {t("settings")}
           </button>
           <button
+            data-testid="nav-notifications"
             className={`relative flex-1 rounded-lg px-2 py-1.5 text-xs font-medium ${
               view === "notifications"
                 ? "bg-[var(--surface-3)] text-white"

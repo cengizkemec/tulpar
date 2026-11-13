@@ -117,5 +117,15 @@ function handleDispatch(frame: DispatchFrame, queryClient: QueryClient) {
   if (frame.t === "NOTIFICATION_CREATE") {
     void queryClient.invalidateQueries({ queryKey: ["notifications"] });
     void queryClient.invalidateQueries({ queryKey: ["sync"] });
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
+      const kind =
+        (payload?.kind as string | undefined) === "mention"
+          ? "You were mentioned"
+          : "New Tulpar notification";
+      new Notification("Tulpar", { body: kind, tag: "tulpar-notification" });
+    }
   }
 }

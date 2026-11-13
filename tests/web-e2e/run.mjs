@@ -154,11 +154,11 @@ try {
   await page.getByText("# general").first().waitFor({ timeout: 20_000 });
   await page.getByText(setupData.text).first().waitFor({ timeout: 20_000 });
 
-  await page.getByRole("button", { name: "Friends" }).click();
+  await page.getByTestId("nav-friends").click();
   await page.getByText("Find people").waitFor({ timeout: 10_000 });
-  await page.getByRole("button", { name: "Settings" }).click();
+  await page.getByTestId("nav-settings").click();
   await page.getByText("Profile").first().waitFor({ timeout: 10_000 });
-  await page.getByRole("button", { name: "Notifications" }).click();
+  await page.getByTestId("nav-notifications").click();
   await page.getByText("Mark all read").waitFor({ timeout: 10_000 });
   await page.goto(`${webUrl}/app`);
   await page.getByText("# general").first().waitFor({ timeout: 20_000 });
@@ -192,6 +192,9 @@ try {
     .locator('[data-testid="voice-screen"][data-active="true"]')
     .waitFor({ timeout: 15_000 });
   await page.locator("video").nth(1).waitFor({ state: "visible" });
+  await page.locator("video").first().click();
+  await page.getByText("Back to grid").waitFor({ timeout: 5_000 });
+  await page.getByText("Back to grid").click();
   await page.getByText("Leave voice").click();
   await page.getByTestId("voice-join").waitFor({ timeout: 15_000 });
   await page
@@ -211,7 +214,7 @@ try {
   );
   await browser.close();
   browser = null;
-  cleanup();
+  cleanup(0);
 } catch (error) {
   console.error("WEB_E2E_FAILED", error);
   if (browser) {
@@ -225,11 +228,10 @@ try {
     }
     await browser.close();
   }
-  cleanup();
-  process.exit(1);
+  cleanup(1);
 }
 
-function cleanup() {
+function cleanup(exitCode) {
   vite?.kill();
-  process.exit(0);
+  process.exit(exitCode);
 }

@@ -30,6 +30,7 @@ export function VoicePanel({ channel }: { channel: Channel }) {
   const [remoteMedia, setRemoteMedia] = useState<Record<string, RemoteMedia>>(
     {},
   );
+  const [focusedTile, setFocusedTile] = useState<string | null>(null);
   const participants =
     useVoiceStore((state) => state.participants[channelId]) ??
     EMPTY_PARTICIPANTS;
@@ -308,17 +309,41 @@ export function VoicePanel({ channel }: { channel: Channel }) {
       ) : null}
 
       {videoTiles.length ? (
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {videoTiles.map((tile) => (
-            <VideoTile
-              key={tile.id}
-              label={tile.label}
-              track={tile.track}
-              local={tile.local}
-              screen={tile.screen}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mt-4 flex items-center gap-2">
+            <h2 className="text-sm font-semibold">Video</h2>
+            {focusedTile ? (
+              <button
+                className="rounded bg-[var(--surface-3)] px-2 py-1 text-xs"
+                onClick={() => setFocusedTile(null)}
+              >
+                Back to grid
+              </button>
+            ) : (
+              <span className="text-xs text-[var(--muted)]">
+                Click a tile to focus
+              </span>
+            )}
+          </div>
+          <div
+            className={`mt-3 grid gap-3 ${
+              focusedTile ? "" : "md:grid-cols-2 xl:grid-cols-3"
+            }`}
+          >
+            {videoTiles
+              .filter((tile) => !focusedTile || tile.id === focusedTile)
+              .map((tile) => (
+                <VideoTile
+                  key={tile.id}
+                  label={tile.label}
+                  track={tile.track}
+                  local={tile.local}
+                  screen={tile.screen}
+                  onFocus={() => setFocusedTile(tile.id)}
+                />
+              ))}
+          </div>
+        </>
       ) : null}
 
       <h2 className="mt-6 text-sm font-semibold">{t("voiceParticipants")}</h2>
@@ -361,11 +386,13 @@ function VideoTile({
   track,
   local,
   screen,
+  onFocus,
 }: {
   label: string;
   track: LiveKitTrack;
   local: boolean;
   screen: boolean;
+  onFocus: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -382,9 +409,10 @@ function VideoTile({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl border border-[var(--border)] bg-black ${
+      className={`group relative cursor-pointer overflow-hidden rounded-xl border border-[var(--border)] bg-black ${
         screen ? "md:col-span-2" : ""
       }`}
+      onClick={onFocus}
     >
       <video
         ref={videoRef}
@@ -398,7 +426,10 @@ function VideoTile({
       </span>
       <button
         className="absolute right-2 top-2 hidden rounded bg-black/60 px-2 py-1 text-xs text-white group-hover:block"
-        onClick={() => void videoRef.current?.requestFullscreen()}
+        onClick={(event) => {
+          event.stopPropagation();
+          void videoRef.current?.requestFullscreen();
+        }}
       >
         Fullscreen
       </button>

@@ -197,7 +197,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Screen/window sharing and optional audio (browser picker).
 - [ ] Resolution/fps/bitrate controls.
 - [ ] Simulcast/adaptation and network indicators (LiveKit defaults only).
-- [x] Video tiles, grid layout, and fullscreen; focus/pin layouts pending.
+- [x] Video tiles, grid/focus layouts, and fullscreen; pin layout pending.
 - [ ] Capability detection and fallback UI.
 - [ ] Test matrix across browsers and desktop WebViews (Edge verified).
 - [ ] Document platform limitations with measured results.
@@ -223,7 +223,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] Communities, channels, messaging, DMs, friends, and personal settings UI.
 - [x] Voice/video UI integration (join/leave, mic, camera, screen share).
 - [x] In-app notification center and preferences.
-- [ ] Browser/desktop notifications.
+- [x] Browser notifications with permission control; click routing/desktop toasts pending.
 - [ ] Admin UI (instance and community).
 - [ ] Responsive layouts for desktop/tablet/mobile.
 - [x] PWA manifest and shell-only service worker (offline install verification pending).

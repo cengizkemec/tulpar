@@ -18,6 +18,9 @@ export function SettingsPage() {
   const [notifications, setNotifications] =
     useState<NotificationPreferences | null>(null);
   const [saved, setSaved] = useState(false);
+  const [browserPermission, setBrowserPermission] = useState(
+    typeof Notification === "undefined" ? "unsupported" : Notification.permission,
+  );
 
   const settingsQuery = useQuery({
     queryKey: ["user-settings"],
@@ -217,6 +220,21 @@ export function SettingsPage() {
 
       <section className="mt-5 max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
         <h2 className="text-sm font-semibold">Notifications</h2>
+        <div className="mt-3 flex items-center gap-3 text-sm">
+          <button
+            className="rounded-lg bg-[var(--surface-3)] px-3 py-2"
+            disabled={browserPermission === "unsupported"}
+            onClick={async () => {
+              const permission = await Notification.requestPermission();
+              setBrowserPermission(permission);
+            }}
+          >
+            Enable browser notifications
+          </button>
+          <span className="text-xs text-[var(--muted)]">
+            {browserPermission}
+          </span>
+        </div>
         {notifications ? (
           <div className="mt-3 space-y-2 text-sm">
             {[

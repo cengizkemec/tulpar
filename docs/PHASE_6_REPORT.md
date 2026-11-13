@@ -35,8 +35,9 @@
 - Screen-share enable/disable.
 - Voice participant tiles from the server projection.
 - Gateway-driven voice state updates with polling fallback.
-- Camera/screen video tiles attached to LiveKit tracks, grid layout, and per-tile fullscreen.
+- Camera/screen video tiles attached to LiveKit tracks, grid/focus layouts, and per-tile fullscreen.
 - Remote audio elements attached and cleaned up with subscriptions/disconnects.
+- Browser notification permission control; gateway notification events show a browser notification when granted.
 
 ### CI and verification
 
@@ -63,7 +64,7 @@ TULPAR_VOICE_RELAY=1 node tests/voice-e2e/run.mjs -> TURN relay pass
 ## 3. Known gaps
 
 1. Admin UI and community-settings UI are not implemented.
-2. Browser notifications and desktop toasts are not implemented; in-app notification center and preferences exist.
+2. Browser notifications use the basic Web Notification API; desktop toast integration and notification-click routing are pending.
 3. PWA install/offline behavior has not been exercised on real devices; private data is intentionally not cached.
 4. Responsive layouts are basic and the accessibility audit is incomplete.
 5. Device selection, PTT/VAD, per-user volume, and quality controls are incomplete.
