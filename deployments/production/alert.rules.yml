@@ -1,0 +1,29 @@
+groups:
+  - name: tulpar
+    rules:
+      - alert: TulparApiDown
+        expr: up{job="tulpar-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: Tulpar API is down
+          description: Prometheus cannot scrape the Tulpar API.
+
+      - alert: TulparOutboxBacklog
+        expr: tulpar_outbox_pending > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Tulpar outbox backlog is growing
+          description: More than 100 outbox events have been pending for 10 minutes.
+
+      - alert: TulparWebhookBacklog
+        expr: tulpar_webhook_pending > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Tulpar webhook backlog is growing
+          description: More than 100 webhook deliveries have been pending for 10 minutes.

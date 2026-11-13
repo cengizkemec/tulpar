@@ -68,14 +68,16 @@ docker compose --env-file .env exec -T api tulpar-server admin create \
 
 ## 4.1 Monitoring
 
-Enable the optional Prometheus scrape profile:
+Enable the optional Prometheus + Grafana monitoring profile:
 
 ```bash
-docker compose --env-file .env --profile monitoring up -d prometheus
+docker compose --env-file .env --profile monitoring up -d prometheus grafana
 ```
 
-Prometheus binds to `127.0.0.1:9090` and scrapes the internal `/metrics` endpoint.
-Do not expose `/metrics` publicly. See [../../docs/MONITORING.md](../../docs/MONITORING.md).
+Prometheus binds to `127.0.0.1:9090`, Grafana to `127.0.0.1:3000` (admin password from
+`TULPAR_GRAFANA_PASSWORD`), and the provisioned `Tulpar overview` dashboard reads the
+internal `/metrics` endpoint. Do not expose either port publicly. See
+[../../docs/MONITORING.md](../../docs/MONITORING.md).
 
 ## 5. Backups
 

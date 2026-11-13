@@ -67,12 +67,13 @@ listener. It reports process liveness and table/queue gauges:
 - `tulpar_outbox_pending`
 - `tulpar_webhook_pending`
 
-Enable the optional Prometheus service:
+Enable the optional Prometheus and Grafana services:
 
 ```bash
-docker compose --env-file deployments/production/.env --profile monitoring up -d prometheus
+docker compose --env-file deployments/production/.env --profile monitoring up -d prometheus grafana
 ```
 
 Prometheus listens on `127.0.0.1:9090` and scrapes `api:8080/metrics` over the internal
-network. Do not expose `/metrics` publicly. Dashboards, alert rules, request latency
-histograms, and gateway/voice metrics are still follow-ups.
+network. Grafana listens on `127.0.0.1:3000` with a provisioned `Tulpar overview`
+dashboard and alert rules. Do not expose either port publicly. Request latency
+histograms, gateway/voice metrics, and Alertmanager routing are still follow-ups.

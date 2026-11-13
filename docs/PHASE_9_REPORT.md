@@ -1,6 +1,6 @@
 # Phase 9 Report — Production hardening
 
-**Status:** Production deployment artifacts, runbooks, and a Prometheus metrics baseline are implemented. Clean-host installation, restore drills, Grafana dashboards/alerts, load tests, release signing, and external security review remain pending.
+**Status:** Production deployment artifacts, runbooks, a Prometheus/Grafana monitoring profile, alert rules, and HTTP/k6 load harnesses are implemented. Clean-host installation, restore drills, Alertmanager routing, WebSocket/media load tests, release signing, and external security review remain pending.
 
 **Date:** 2026-11-13
 
@@ -53,7 +53,7 @@
 
 1. Clean Ubuntu 24.04 installation and firewall verification are not recorded.
 2. The backup/restore drill on a clean host is pending.
-3. Prometheus scraping exists, but Grafana dashboards, alert rules, request-latency histograms, and log aggregation are not included.
+3. Grafana dashboards and Prometheus alert rules are provisioned; Alertmanager routing, request-latency histograms, and gateway/voice metrics are still pending.
 4. Load tests, soak tests, and multi-node gateway fan-out are not implemented.
 5. Coturn TLS on 5349 is not configured.
 6. Image signing, checksums, and a release workflow are not implemented.
@@ -66,6 +66,6 @@
 
 1. Install on a clean Ubuntu 24.04 host and record the firewall/TLS/health checks.
 2. Run a full backup → destroy → restore drill.
-3. Add Grafana dashboards and alert rules on top of the existing Prometheus scrape.
-4. Add k6/WebSocket load tests and fix bottlenecks.
+3. Add Alertmanager routing and richer latency/gateway metrics.
+4. Add WebSocket and LiveKit media load tests.
 5. Configure Coturn TLS, image signing, and signed desktop releases.
