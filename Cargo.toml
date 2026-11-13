@@ -21,6 +21,7 @@ members = [
     "crates/realtime",
     "crates/api",
     "crates/gateway",
+    "crates/sdk",
     "crates/server",
 ]
 

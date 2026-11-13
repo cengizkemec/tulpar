@@ -289,7 +289,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [x] WebSocket documentation and event schemas.
 - [x] Webhooks with HMAC signatures, retries, and SSRF protection.
 - [x] API keys with hashed, scoped, revocable tokens and rate limits (dedicated bot accounts pending).
-- [x] TypeScript SDK (Rust SDK pending).
+- [x] TypeScript and Rust SDKs.
 - [x] Developer examples for the embed loader.
 - [x] Embed security tests (public/member/origin/widget/revocation/preview).
 
@@ -299,7 +299,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 - [ ] Origin, audience, postMessage, and clickjacking tests pass (origin/audience covered; postMessage/clickjacking pending).
 - [x] Webhook signatures/retries/SSRF tests pass.
 - [x] API keys are hashed, scoped, revocable, and rate limited (bot accounts pending).
-- [ ] SDKs compile and pass contract tests (TypeScript SDK builds; Rust SDK pending).
+- [x] SDKs compile and pass contract tests.
 - [x] API/WS docs match the implemented v1 surface.
 
 ---

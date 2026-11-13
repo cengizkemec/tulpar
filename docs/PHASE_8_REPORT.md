@@ -62,15 +62,14 @@
 ## 2. Known gaps
 
 1. Bot accounts/dedicated bot profiles are not implemented; API keys are owned by normal user accounts.
-2. The Rust SDK is not implemented.
-3. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo.
-4. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
+2. REST/WebSocket developer documentation is still the existing OpenAPI/WEBSOCKET docs; no new SDK examples beyond the demo and Rust README.
+3. API key scopes are intentionally limited to read and message-send; moderation/channel-management scopes need an explicit policy.
 
 ---
 
 ## 3. Next steps
 
 1. Add bot account creation/management and per-bot permissions.
-2. Add the Rust SDK and publish versioned SDK packages.
-3. Expand API key scopes for moderation/channel management with an explicit policy.
-4. Add more webhook event types and a delivery dashboard.
+2. Expand API key scopes for moderation/channel management with an explicit policy.
+3. Add more webhook event types and a delivery dashboard.
+4. Add richer typed SDK models and WebSocket/gateway support.
