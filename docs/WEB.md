@@ -1,6 +1,6 @@
 # Tulpar Web Client
 
-**Status:** Phase 0 design. Not implemented.
+**Status:** Phase 6 foundation implemented in `apps/web`: React/Vite build, login/register, session refresh, `/sync`, community/channel/DM navigation, text messaging, gateway live updates, and LiveKit voice/video/screen controls. Admin, friends UI, settings, PWA, and full layouts remain open.
 
 **Stack:** React 19, TypeScript, Vite, Zustand, TanStack Query, Tailwind CSS, LiveKit JavaScript SDK, i18next.
 

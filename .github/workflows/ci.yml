@@ -70,6 +70,7 @@ jobs:
       - run: pnpm generate:types
       - run: git diff --exit-code -- packages/shared-types/src/schema.d.ts
       - run: pnpm typecheck
+      - run: pnpm build:web
 
   secrets:
     name: Secret scan

@@ -1,8 +1,8 @@
 # Tulpar Roadmap
 
-**Current phase:** Phase 4 — Voice infrastructure (backend implemented; client verification open).
+**Current phase:** Phase 5/6 — Web client, video, and screen sharing (in progress).
 
-**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phase 2 is complete. Phase 3 backend scope is complete. Phase 4 backend adds LiveKit tokens, TURN credentials, room policy, webhooks/projection, moderation, and revocation; real-audio and TURN-fallback tests await the web client. Multi-node fan-out and S3 storage remain later work.
+**Status:** Phase 0 is approved. Phase 1 is closed apart from the license decision. Phases 2–4 are complete. The React/Vite web client now covers auth, `/sync`, text messaging, gateway live updates, and voice/video/screen controls, verified by an Edge browser smoke test. Remaining work is client polish, friends/settings/admin UI, PWA, accessibility, device/quality controls, and the browser matrix.
 
 **Rule:** do not begin a phase until the previous phase meets its exit criteria. A phase can be partially delivered, but it is not “complete” because the happy path works.
 
@@ -186,45 +186,50 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ---
 
-## Phase 5 — Video and screen sharing
+## Phase 5 - Video and screen sharing
+
+**Status:** In progress. Camera and screen-share publishing controls exist in the web client and LiveKit grants are permission-scoped. Device selection, quality controls, layouts, capability matrix, and cross-browser media tests remain open.
 
 ### Tasks
 
-- Camera publishing, device selection, mute.
-- Screen/window sharing and optional audio.
-- Resolution/fps/bitrate controls.
-- Simulcast/adaptation and network indicators.
-- Layouts: grid, focus, pin, fullscreen.
-- Capability detection and fallback UI.
-- Test matrix across browsers and desktop WebViews.
-- Document platform limitations with measured results.
+- [x] Camera publishing and mute controls (web foundation).
+- [ ] Device selection.
+- [x] Screen/window sharing and optional audio (browser picker).
+- [ ] Resolution/fps/bitrate controls.
+- [ ] Simulcast/adaptation and network indicators (LiveKit defaults only).
+- [ ] Layouts: grid, focus, pin, fullscreen.
+- [ ] Capability detection and fallback UI.
+- [ ] Test matrix across browsers and desktop WebViews (Edge verified).
+- [ ] Document platform limitations with measured results.
 
 ### Exit criteria
 
-- Camera and screen share work on supported browsers.
-- A token without the source permission cannot publish that source.
-- Screen-share stop/leave/disconnect stops the stream.
-- Capability detection never shows a known-broken control.
-- Real media tests pass on the documented matrix.
-- Desktop limitations are recorded, not hidden.
+- [x] Camera and screen share work on Edge.
+- [x] Token source grants are permission-scoped and verified in the voice integration test.
+- [x] Screen-share stop/leave stops the stream (browser leave flow tested).
+- [ ] Capability detection never shows a known-broken control.
+- [ ] Real media tests pass on the documented matrix (Edge only so far).
+- [ ] Desktop limitations are recorded, not hidden.
 
 ---
 
-## Phase 6 — Tulpar Web
+## Phase 6 - Tulpar Web
+
+**Status:** In progress. The authenticated SPA foundation, text/DM navigation, real-time gateway updates, and voice/video/screen controls are implemented and browser-tested. Friends/settings/admin UI, PWA, responsive polish, and accessibility passes remain open.
 
 ### Tasks
 
-- Complete authenticated SPA shell and routes.
-- Communities, channels, messaging, DMs, friends, settings.
-- Voice/video UI integration.
-- Notifications (in-app, browser).
-- Admin UI (instance and community).
-- Responsive layouts for desktop/tablet/mobile.
-- PWA manifest, service worker, offline shell.
-- `en`/`tr` localization and formatting.
-- Accessibility pass.
-- Performance budgets and code splitting.
-- Playwright core flows.
+- [x] Authenticated SPA shell and core routes (login/register/app/channel/DM).
+- [ ] Communities, channels, messaging, DMs, friends, settings (messaging/DMs done; friends/settings UI pending).
+- [x] Voice/video UI integration (join/leave, mic, camera, screen share).
+- [ ] Notifications (in-app gateway events exist; browser notifications pending).
+- [ ] Admin UI (instance and community).
+- [ ] Responsive layouts for desktop/tablet/mobile.
+- [ ] PWA manifest, service worker, offline shell.
+- [x] `en`/`tr` localization foundation.
+- [ ] Accessibility pass.
+- [x] Performance budgets and code splitting (LiveKit lazy chunk).
+- [x] Playwright core flows (login, message, voice join).
 
 ### Exit criteria
 

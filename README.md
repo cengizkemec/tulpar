@@ -6,9 +6,9 @@ Tulpar combines Discord-like communities and real-time social features with Team
 
 Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastructure. A community owner can run a Tulpar instance on their own server and retain full control of users, messages, files, voice infrastructure, and configuration.
 
-> **Project status: Phase 4 complete — Voice backend and transport verification.**
+> **Project status: Phase 5/6 in progress — Web client and media controls.**
 >
-> The backend includes authentication, communities, permissions, moderation, social features, messaging, a WebSocket gateway, sync, attachments, notifications, and voice infrastructure: LiveKit tokens, Coturn credentials, room policy, webhooks, Redis-backed projection, reconciliation, and moderation. Two real Edge clients hear each other directly and through a forced TURN relay path. A verified Docker development stack, generated TypeScript contracts, and a green GitHub Actions pipeline exist. The web/desktop clients and video/screen sharing are not implemented yet. There is no production-ready release. See [PHASE_1_REPORT.md](docs/PHASE_1_REPORT.md), [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md), [PHASE_3_REPORT.md](docs/PHASE_3_REPORT.md), and [PHASE_4_REPORT.md](docs/PHASE_4_REPORT.md) for verification details and remaining work.
+> The backend covers auth, communities, permissions, moderation, social features, messaging, the WebSocket gateway, sync, attachments, notifications, and voice infrastructure. `apps/web` now provides login/register, `/sync`, community/channel/DM navigation, text messaging, live gateway updates, and LiveKit voice/video/screen controls. Edge tests verify two-client audio, forced TURN relay, and the browser core flow. Desktop, PWA, admin/friends/settings UI, and the full media matrix remain open. There is no production-ready release. See the phase reports in [docs](docs/PHASE_4_REPORT.md).
 
 ---
 
@@ -17,7 +17,7 @@ Tulpar does not depend on Discord accounts, Discord APIs, or Discord infrastruct
 | Product | Purpose | Status |
 |---|---|---|
 | **Tulpar Server** | Self-hosted Rust backend: auth, users, communities, messaging, gateway, permissions, voice authorization, files, administration, APIs | Backend through Phase 3 |
-| **Tulpar Web** | Full browser client and PWA | Planned, Phase 6 |
+| **Tulpar Web** | Full browser client and PWA | Foundation implemented, Phase 6 |
 | **Tulpar Desktop** | Tauri 2 desktop client for Windows 10/11 and Linux | Planned, Phase 7 |
 | **Tulpar Embed** | Secure iframe widgets and SDK for third-party websites | Planned, Phase 8 |
 | **Tulpar Developer Platform** | REST API, WebSocket events, webhooks, API keys, bots, TypeScript and Rust SDKs | Planned, Phase 8 |
@@ -125,6 +125,7 @@ The detailed crate dependency rules and ownership model are in [docs/ARCHITECTUR
 | [PHASE_2_REPORT.md](docs/PHASE_2_REPORT.md) | Phase 2 communities, permissions, and social report |
 | [PHASE_3_REPORT.md](docs/PHASE_3_REPORT.md) | Phase 3 messaging foundation report |
 | [PHASE_4_REPORT.md](docs/PHASE_4_REPORT.md) | Phase 4 voice infrastructure report |
+| [PHASE_6_REPORT.md](docs/PHASE_6_REPORT.md) | Phase 5/6 web client and media controls report |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Development workflow, style, review and security rules |
 
 ## Development environment

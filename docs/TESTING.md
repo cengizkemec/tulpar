@@ -1,6 +1,6 @@
 # Tulpar Testing Strategy
 
-**Status:** Phase 4 voice backend implemented. Unit tests cover config, common helpers, password hashing, rate limiting, permissions, gateway, storage, LiveKit tokens, TURN credentials, and voice projection. Integration tests cover auth, communities, moderation, messaging, WebSocket gateway, attachments, notifications, outbox, `/sync`, and voice tokens/passwords/webhooks/moderation. GitHub Actions runs Rust checks/tests and TypeScript contract checks. `tests/voice-e2e` is a manual Edge-based two-client audio suite that also verifies forced TURN relay; multi-node load, frontend, and desktop suites remain open.
+**Status:** Phase 4 voice backend implemented. Unit tests cover config, common helpers, password hashing, rate limiting, permissions, gateway, storage, LiveKit tokens, TURN credentials, and voice projection. Integration tests cover auth, communities, moderation, messaging, WebSocket gateway, attachments, notifications, outbox, `/sync`, and voice tokens/passwords/webhooks/moderation. GitHub Actions runs Rust checks/tests, web typecheck/build, and TypeScript contract checks. `tests/voice-e2e` is a manual Edge-based two-client audio suite that also verifies forced TURN relay. `tests/web-e2e` logs in through the browser, sends a message, and joins LiveKit voice. Multi-node load, broader browser matrices, and desktop suites remain open.
 
 **Rule:** a feature is not complete until it is tested at the level where it can fail. Mocked voice, mocked permissions, and happy-path-only API tests do not count as completion.
 

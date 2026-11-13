@@ -71,6 +71,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Tul
 - LiveKit participant reconciliation worker and role/overwrite bulk revocation.
 - Edge-based two-client voice e2e harness with fake microphones, direct and forced TURN relay modes.
 
+### Added — Phase 5/6 web client foundation
+
+- React 19/Vite/Tailwind web app with login/register and refresh-cookie session bootstrap.
+- `/sync`-driven community, channel, and DM navigation.
+- Text message history and sending with REST and live gateway invalidation.
+- LiveKit voice join/leave, microphone, camera, and screen-share controls with lazy-loaded media chunk.
+- English/Turkish localization foundation.
+- Headless Edge web smoke test covering login, message send, voice connection, camera publishing, screen sharing, and leave cleanup.
+
 ### Planned — Phase 4 follow-ups
 
 - Real-browser audio verification and TURN fallback with UDP blocked.
