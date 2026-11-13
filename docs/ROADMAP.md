@@ -277,7 +277,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 8 — Embed and developer platform
 
-**Status:** Embed MVP complete: app management, origin allowlisting, public and authenticated token flows, authenticated popup UX, message previews, iframe widget, postMessage loader, TypeScript wrapper, demo site, and embed tests. API keys/bots, outgoing webhooks, and the Rust SDK remain follow-ups.
+**Status:** Complete for the v1 embed/developer scope: app management, origin allowlisting, public and authenticated token flows, authenticated popup UX, message previews, iframe widget, postMessage loader, TypeScript and Rust SDKs, demo site, scoped API keys, owner-managed bot accounts, signed outgoing webhooks, and embed/key/bot/webhook tests. Richer scopes, more webhook event types, and richer typed SDK models remain follow-ups.
 
 ### Tasks
 
@@ -306,7 +306,7 @@ No delivery dates are promised. Scope and quality take precedence over calendar 
 
 ## Phase 9 — Production hardening
 
-**Status:** Production deployment artifacts are in place: a single-host Compose stack, Caddy TLS/security headers, production environment template, backup/restore scripts, and deployment/backup documentation. Clean-host installation, restore drills, monitoring dashboards, load tests, release signing, and external security review remain pending.
+**Status:** Production deployment artifacts are in place: a single-host Compose stack, Caddy TLS/security headers, production environment template, backup/restore scripts, a Prometheus metrics endpoint/scrape profile, and deployment/backup/monitoring documentation. Clean-host installation, restore drills, Grafana dashboards/alerts, load tests, release signing, and external security review remain pending.
 
 ### Tasks
 

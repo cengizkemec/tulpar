@@ -1,6 +1,6 @@
 # Phase 9 Report — Production hardening
 
-**Status:** Production deployment artifacts and runbooks are implemented. Clean-host installation, restore drills, monitoring dashboards, load tests, release signing, and external security review remain pending.
+**Status:** Production deployment artifacts, runbooks, and a Prometheus metrics baseline are implemented. Clean-host installation, restore drills, Grafana dashboards/alerts, load tests, release signing, and external security review remain pending.
 
 **Date:** 2026-11-13
 

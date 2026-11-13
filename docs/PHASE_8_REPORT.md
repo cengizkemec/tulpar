@@ -1,6 +1,6 @@
 # Phase 8 Report — Embed and developer platform
 
-**Status:** Embed MVP implemented. Public community widgets, one-time authenticated member authorization with a popup flow, public message previews, the embed app management API/UI, the hosted widget page, the SDK loader, a typed TypeScript wrapper, and a demo host page are in place. API keys/bot accounts, outgoing webhooks, and the Rust SDK remain follow-ups.
+**Status:** Phase 8 complete for the v1 developer scope. Public/authenticated embed widgets, message previews, scoped API keys, owner-managed bots, signed outgoing webhooks, TypeScript and Rust SDKs, and their integration tests are implemented. Richer API-key scopes, more webhook event types, and richer typed SDK models remain follow-ups.
 
 **Date:** 2026-11-13
 
